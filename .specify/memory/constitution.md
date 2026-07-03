@@ -53,7 +53,7 @@ entregou — mudanças geram nova spec ou emenda.
 
 ## Stack e convenções
 
-- **Backend**: Laravel 11 (PHP 8.3+), MySQL 8, Redis, Sanctum SPA (cookie),
+- **Backend**: Laravel 12 (PHP 8.3+), MySQL 8, Redis, Sanctum SPA (cookie),
   Socialite (Google), openspout (.xlsx), barryvdh/laravel-dompdf + simple-qrcode
   (comprovante), filas via `queue`.
 - **Frontend**: React 18 + Vite, React Query para estado do servidor.
@@ -82,4 +82,12 @@ registro da mudança neste arquivo (com versão e data), justificativa, e verifi
 de impacto nas specs já entregues. Toda revisão de PR verifica conformidade com os
 princípios I–VI; complexidade além do necessário deve ser justificada na spec.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-03
+## Emendas
+
+- **1.1.0 (2026-07-03)** — Laravel 11 → **Laravel 12**. Justificativa: o Laravel 11
+  saiu do suporte de segurança em mar/2026 e o Composer bloqueia sua instalação por
+  advisories ativos (PKSA-m5cs-t1y6-qpcs e outros); plataforma de pagamento não pode
+  nascer em framework EOL. Impacto nas specs entregues: nenhum (descoberto durante a
+  implementação da 001; API do framework compatível). Specs 002+ herdam o Laravel 12.
+
+**Version**: 1.1.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-03

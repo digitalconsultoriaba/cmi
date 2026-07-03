@@ -8,7 +8,7 @@ sua área. O pacote em `base/` é material de referência; a constituição est�
 
 | # | Spec | Escopo | Origem (tasks.md da base) | Status |
 |---|---|---|---|---|
-| 001 | **fundacao** | Scaffold Laravel 11 + React 18 (Vite) + Sanctum; extração do domínio do 061 (sem acoplamentos); migrations, models, lookups, seeders; RBAC (roles, middleware, policies); Docker/make | Fases 0 + 1 | ⏳ |
+| 001 | **fundacao** | Scaffold Laravel 12 + React 18 (Vite) + Sanctum; extração do domínio do 061 (sem acoplamentos); migrations, models, lookups, seeders; RBAC (roles, middleware, policies); Docker/make | Fases 0 + 1 | ✅ |
 | 002 | **auth-inscrito** | Cadastro e-mail+senha, verificação, reset; login Google (Socialite); `/auth/me`; contexto de auth + rotas protegidas no front | Fase 2 | ⏳ |
 | 003 | **config-evento** | Admin: evento (CRUD/publish/cancel/banner), tipos de ingresso, lotes, camisas com estoque, regra de cortesia + vouchers, patrocínio, editor da landing (blocos); telas admin correspondentes | Fase 3 + T084/T087 | ⏳ |
 | 004 | **catalogo-compra** | Landing pública renderizada (blocos), catálogo do lote vigente, carrinho + participantes (grupo/casal), reserva com TTL + expiração, área do inscrito (meus pedidos/ingressos), comprovante PDF+QR | Fase 4 + T074 + T081/T083 (parcial) | ⏳ |
