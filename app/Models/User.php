@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use App\Domain\Events\Models\Role;
+use App\Notifications\ResetPasswordPtBr;
+use App\Notifications\VerifyEmailPtBr;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -38,6 +42,26 @@ class User extends Authenticatable
         ];
     }
 
+    /** E-mail sempre normalizado (trim + minúsculas) — edge case da spec 002. */
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value) => mb_strtolower(trim($value)),
+        );
+    }
+
+    // ── Notificações pt-BR (spec 002) ───────────────────────────────
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailPtBr);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordPtBr($token));
+    }
+
     // ── RBAC (specs/001-fundacao/contracts/rbac.md) ─────────────────
 
     public function roles(): BelongsToMany
@@ -54,5 +78,12 @@ class User extends Authenticatable
     public function hasAnyRole(array $slugs): bool
     {
         return $this->roles->whereIn('slug', $slugs)->isNotEmpty();
+    }
+
+    /** Atribui um papel sem duplicar (cadastro/Google → attendee). */
+    public function assignRole(string $slug): void
+    {
+        $this->roles()->syncWithoutDetaching([Role::idFor($slug)]);
+        $this->unsetRelation('roles');
     }
 }
