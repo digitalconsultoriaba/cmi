@@ -7,10 +7,28 @@
 # IDEs
 .idea/
 .vscode/
+.fleet/
+.nova/
+.zed/
 
-# Dependências (fases futuras)
+# Dependências
 /vendor/
 node_modules/
+
+# Build
+/public/build/
+/public/hot/
+/public/storage/
+/frontend/dist/
+
+# Laravel
+/storage/*.key
+/storage/pail
+.phpunit.result.cache
+/.phpunit.cache
+
+# Logs
+*.log
 
 # Ambiente / segredos
 .env
@@ -20,3 +38,4 @@ node_modules/
 *.pem
 *.pfx
 *.key
+auth.json
