@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\Domain\Events\Models\Event;
 use App\Policies\EventPolicy;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -18,5 +21,22 @@ class AppServiceProvider extends ServiceProvider
     {
         // Models do domínio ficam fora de App\Models — registro explícito.
         Gate::policy(Event::class, EventPolicy::class);
+
+        $this->configureRateLimiters();
+    }
+
+    /**
+     * Limitadores nomeados da autenticação
+     * (specs/002-auth-inscrito/research.md, Decisão 7).
+     */
+    private function configureRateLimiters(): void
+    {
+        RateLimiter::for('auth-email', function (Request $request) {
+            return Limit::perMinute(1)->by('resend:'.($request->user()?->id ?: $request->ip()));
+        });
+
+        RateLimiter::for('auth-forgot', function (Request $request) {
+            return Limit::perMinute(3)->by('forgot:'.$request->ip());
+        });
     }
 }
