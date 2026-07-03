@@ -1,0 +1,22 @@
+# Template de referência (Tabler admin — não versionado, ~155 MB)
+/template/
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+
+# Dependências (fases futuras)
+/vendor/
+node_modules/
+
+# Ambiente / segredos
+.env
+.env.*
+!.env.example
+/secrets/
+*.pem
+*.pfx
+*.key
