@@ -15,8 +15,9 @@ vaga foi consumida de fato. Excluir used apenas de contagens de "aguardando".)
 **Disponível por tipo** = `ticket_type.capacity − COUNT(tickets vivos do tipo)`;
 `capacity` null = ilimitado (disponível = null, nunca esgota por tipo).
 
-**Disponível do evento** = `event.total_capacity − COUNT(tickets vivos do evento)`;
-null = ilimitado.
+**Disponível do evento** = `event.total_capacity − ASSENTOS(tickets vivos do
+evento)`; null = ilimitado. *(Emenda spec 004: a contagem passou de COUNT para
+soma de assentos — casal/`seats_per_ticket` conta 2 vagas, conforme FR-008.)*
 
 **Lote vigente** (por tipo de ingresso, ou global quando `ticket_type_id` null):
 elegível = `is_active` ∧ (starts_at null ∨ agora ≥ starts_at) ∧ (ends_at null ∨

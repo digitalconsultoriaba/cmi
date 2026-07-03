@@ -39,7 +39,8 @@ class EventShirtSize extends BaseModel
     }
 
     /**
-     * Recalcula o cache sold_count: camisas do titular + do acompanhante (casal).
+     * Recalcula o cache sold_count em UNIDADES: camisa do titular + a do
+     * acompanhante contam separadamente (um ticket de casal usa 2).
      * Specs 004+ DEVEM chamar dentro da mesma DB::transaction.
      */
     public function recountSold(): int
@@ -48,9 +49,12 @@ class EventShirtSize extends BaseModel
 
         $count = Ticket::query()
             ->whereIn('status_id', $statusIds)
-            ->where(fn ($q) => $q->where('shirt_size_id', $this->id)
-                ->orWhere('companion_shirt_size_id', $this->id))
-            ->count();
+            ->where('shirt_size_id', $this->id)
+            ->count()
+            + Ticket::query()
+                ->whereIn('status_id', $statusIds)
+                ->where('companion_shirt_size_id', $this->id)
+                ->count();
 
         $this->forceFill(['sold_count' => $count])->save();
 

@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Domain\Events\Models\Event;
+use App\Domain\Events\Models\Order;
+use App\Domain\Events\Models\Ticket;
 use App\Policies\EventPolicy;
+use App\Policies\OrderPolicy;
+use App\Policies\TicketPolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Models do domínio ficam fora de App\Models — registro explícito.
         Gate::policy(Event::class, EventPolicy::class);
+        Gate::policy(Order::class, OrderPolicy::class);
+        Gate::policy(Ticket::class, TicketPolicy::class);
 
         $this->configureRateLimiters();
     }

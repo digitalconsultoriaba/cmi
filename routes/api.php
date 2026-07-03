@@ -16,9 +16,25 @@ use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PublicEventController;
+use App\Http\Controllers\Api\TicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
+
+// ── Catálogo público (spec 004 — sem auth, binding por slug) ────────
+Route::get('/public/events/{event:slug}', [PublicEventController::class, 'show']);
+
+// ── Compra e área do inscrito (spec 004 — códigos públicos nas URLs) ─
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{order:code}', [OrderController::class, 'show']);
+    Route::get('/tickets', [TicketController::class, 'index']);
+    Route::get('/tickets/{ticket:code}', [TicketController::class, 'show']);
+    Route::get('/tickets/{ticket:code}/receipt', [TicketController::class, 'receipt']);
+});
 
 Route::prefix('auth')->group(function () {
     // Público

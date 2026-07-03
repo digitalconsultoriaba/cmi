@@ -12,6 +12,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -47,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (AuthorizationException $e, Request $request) {
+        $exceptions->render(function (AuthorizationException|AccessDeniedHttpException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return ApiResponse::error('Você não tem permissão para esta ação.', 'forbidden', 403);
             }

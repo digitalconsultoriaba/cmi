@@ -31,6 +31,12 @@ export default function MinhaConta() {
     <main style={{ maxWidth: 560, margin: '4rem auto', fontFamily: 'sans-serif' }}>
       <h1>Minha conta</h1>
 
+      <p>
+        <a href="/minha-conta/pedidos">Meus pedidos</a>
+        {' · '}
+        <a href="/minha-conta/ingressos">Meus ingressos</a>
+      </p>
+
       <dl>
         <dt>Nome</dt>
         <dd>{user.name}</dd>
