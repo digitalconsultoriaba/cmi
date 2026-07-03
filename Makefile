@@ -19,6 +19,7 @@ install:
 	$(COMPOSE) build php
 	$(PHP) composer install
 	@test -f .env || (cp .env.example .env && $(PHP) php artisan key:generate)
+	$(PHP) php artisan storage:link
 	npm install --prefix frontend
 
 ## Aplica migrations + seeders

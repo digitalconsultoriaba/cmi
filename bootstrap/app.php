@@ -55,7 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (DomainRuleViolation $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {
-                return ApiResponse::error($e->getMessage(), $e->type, 409);
+                return ApiResponse::error($e->getMessage(), $e->type, 409, $e->errors);
             }
         });
 

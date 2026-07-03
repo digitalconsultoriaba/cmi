@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SponsorshipInstallment extends BaseAuditedModel
 {
+    protected $attributes = ['status' => 'pending'];
+
     protected $casts = [
         'amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',

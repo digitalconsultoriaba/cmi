@@ -48,6 +48,14 @@ class TicketLot extends BaseModel
         return $this->price_override ?? ($ticketType ?? $this->ticketType)?->price;
     }
 
+    /** Vendas registradas (tickets vivos) — bloqueia exclusão (spec 003). */
+    public function hasSales(): bool
+    {
+        return $this->tickets()
+            ->whereIn('status_id', TicketStatus::idsFor(TicketStatus::COUNTS_CAPACITY))
+            ->exists();
+    }
+
     /**
      * Recalcula o cache sold_count a partir da fonte de verdade (tickets que
      * contam vaga). Specs 004+ DEVEM chamar dentro da mesma DB::transaction.
