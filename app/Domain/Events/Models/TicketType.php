@@ -53,4 +53,19 @@ class TicketType extends BaseModel
 
         return $available !== null && $available <= 0;
     }
+
+    /** Vendas registradas (tickets vivos) — bloqueia exclusão (spec 003). */
+    public function hasSales(): bool
+    {
+        return $this->tickets()
+            ->whereIn('status_id', TicketStatus::idsFor(TicketStatus::COUNTS_CAPACITY))
+            ->exists();
+    }
+
+    public function soldCount(): int
+    {
+        return $this->tickets()
+            ->whereIn('status_id', TicketStatus::idsFor(TicketStatus::COUNTS_CAPACITY))
+            ->count();
+    }
 }

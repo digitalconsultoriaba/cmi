@@ -26,6 +26,18 @@ class EventShirtSize extends BaseModel
         return $this->stock_quantity !== null && $this->sold_count >= $this->stock_quantity;
     }
 
+    /** Vendas registradas — bloqueia exclusão e estoque < vendido (spec 003). */
+    public function hasSales(): bool
+    {
+        $statusIds = TicketStatus::idsFor(TicketStatus::COUNTS_CAPACITY);
+
+        return Ticket::query()
+            ->whereIn('status_id', $statusIds)
+            ->where(fn ($q) => $q->where('shirt_size_id', $this->id)
+                ->orWhere('companion_shirt_size_id', $this->id))
+            ->exists();
+    }
+
     /**
      * Recalcula o cache sold_count: camisas do titular + do acompanhante (casal).
      * Specs 004+ DEVEM chamar dentro da mesma DB::transaction.

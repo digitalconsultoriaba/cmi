@@ -47,3 +47,30 @@ export async function apiPost(url, body, config) {
   const response = await http.post(url, body, config)
   return response.data.data
 }
+
+export async function apiPut(url, body, config) {
+  await csrf()
+  const response = await http.put(url, body, config)
+  return response.data.data
+}
+
+export async function apiPatch(url, body, config) {
+  await csrf()
+  const response = await http.patch(url, body, config)
+  return response.data.data
+}
+
+export async function apiDelete(url, config) {
+  await csrf()
+  const response = await http.delete(url, config)
+  return response.data.data
+}
+
+/** Upload multipart (ex.: banner). */
+export async function apiUpload(url, formData) {
+  await csrf()
+  const response = await http.post(url, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data.data
+}

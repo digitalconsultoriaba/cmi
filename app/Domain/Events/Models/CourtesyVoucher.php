@@ -19,6 +19,8 @@ class CourtesyVoucher extends BaseModel
     /** Ciclo só avança (contracts/domain-derivations.md). */
     public const FLOW = [self::AVAILABLE, self::DISTRIBUTED, self::REDEEMED];
 
+    protected $attributes = ['status' => self::AVAILABLE];
+
     protected $casts = [
         'distributed_at' => 'datetime',
         'redeemed_at' => 'datetime',

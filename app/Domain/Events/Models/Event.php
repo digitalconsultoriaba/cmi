@@ -2,6 +2,7 @@
 
 namespace App\Domain\Events\Models;
 
+use App\Domain\Events\Models\Concerns\TransitionsStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,10 @@ use Illuminate\Support\Carbon;
 
 class Event extends BaseModel
 {
+    use TransitionsStatus;
+
+    public const STATUS_LOOKUP = EventStatus::class;
+
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
