@@ -96,12 +96,17 @@ class Event extends BaseModel
 
     // ── Derivações (contracts/domain-derivations.md — nunca colunas) ──
 
-    /** Tickets que ocupam vaga (vivos + used). */
+    /**
+     * Vagas ocupadas (vivos + used), em ASSENTOS — casal conta 2
+     * (emenda da spec 004 ao contrato de derivações; FR-008).
+     */
     public function ticketsSold(): int
     {
-        return $this->tickets()
-            ->whereIn('status_id', TicketStatus::idsFor(TicketStatus::COUNTS_CAPACITY))
-            ->count();
+        return (int) $this->tickets()
+            ->whereIn('tickets.status_id', TicketStatus::idsFor(TicketStatus::COUNTS_CAPACITY))
+            ->join('ticket_types', 'ticket_types.id', '=', 'tickets.ticket_type_id')
+            ->selectRaw('COALESCE(SUM(GREATEST(ticket_types.seats_per_ticket, IF(ticket_types.is_couple, 2, 1))), 0) as seats')
+            ->value('seats');
     }
 
     /** Vagas restantes do evento; null = capacidade ilimitada. */

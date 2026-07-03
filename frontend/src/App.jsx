@@ -2,6 +2,11 @@ import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
 import ProtectedRoute from './auth/ProtectedRoute'
 import RoleRoute from './auth/RoleRoute'
+import { CartProvider } from './cart/CartProvider'
+import EventoPublico from './pages/EventoPublico'
+import Checkout from './pages/Checkout'
+import MeusPedidos from './pages/MeusPedidos'
+import MeusIngressos from './pages/MeusIngressos'
 import Entrar from './pages/Entrar'
 import Cadastro from './pages/Cadastro'
 import EsqueciSenha from './pages/EsqueciSenha'
@@ -21,7 +26,9 @@ function Home() {
   return (
     <main style={{ fontFamily: 'sans-serif', padding: '2rem' }}>
       <h1>Plataforma de Eventos</h1>
-      <p>A landing pública do evento chega na spec 004.</p>
+      <p>
+        <Link to="/evento/seminario-internacional-2026">Ver o evento →</Link>
+      </p>
       {user ? (
         <>
           <Link to="/minha-conta">Minha conta ({user.name})</Link>
@@ -38,12 +45,38 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CartProvider>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+          <Route path="/evento/:slug" element={<EventoPublico />} />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minha-conta/pedidos"
+            element={
+              <ProtectedRoute>
+                <MeusPedidos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/minha-conta/ingressos"
+            element={
+              <ProtectedRoute>
+                <MeusIngressos />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/minha-conta"
             element={
@@ -68,6 +101,7 @@ export default function App() {
             <Route path="patrocinios" element={<Patrocinios />} />
           </Route>
         </Routes>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   )
