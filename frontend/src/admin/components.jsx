@@ -14,6 +14,28 @@ export function Card({ title, actions, children }) {
   )
 }
 
+/**
+ * Modal padrão do painel (Tabler). Todo cadastro que antes carregava inline
+ * passa a abrir aqui. `footer` recebe os botões de ação.
+ */
+export function Modal({ title, onClose, children, footer, size = 'lg' }) {
+  return (
+    <div className="modal modal-blur fade show d-block" tabIndex="-1"
+      style={{ background: 'rgba(0,0,0,.4)' }} onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
+      <div className={`modal-dialog modal-${size} modal-dialog-scrollable`} role="document">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">{title}</h5>
+            <button type="button" className="btn-close" onClick={onClose} />
+          </div>
+          <div className="modal-body">{children}</div>
+          {footer && <div className="modal-footer">{footer}</div>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** Alerta de erro de API (409/422/…) com dispensa. */
 export function ApiErrorAlert({ error, onClose }) {
   if (!error) return null

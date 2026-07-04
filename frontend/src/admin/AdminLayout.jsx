@@ -53,7 +53,12 @@ export default function AdminLayout() {
           <ul className="navbar-nav pt-lg-3">
             {(isAdmin || isTreasury) && (
               <li className="nav-item">
-                <NavLink className="nav-link" to="/painel/modulo">Eventos e Ingressos</NavLink>
+                <NavLink className="nav-link" to="/painel/modulo">Eventos</NavLink>
+              </li>
+            )}
+            {(isAdmin || isTreasury) && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/atendimentos">Atendimento</NavLink>
               </li>
             )}
             {(isAdmin || isTreasury) && (

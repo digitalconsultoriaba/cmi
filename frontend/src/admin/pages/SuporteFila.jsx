@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, ApiErrorAlert, useApiAction } from '../components'
 import { apiGet, apiPost } from '../../lib/api'
 
-const TYPE_LABEL = { refund: 'Reembolso', question: 'Dúvida', shirt_change: 'Troca de camisa', other: 'Outro' }
+const TYPE_LABEL = { refund: 'Reembolso', cancellation: 'Cancelamento', question: 'Dúvida', shirt_change: 'Troca de camisa', other: 'Outro' }
 const STATUS_LABEL = { open: 'Aberto', finished: 'Finalizado', reopened: 'Reaberto' }
 const STATUS_BADGE = { open: 'bg-green-lt', finished: 'bg-secondary-lt', reopened: 'bg-yellow-lt' }
 

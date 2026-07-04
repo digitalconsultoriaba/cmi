@@ -37,7 +37,7 @@ class OrderController extends Controller
     {
         $orders = Order::query()
             ->where('buyer_user_id', $request->user()->id)
-            ->with(['event', 'status', 'tickets.status', 'tickets.ticketType'])
+            ->with(['event', 'status', 'tickets.status', 'tickets.ticketType', 'payments.status'])
             ->latest('id')
             ->get();
 
@@ -48,6 +48,6 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        return OrderResource::make($order->load(['event', 'status', 'tickets.status', 'tickets.ticketType']));
+        return OrderResource::make($order->load(['event', 'status', 'tickets.status', 'tickets.ticketType', 'payments.status']));
     }
 }

@@ -18,10 +18,9 @@ const TABS = [
   { to: 'cortesias', label: 'Cortesias' },
   { to: 'patrocinio', label: 'Patrocínio' },
   { to: 'financeiro', label: 'Financeiro' },
-  { to: 'atendimento', label: 'Atendimento' },
   { to: 'relatorios', label: 'Relatórios' },
   { to: 'checkin', label: 'Check-in' },
-  { to: 'trilha', label: 'Trilha' },
+  { to: 'trilha', label: 'Logs' },
 ]
 
 const STATUS_BADGE = {

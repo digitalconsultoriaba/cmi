@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { useAuth } from './AuthProvider'
 
@@ -6,12 +6,25 @@ function RoleGate({ roles, children }) {
   const { user } = useAuth()
 
   if (!roles.some((role) => user.roles.includes(role))) {
+    // Inscrito (sem papel de equipe) não deve ver o painel — mandamos para a
+    // conta dele em vez de um beco sem saída.
+    const isStaff = user.roles.some((r) => ['admin', 'treasury', 'gate'].includes(r))
+    if (!isStaff) {
+      return <Navigate to="/minha-conta" replace />
+    }
+
     return (
-      <main style={{ maxWidth: 480, margin: '6rem auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
-        <h1>403</h1>
-        <p>Você não tem permissão para acessar esta área.</p>
-        <Link to="/">Voltar ao início</Link>
-      </main>
+      <div className="page page-center" data-bs-theme="light" style={{ minHeight: '100vh' }}>
+        <div className="container container-tight py-4 text-center">
+          <div className="empty">
+            <div className="empty-header">403</div>
+            <p className="empty-title">Você não tem permissão para acessar esta área.</p>
+            <div className="empty-action">
+              <Link className="btn btn-primary" to="/painel">Ir para o painel</Link>
+            </div>
+          </div>
+        </div>
+      </div>
     )
   }
 

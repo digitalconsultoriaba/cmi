@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../../../lib/api'
-import { ApiErrorAlert, useApiAction } from '../../components'
+import { ApiErrorAlert, Modal, useApiAction } from '../../components'
 import { useEventoUI } from '../EventoLayout'
+import QrCode from '../../../components/QrCode'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const dt = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR') : '—')
@@ -28,6 +29,8 @@ export default function ClienteFicha({ userId, onClose }) {
   const [tab, setTab] = useState('Dados')
   const [message, setMessage] = useState('')
   const [note, setNote] = useState('')
+  const [qrTicket, setQrTicket] = useState(null) // ingresso com QR aberto
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   // Esconde as abas do evento enquanto a ficha do cliente está aberta
   const ui = useEventoUI()
@@ -60,7 +63,7 @@ export default function ClienteFicha({ userId, onClose }) {
   })
 
   const adicionarNota = () => run(() => apiPost(`${base}/history`, { note }), {
-    onSuccess: () => { setNote(''); invalidate() },
+    onSuccess: () => { setNote(''); setShowHistoryModal(false); invalidate() },
   })
 
   const cancelarIngresso = (code) => {
@@ -160,20 +163,24 @@ export default function ClienteFicha({ userId, onClose }) {
                   <td className="small">
                     {t.isCourtesy && (
                       <div className="text-purple">
-                        <strong>Cortesia</strong> · deu: {t.courtesyGivenBy}
+                        <strong>Cortesia</strong> · concedida por {t.courtesyGivenBy}
                         {t.courtesyCode && <> ({t.courtesyCode})</>}
                       </div>
                     )}
                     {t.usedAt
-                      ? <div className="text-primary">✓ Entrou {dt(t.usedAt)}{t.validatedBy && <> · {t.validatedBy}</>}</div>
-                      : <div className="text-secondary">Não utilizado</div>}
+                      ? <div className="text-primary">✓ Entrou em {dt(t.usedAt)}{t.validatedBy && <> · {t.validatedBy}</>}</div>
+                      : <div className="text-secondary">Ainda não utilizado</div>}
                   </td>
                   <td className="text-end">
                     <span className="btn-list justify-content-end">
-                      {t.printable && (
-                        <a className="btn btn-sm btn-success" href={`/api/admin/tickets/${t.code}/receipt`} target="_blank">
+                      <button className="btn btn-sm" onClick={() => setQrTicket(t)}>QR</button>
+                      {t.printable && t.status !== 'used' && (
+                        <a className="btn btn-sm btn-success" href={`/api/admin/tickets/${t.code}/receipt`} target="_blank" rel="noopener">
                           Baixar ingresso
                         </a>
+                      )}
+                      {t.status === 'used' && (
+                        <span className="text-secondary small align-self-center">Já utilizado</span>
                       )}
                       {t.canCancel && (
                         <button className="btn btn-sm btn-outline-danger" disabled={busy}
@@ -235,11 +242,9 @@ export default function ClienteFicha({ userId, onClose }) {
         <div className="card">
           <div className="card-header">
             <h3 className="card-title">Histórico</h3>
-            <div className="card-actions d-flex gap-2">
-              <input className="form-control form-control-sm" style={{ minWidth: 280 }}
-                placeholder="Adicionar anotação…" value={note} onChange={(e) => setNote(e.target.value)} />
-              <button className="btn btn-sm btn-primary" disabled={busy || !note.trim()} onClick={adicionarNota}>
-                Adicionar
+            <div className="card-actions">
+              <button className="btn btn-sm btn-primary" onClick={() => setShowHistoryModal(true)}>
+                Adicionar anotação
               </button>
             </div>
           </div>
@@ -260,6 +265,34 @@ export default function ClienteFicha({ userId, onClose }) {
             </table>
           </div>
         </div>
+      )}
+
+      {qrTicket && (
+        <Modal title={`Ingresso ${qrTicket.code}`} size="sm" onClose={() => setQrTicket(null)}
+          footer={<button className="btn" onClick={() => setQrTicket(null)}>Fechar</button>}>
+          <div className="text-center">
+            <div className="fw-bold">{qrTicket.participantName}</div>
+            <div className="text-secondary mb-3">{qrTicket.ticketTypeName}</div>
+            <div className="d-flex justify-content-center"><QrCode value={qrTicket.code} size={200} /></div>
+            <div className="text-secondary mt-2"><code>{qrTicket.code}</code></div>
+            <div className="text-secondary small mt-1">Use este QR para testar a leitura na portaria.</div>
+          </div>
+        </Modal>
+      )}
+
+      {showHistoryModal && (
+        <Modal title="Adicionar anotação" size="md" onClose={() => setShowHistoryModal(false)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setShowHistoryModal(false)}>Cancelar</button>
+              <button className="btn btn-primary" disabled={busy || !note.trim()} onClick={adicionarNota}>Salvar</button>
+            </>
+          }>
+          <label className="form-label">Observação</label>
+          <textarea className="form-control" rows={4} autoFocus placeholder="Descreva a anotação…"
+            value={note} onChange={(e) => setNote(e.target.value)} />
+          <div className="form-hint mt-1">Registra automaticamente o usuário, a data e a hora.</div>
+        </Modal>
       )}
     </>
   )

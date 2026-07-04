@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
-import { Card, ApiErrorAlert, StatusBadge, useApiAction } from '../components'
+import { Card, ApiErrorAlert, Modal, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut, apiDelete } from '../../lib/api'
 
 export default function Camisas() {
@@ -10,6 +10,8 @@ export default function Camisas() {
   const { run, error, setError } = useApiAction()
   const [newModel, setNewModel] = useState('')
   const [newSize, setNewSize] = useState({})
+  const [editing, setEditing] = useState(null) // modelo em edição
+  const [editLabel, setEditLabel] = useState('')
 
   const eventId = event?.id
   const { data: models = [] } = useQuery({
@@ -52,6 +54,12 @@ export default function Camisas() {
     { onSuccess: refresh }
   )
 
+  const openEdit = (model) => { setEditing(model); setEditLabel(model.label) }
+  const saveEdit = () => run(
+    () => apiPut(`/admin/events/${eventId}/shirt-models/${editing.id}`, { label: editLabel }),
+    { onSuccess: () => { refresh(); setEditing(null) } }
+  )
+
   return (
     <>
       <h2>Camisas</h2>
@@ -78,6 +86,7 @@ export default function Camisas() {
           actions={
             <span className="btn-list">
               <a className="btn btn-sm" href={`/api/admin/events/${eventId}/reports/camisas.xlsx`}>Relatório</a>
+              <button className="btn btn-sm" onClick={() => openEdit(model)}>Editar modelo</button>
               <button className="btn btn-sm btn-outline-danger" onClick={() => removeModel(model)}>Excluir modelo</button>
             </span>
           }>
@@ -130,6 +139,20 @@ export default function Camisas() {
         </Card>
         )
       })}
+
+      {editing && (
+        <Modal title="Editar modelo" size="sm" onClose={() => setEditing(null)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setEditing(null)}>Cancelar</button>
+              <button className="btn btn-primary" disabled={!editLabel.trim()} onClick={saveEdit}>Salvar</button>
+            </>
+          }>
+          <label className="form-label">Nome do modelo</label>
+          <input className="form-control" value={editLabel} autoFocus
+            onChange={(e) => setEditLabel(e.target.value)} />
+        </Modal>
+      )}
     </>
   )
 }

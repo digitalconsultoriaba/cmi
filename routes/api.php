@@ -265,6 +265,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::put('/landing-blocks/{landingBlock}', [LandingBlockController::class, 'update']);
         Route::delete('/landing-blocks/{landingBlock}', [LandingBlockController::class, 'destroy']);
 
+        Route::get('/courtesy-vouchers/stats', [CourtesyVoucherController::class, 'stats']);
         Route::get('/courtesy-vouchers', [CourtesyVoucherController::class, 'index']);
         Route::post('/courtesy-vouchers', [CourtesyVoucherController::class, 'generate']);
         Route::patch('/courtesy-vouchers/{courtesyVoucher}/distribute', [CourtesyVoucherController::class, 'distribute']);

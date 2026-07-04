@@ -15,7 +15,7 @@ class SupportCaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', Rule::in(['refund', 'question', 'shirt_change', 'other'])],
+            'type' => ['required', Rule::in(['refund', 'cancellation', 'question', 'shirt_change', 'other'])],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:2000'],
             'order_code' => ['nullable', 'string', 'exists:orders,code'],

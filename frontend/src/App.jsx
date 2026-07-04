@@ -8,13 +8,14 @@ import Checkout from './pages/Checkout'
 import MeusPedidos from './pages/MeusPedidos'
 import MeusIngressos from './pages/MeusIngressos'
 import Suporte from './pages/Suporte'
-import SuporteFila from './admin/pages/SuporteFila'
+import Atendimentos from './admin/pages/Atendimentos'
 import Checkin from './admin/pages/Checkin'
 import Entrar from './pages/Entrar'
 import Cadastro from './pages/Cadastro'
 import EsqueciSenha from './pages/EsqueciSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
 import MinhaConta from './pages/MinhaConta'
+import MeusDados from './pages/MeusDados'
 import AdminLayout from './admin/AdminLayout'
 import PagarPedido from './pages/PagarPedido'
 import Tesouraria from './admin/pages/Tesouraria'
@@ -107,37 +108,18 @@ export default function App() {
             }
           />
           <Route
-            path="/minha-conta/pedidos"
-            element={
-              <ProtectedRoute>
-                <MeusPedidos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/minha-conta/ingressos"
-            element={
-              <ProtectedRoute>
-                <MeusIngressos />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/minha-conta/suporte"
-            element={
-              <ProtectedRoute>
-                <Suporte />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/minha-conta"
             element={
               <ProtectedRoute>
                 <MinhaConta />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<MeusDados />} />
+            <Route path="pedidos" element={<MeusPedidos />} />
+            <Route path="ingressos" element={<MeusIngressos />} />
+            <Route path="suporte" element={<Suporte />} />
+          </Route>
           <Route
             path="/painel"
             element={
@@ -148,13 +130,15 @@ export default function App() {
           >
             <Route index element={<PainelHome />} />
 
-            {/* ── Módulo Eventos e Ingressos (1ª camada de abas) ── */}
+            {/* ── Módulo Eventos (1ª camada de abas) ── */}
             <Route path="modulo" element={<RoleRoute roles={['admin', 'treasury']}><ModuloLayout /></RoleRoute>}>
               <Route index element={<PainelModulo />} />
               <Route path="eventos" element={<ListaEventos />} />
-              <Route path="atendimentos" element={<SuporteFila />} />
               <Route path="tipos" element={<TiposEvento />} />
             </Route>
+
+            {/* ── Atendimento centralizado (sidebar, admin+financeiro) ── */}
+            <Route path="atendimentos" element={<RoleRoute roles={['admin', 'treasury']}><Atendimentos /></RoleRoute>} />
 
             {/* ── Usuários da equipe (módulo, admin) ── */}
             <Route path="usuarios" element={<RoleRoute role="admin"><Usuarios /></RoleRoute>} />
@@ -177,7 +161,6 @@ export default function App() {
               <Route path="cortesias" element={<Cortesias />} />
               <Route path="patrocinio" element={<Patrocinios />} />
               <Route path="financeiro" element={<FinanceiroEvento />} />
-              <Route path="atendimento" element={<SuporteFila />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="checkin" element={<CheckinEvento />} />
               <Route path="trilha" element={<Auditoria />} />
