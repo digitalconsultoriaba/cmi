@@ -4,12 +4,13 @@ import { useAuth } from '../auth/AuthProvider'
 import { apiGet } from '../lib/api'
 
 const MENU = [
-  { to: '/painel', label: 'Evento', end: true },
-  { to: '/painel/tipos-lotes', label: 'Tipos & Lotes' },
-  { to: '/painel/camisas', label: 'Camisas' },
-  { to: '/painel/landing', label: 'Landing' },
-  { to: '/painel/cortesias', label: 'Cortesias' },
-  { to: '/painel/patrocinios', label: 'Patrocínios' },
+  { to: '/painel', label: 'Evento', end: true, roles: ['admin'] },
+  { to: '/painel/tipos-lotes', label: 'Tipos & Lotes', roles: ['admin'] },
+  { to: '/painel/camisas', label: 'Camisas', roles: ['admin'] },
+  { to: '/painel/landing', label: 'Landing', roles: ['admin'] },
+  { to: '/painel/cortesias', label: 'Cortesias', roles: ['admin'] },
+  { to: '/painel/patrocinios', label: 'Patrocínios', roles: ['admin'] },
+  { to: '/painel/tesouraria', label: 'Tesouraria', roles: ['treasury', 'admin'] },
 ]
 
 /** Resolve o evento gerenciado (single-event no MVP — primeiro da lista). */
@@ -38,13 +39,14 @@ export default function AdminLayout() {
             <span className="fs-3">Plataforma de Eventos</span>
           </h1>
           <ul className="navbar-nav pt-lg-3">
-            {MENU.map((item) => (
-              <li className="nav-item" key={item.to}>
-                <NavLink className="nav-link" to={item.to} end={item.end}>
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
+            {MENU.filter((item) => item.roles.some((role) => user?.roles.includes(role)))
+              .map((item) => (
+                <li className="nav-item" key={item.to}>
+                  <NavLink className="nav-link" to={item.to} end={item.end}>
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
           </ul>
         </div>
       </aside>

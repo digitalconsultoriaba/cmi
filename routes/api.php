@@ -15,8 +15,11 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\Treasury\TreasuryController;
+use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\PublicEventController;
 use App\Http\Controllers\Api\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +37,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tickets', [TicketController::class, 'index']);
     Route::get('/tickets/{ticket:code}', [TicketController::class, 'show']);
     Route::get('/tickets/{ticket:code}/receipt', [TicketController::class, 'receipt']);
+
+    // ── Checkout (spec 005) ──
+    Route::post('/orders/{order:code}/checkout/pix', [CheckoutController::class, 'pix']);
+    Route::post('/orders/{order:code}/checkout/boleto', [CheckoutController::class, 'boleto']);
+    Route::post('/orders/{order:code}/checkout/card', [CheckoutController::class, 'card']);
+    Route::get('/orders/{order:code}/payment-status', [CheckoutController::class, 'paymentStatus']);
+});
+
+// ── Webhooks (spec 005 — sem sessão; verificação por segredo) ────────
+Route::post('/webhooks/sicoob', [WebhookController::class, 'sicoob']);
+Route::post('/webhooks/card', [WebhookController::class, 'card']);
+
+// ── Tesouraria (spec 005) ─────────────────────────────────────────────
+Route::prefix('treasury')->middleware(['auth:sanctum', 'require.role:treasury'])->group(function () {
+    Route::get('/receivables', [TreasuryController::class, 'receivables']);
+    Route::post('/reconcile', [TreasuryController::class, 'reconcile']);
+    Route::post('/orders/{order:code}/pay-manual', [TreasuryController::class, 'payManual']);
 });
 
 Route::prefix('auth')->group(function () {

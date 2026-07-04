@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Reservas vencidas liberam vagas (spec 004)
 Schedule::command('orders:expire')->everyFiveMinutes();
+
+// Garantia de baixa: concilia cobranças pendentes com o provedor (spec 005)
+Schedule::command('payments:reconcile')->dailyAt('04:00');

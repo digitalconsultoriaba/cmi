@@ -57,6 +57,9 @@ class ExpireReservations extends Command
 
                 $order->transitionTo(OrderStatus::EXPIRED);
 
+                // Cancela cobranças ativas no provedor (spec 005 — melhor esforço)
+                app(\App\Domain\Events\Services\CreateCharge::class)->expirePendingPayments($order);
+
                 // Libera caches de lote/estoque imediatamente
                 $tickets->pluck('ticketLot')->filter()->unique('id')->each->recountSold();
                 $tickets->pluck('shirtSize')->filter()->unique('id')->each->recountSold();

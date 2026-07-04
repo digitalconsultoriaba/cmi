@@ -10,4 +10,7 @@ RUN docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Defesa anti-PAN: argumentos de funções nunca entram em stack traces de log
+RUN echo "zend.exception_ignore_args=On" > /usr/local/etc/php/conf.d/zz-security.ini
+
 WORKDIR /var/www/html
