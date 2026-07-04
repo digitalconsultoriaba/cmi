@@ -138,6 +138,49 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+// ── Módulo Financeiro central (spec 010 — admin + financeiro) ────────
+Route::prefix('finance')->middleware(['auth:sanctum', 'require.role:admin,treasury'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Api\Finance\DashboardController::class, 'show']);
+    Route::get('/events/{event}/result', [\App\Http\Controllers\Api\Finance\DashboardController::class, 'eventResult']);
+
+    Route::get('/entries', [\App\Http\Controllers\Api\Finance\EntryController::class, 'index']);
+    Route::post('/entries', [\App\Http\Controllers\Api\Finance\EntryController::class, 'store']);
+    Route::get('/entries/{entry}', [\App\Http\Controllers\Api\Finance\EntryController::class, 'show']);
+    Route::put('/entries/{entry}', [\App\Http\Controllers\Api\Finance\EntryController::class, 'update']);
+    Route::post('/entries/{entry}/settle', [\App\Http\Controllers\Api\Finance\SettlementController::class, 'settle']);
+    Route::post('/entries/{entry}/reverse', [\App\Http\Controllers\Api\Finance\SettlementController::class, 'reverse']);
+    Route::post('/entries/{entry}/cancel', [\App\Http\Controllers\Api\Finance\EntryController::class, 'cancel']);
+    Route::post('/entries/{entry}/duplicate', [\App\Http\Controllers\Api\Finance\EntryController::class, 'duplicate']);
+
+    Route::post('/entries/{entry}/attachments', [\App\Http\Controllers\Api\Finance\AttachmentController::class, 'store']);
+    Route::get('/entries/{entry}/attachments/{attachment}', [\App\Http\Controllers\Api\Finance\AttachmentController::class, 'download']);
+    Route::delete('/entries/{entry}/attachments/{attachment}', [\App\Http\Controllers\Api\Finance\AttachmentController::class, 'destroy']);
+
+    Route::get('/categories', [\App\Http\Controllers\Api\Finance\CategoryController::class, 'index']);
+    Route::post('/categories', [\App\Http\Controllers\Api\Finance\CategoryController::class, 'store']);
+    Route::put('/categories/{category}', [\App\Http\Controllers\Api\Finance\CategoryController::class, 'update']);
+    Route::delete('/categories/{category}', [\App\Http\Controllers\Api\Finance\CategoryController::class, 'destroy']);
+
+    Route::get('/people', [\App\Http\Controllers\Api\Finance\PersonController::class, 'index']);
+    Route::post('/people', [\App\Http\Controllers\Api\Finance\PersonController::class, 'store']);
+    Route::put('/people/{person}', [\App\Http\Controllers\Api\Finance\PersonController::class, 'update']);
+    Route::delete('/people/{person}', [\App\Http\Controllers\Api\Finance\PersonController::class, 'destroy']);
+
+    Route::get('/payment-methods', [\App\Http\Controllers\Api\Finance\PaymentMethodController::class, 'index']);
+    Route::post('/payment-methods', [\App\Http\Controllers\Api\Finance\PaymentMethodController::class, 'store']);
+    Route::put('/payment-methods/{paymentMethod}', [\App\Http\Controllers\Api\Finance\PaymentMethodController::class, 'update']);
+
+    Route::get('/recurrences', [\App\Http\Controllers\Api\Finance\RecurrenceController::class, 'index']);
+    Route::post('/recurrences', [\App\Http\Controllers\Api\Finance\RecurrenceController::class, 'store']);
+    Route::put('/recurrences/{recurrence}', [\App\Http\Controllers\Api\Finance\RecurrenceController::class, 'update']);
+    Route::delete('/recurrences/{recurrence}', [\App\Http\Controllers\Api\Finance\RecurrenceController::class, 'destroy']);
+
+    Route::get('/reports/{type}', [\App\Http\Controllers\Api\Finance\ReportController::class, 'preview'])
+        ->where('type', '[a-z-]+');
+    Route::get('/reports/{type}/{format}', [\App\Http\Controllers\Api\Finance\ReportController::class, 'export'])
+        ->where(['type' => '[a-z-]+', 'format' => 'xlsx|pdf|csv']);
+});
+
 // ── Painel administrativo (spec 003; 009: financeiro acessa tudo) ────
 // Admin E tesouraria acessam o módulo inteiro; só a gestão de usuários da
 // equipe é exclusiva do admin (fronteira: quem cria contas de equipe).
