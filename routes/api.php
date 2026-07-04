@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Admin\SupportQueueController;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\Gate\GateController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SupportCaseController;
@@ -74,6 +75,12 @@ Route::prefix('admin/support-cases')
 // ── Webhooks (spec 005 — sem sessão; verificação por segredo) ────────
 Route::post('/webhooks/sicoob', [WebhookController::class, 'sicoob']);
 Route::post('/webhooks/card', [WebhookController::class, 'card']);
+
+// ── Portaria (spec 007) ───────────────────────────────────────────────
+Route::prefix('gate')->middleware(['auth:sanctum', 'require.role:gate,admin'])->group(function () {
+    Route::post('/checkin', [GateController::class, 'checkin']);
+    Route::get('/attendance', [GateController::class, 'attendance']);
+});
 
 // ── Tesouraria (spec 005) ─────────────────────────────────────────────
 Route::prefix('treasury')->middleware(['auth:sanctum', 'require.role:treasury'])->group(function () {

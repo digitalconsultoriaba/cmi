@@ -12,6 +12,7 @@ const MENU = [
   { to: '/painel/patrocinios', label: 'Patrocínios', roles: ['admin'] },
   { to: '/painel/tesouraria', label: 'Tesouraria', roles: ['treasury', 'admin'] },
   { to: '/painel/suporte', label: 'Suporte', roles: ['treasury', 'admin'] },
+  { to: '/painel/checkin', label: 'Check-in', roles: ['gate', 'admin'] },
 ]
 
 /** Resolve o evento gerenciado (single-event no MVP — primeiro da lista). */

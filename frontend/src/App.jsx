@@ -9,6 +9,7 @@ import MeusPedidos from './pages/MeusPedidos'
 import MeusIngressos from './pages/MeusIngressos'
 import Suporte from './pages/Suporte'
 import SuporteFila from './admin/pages/SuporteFila'
+import Checkin from './admin/pages/Checkin'
 import Entrar from './pages/Entrar'
 import Cadastro from './pages/Cadastro'
 import EsqueciSenha from './pages/EsqueciSenha'
@@ -24,11 +25,15 @@ import Landing from './admin/pages/Landing'
 import Cortesias from './admin/pages/Cortesias'
 import Patrocinios from './admin/pages/Patrocinios'
 
-// Home do painel: admin vê o Evento; tesouraria-só cai direto na Tesouraria
+// Home do painel por papel: admin → Evento; tesouraria → Tesouraria;
+// portaria → Check-in direto
 function PainelHome() {
   const { user } = useAuth()
 
-  return user.roles.includes('admin') ? <Evento /> : <Tesouraria />
+  if (user.roles.includes('admin')) return <Evento />
+  if (user.roles.includes('treasury')) return <Tesouraria />
+
+  return <Checkin />
 }
 
 function Home() {
@@ -115,7 +120,7 @@ export default function App() {
           <Route
             path="/painel"
             element={
-              <RoleRoute roles={['admin', 'treasury']}>
+              <RoleRoute roles={['admin', 'treasury', 'gate']}>
                 <AdminLayout />
               </RoleRoute>
             }
@@ -128,6 +133,7 @@ export default function App() {
             <Route path="patrocinios" element={<RoleRoute role="admin"><Patrocinios /></RoleRoute>} />
             <Route path="tesouraria" element={<Tesouraria />} />
             <Route path="suporte" element={<SuporteFila />} />
+            <Route path="checkin" element={<Checkin />} />
           </Route>
         </Routes>
         </CartProvider>
