@@ -212,7 +212,8 @@ class AuditTrailTest extends LifecycleTestCase
 
         $this->sellableEvent();
 
-        $this->actingAs($this->treasury())->getJson('/api/admin/audit')->assertStatus(403);
+        // Financeiro acessa tudo (spec 009); portaria e inscrito comum não
+        $this->actingAs($this->treasury())->getJson('/api/admin/audit')->assertOk();
 
         $gate = $this->buyer();
         $gate->assignRole(Role::GATE);

@@ -31,17 +31,27 @@ class SponsorshipService
             $totalCents = (int) round(((float) $data['total_amount']) * 100);
             $baseCents = intdiv($totalCents, $count);
 
+            // Vencimentos personalizados (uma data por parcela) ou automáticos
+            // (1ª + 30 em 30 dias a partir de first_due_date)
+            $custom = $data['due_dates'] ?? null;
+
             foreach (range(1, $count) as $number) {
                 $cents = $number === $count
                     ? $totalCents - $baseCents * ($count - 1)
                     : $baseCents;
 
+                $dueDate = null;
+                if (is_array($custom) && ! empty($custom[$number - 1])) {
+                    $dueDate = \Illuminate\Support\Carbon::parse($custom[$number - 1]);
+                } elseif (! empty($data['first_due_date'])) {
+                    $dueDate = \Illuminate\Support\Carbon::parse($data['first_due_date'])
+                        ->addMonthsNoOverflow($number - 1);
+                }
+
                 $sponsorship->installments()->create([
                     'number' => $number,
                     'amount' => number_format($cents / 100, 2, '.', ''),
-                    'due_date' => $data['first_due_date'] ?? null
-                        ? \Illuminate\Support\Carbon::parse($data['first_due_date'])->addMonthsNoOverflow($number - 1)
-                        : null,
+                    'due_date' => $dueDate,
                 ]);
             }
 

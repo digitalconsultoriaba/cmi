@@ -49,8 +49,8 @@ function TypeForm({ initial, onSubmit, onCancel }) {
   )
 }
 
-function LotForm({ types, onSubmit }) {
-  const [form, setForm] = useState({ name: '', price_override: '', starts_at: '', ends_at: '', quantity: '', ticket_type_id: '' })
+function LotForm({ types, initial, onSubmit, onCancel }) {
+  const [form, setForm] = useState(initial ?? { name: '', price_override: '', starts_at: '', ends_at: '', quantity: '', ticket_type_id: '' })
 
   return (
     <div className="row g-2 align-items-end mb-3">
@@ -95,6 +95,7 @@ function LotForm({ types, onSubmit }) {
           quantity: form.quantity === '' ? null : Number(form.quantity),
           ticket_type_id: form.ticket_type_id === '' ? null : Number(form.ticket_type_id),
         })}>Salvar</button>
+        {onCancel && <button className="btn mt-1" onClick={onCancel}>Fechar</button>}
       </div>
     </div>
   )
@@ -106,6 +107,8 @@ export default function TiposLotes() {
   const { run, error, setError, busy } = useApiAction()
   const [showTypeForm, setShowTypeForm] = useState(false)
   const [showLotForm, setShowLotForm] = useState(false)
+  const [editingType, setEditingType] = useState(null)
+  const [editingLot, setEditingLot] = useState(null)
 
   const eventId = event?.id
   const { data: types = [] } = useQuery({
@@ -130,6 +133,38 @@ export default function TiposLotes() {
 
   const removeType = (type) => run(() => apiDelete(`/admin/events/${eventId}/ticket-types/${type.id}`), { onSuccess: refreshTypes })
 
+  const salvarType = (payload) => {
+    const url = editingType
+      ? `/admin/events/${eventId}/ticket-types/${editingType.id}`
+      : `/admin/events/${eventId}/ticket-types`
+    const call = editingType ? apiPut : apiPost
+    return run(() => call(url, payload), {
+      onSuccess: () => { refreshTypes(); setShowTypeForm(false); setEditingType(null) },
+    })
+  }
+
+  const editarType = (type) => setEditingType({
+    id: type.id, name: type.name, price: type.price, capacity: type.capacity ?? '',
+    is_couple: type.isCouple, includes_shirt: type.includesShirt, is_courtesy: type.isCourtesy,
+  })
+
+  const salvarLot = (payload) => {
+    const url = editingLot
+      ? `/admin/events/${eventId}/lots/${editingLot.id}`
+      : `/admin/events/${eventId}/lots`
+    const call = editingLot ? apiPut : apiPost
+    return run(() => call(url, payload), {
+      onSuccess: () => { refreshLots(); setShowLotForm(false); setEditingLot(null) },
+    })
+  }
+
+  const editarLot = (lot) => setEditingLot({
+    id: lot.id, name: lot.name, price_override: lot.priceOverride ?? '',
+    starts_at: lot.startsAt ? lot.startsAt.slice(0, 16) : '',
+    ends_at: lot.endsAt ? lot.endsAt.slice(0, 16) : '',
+    quantity: lot.quantity ?? '', ticket_type_id: lot.ticketTypeId ?? '',
+  })
+
   const moveType = (index, delta) => {
     const ids = types.map((t) => t.id)
     const [moved] = ids.splice(index, 1)
@@ -150,11 +185,10 @@ export default function TiposLotes() {
 
       <Card title="Tipos de ingresso"
         actions={<button className="btn btn-primary btn-sm" onClick={() => setShowTypeForm(!showTypeForm)}>Novo tipo</button>}>
-        {showTypeForm && (
-          <TypeForm onSubmit={(payload) => run(
-            () => apiPost(`/admin/events/${eventId}/ticket-types`, payload),
-            { onSuccess: () => { refreshTypes(); setShowTypeForm(false) } }
-          )} onCancel={() => setShowTypeForm(false)} />
+        {(showTypeForm || editingType) && (
+          <TypeForm key={editingType?.id ?? 'new'} initial={editingType}
+            onSubmit={salvarType}
+            onCancel={() => { setShowTypeForm(false); setEditingType(null) }} />
         )}
         <table className="table table-vcenter">
           <thead><tr>
@@ -174,6 +208,7 @@ export default function TiposLotes() {
                   <button className="btn btn-sm" disabled={index === types.length - 1 || busy} onClick={() => moveType(index, 1)}>↓</button>
                 </td>
                 <td className="text-end">
+                  <button className="btn btn-sm" onClick={() => editarType(type)}>Editar</button>{' '}
                   <button className="btn btn-sm" onClick={() => toggleType(type)}>{type.isActive ? 'Desativar' : 'Ativar'}</button>{' '}
                   <button className="btn btn-sm btn-outline-danger" onClick={() => removeType(type)}>Excluir</button>
                 </td>
@@ -185,11 +220,10 @@ export default function TiposLotes() {
 
       <Card title="Lotes"
         actions={<button className="btn btn-primary btn-sm" onClick={() => setShowLotForm(!showLotForm)}>Novo lote</button>}>
-        {showLotForm && (
-          <LotForm types={types} onSubmit={(payload) => run(
-            () => apiPost(`/admin/events/${eventId}/lots`, payload),
-            { onSuccess: () => { refreshLots(); setShowLotForm(false) } }
-          )} />
+        {(showLotForm || editingLot) && (
+          <LotForm key={editingLot?.id ?? 'new'} types={types} initial={editingLot}
+            onSubmit={salvarLot}
+            onCancel={() => { setShowLotForm(false); setEditingLot(null) }} />
         )}
         <table className="table table-vcenter">
           <thead><tr>
@@ -212,6 +246,7 @@ export default function TiposLotes() {
                   <StatusBadge ok={lot.isActive} okLabel="ativo" badLabel="inativo" />
                 </td>
                 <td className="text-end">
+                  <button className="btn btn-sm" onClick={() => editarLot(lot)}>Editar</button>{' '}
                   <button className="btn btn-sm" onClick={() => toggleLot(lot)}>{lot.isActive ? 'Desativar' : 'Ativar'}</button>{' '}
                   <button className="btn btn-sm btn-outline-danger" onClick={() => removeLot(lot)}>Excluir</button>
                 </td>

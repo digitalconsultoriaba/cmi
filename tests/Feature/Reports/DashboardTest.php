@@ -178,9 +178,10 @@ class DashboardTest extends LifecycleTestCase
 
         $this->sellableEvent();
 
+        // Financeiro acessa tudo (spec 009); portaria e inscrito comum não
         $treasury = $this->buyer();
         $treasury->assignRole(Role::TREASURY);
-        $this->actingAs($treasury)->getJson('/api/admin/dashboard')->assertStatus(403);
+        $this->actingAs($treasury)->getJson('/api/admin/dashboard')->assertOk();
 
         $gate = $this->buyer();
         $gate->assignRole(Role::GATE);

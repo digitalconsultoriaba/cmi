@@ -184,7 +184,7 @@ export default function MeusIngressos() {
                 <td className="text-end">
                   <span className="btn-list justify-content-end">
                     {ticket.receiptAvailable && (
-                      <a className="btn btn-sm btn-primary" target="_blank" rel="noreferrer"
+                      <a className="btn btn-sm btn-primary" target="_blank"
                         href={`/api/tickets/${ticket.code}/receipt`}>
                         Comprovante
                       </a>

@@ -4,11 +4,15 @@ namespace App\Domain\Events\Services;
 
 use App\Domain\Events\Models\CourtesyVoucher;
 use App\Domain\Events\Models\Event;
+use App\Domain\Events\Models\EventStatus;
 use App\Domain\Events\Models\OrderStatus;
 use App\Domain\Events\Models\Payment;
 use App\Domain\Events\Models\PaymentStatus;
+use App\Domain\Events\Models\SponsorshipInstallment;
+use App\Domain\Events\Models\SupportCase;
 use App\Domain\Events\Models\Ticket;
 use App\Domain\Events\Models\TicketStatus;
+use Illuminate\Support\Carbon;
 
 /**
  * Fórmulas canônicas do painel (spec 008) — TUDO derivado na consulta
@@ -314,5 +318,434 @@ class ReportService
     protected function money(string $value): string
     {
         return number_format((float) $value, 2, '.', '');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Spec 009 — painel v2 (derivações de leitura, escopadas por evento)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /** Painel do MÓDULO — consolidado de todos os eventos (ou 1, se filtrado). */
+    public function overview(?int $eventId, ?Carbon $from, ?Carbon $to): array
+    {
+        $events = Event::query()
+            ->when($eventId, fn ($q) => $q->whereKey($eventId))
+            ->get();
+        $eventIds = $events->pluck('id');
+
+        $tickets = Ticket::query()
+            ->whereIn('event_id', $eventIds)
+            ->whereIn('status_id', TicketStatus::idsFor(self::ELIGIBLE))
+            ->with('ticketType')
+            ->get();
+
+        $inPeriod = $tickets->filter(fn (Ticket $t) => $this->within($t->created_at, $from, $to));
+
+        $confirmed = '0.00';
+        $pending = '0.00';
+        foreach ($events as $event) {
+            $rev = $this->revenue($event);
+            $confirmed = bcadd($confirmed, $rev['confirmed'], 2);
+            $pending = bcadd($pending, $rev['pending'], 2);
+        }
+
+        $sponsorshipPaid = (string) SponsorshipInstallment::query()
+            ->whereHas('sponsorship', fn ($q) => $q
+                ->whereIn('event_id', $eventIds)->where('status', '!=', 'cancelled'))
+            ->where('status', 'paid')->sum('paid_amount');
+
+        $refundsOpen = SupportCase::query()
+            ->whereIn('event_id', $eventIds)
+            ->where('type', 'refund')
+            ->whereIn('status', ['open', 'reopened'])
+            ->count();
+
+        $statusLabels = EventStatus::query()->get()->keyBy('id');
+
+        return [
+            'cards' => [
+                'events' => $events->count(),
+                'published' => $events->filter(fn ($e) => $e->status?->slug === EventStatus::PUBLISHED)->count(),
+                'upcoming' => $events->filter(fn ($e) => $e->starts_at !== null
+                    && $e->starts_at->isFuture()
+                    && ! in_array($e->status?->slug, EventStatus::TERMINAL, true))->count(),
+                'activeRegistrations' => (int) $inPeriod->sum(fn (Ticket $t) => $this->seats($t)),
+                'revenueConfirmed' => $this->money($confirmed),
+                'revenueProjected' => $this->money(bcadd($confirmed, $pending, 2)),
+                'sponsorshipPaid' => $this->money($sponsorshipPaid),
+                'refundsOpen' => $refundsOpen,
+            ],
+            'eventsByStatus' => $events->groupBy('status_id')
+                ->map(fn ($group, $statusId) => [
+                    'status' => $statusLabels[$statusId]?->slug,
+                    'label' => $statusLabels[$statusId]?->name,
+                    'count' => $group->count(),
+                ])->values()->all(),
+            'inscriptionsByMonth' => $this->monthlySeries($inPeriod, $from, $to),
+        ];
+    }
+
+    /** Painel do EVENTO — contadores da operação + financeiro + gráficos. */
+    public function eventPanel(Event $event): array
+    {
+        $tickets = $this->eligibleTickets($event);
+        $people = fn ($collection) => (int) $collection->sum(fn (Ticket $t) => $this->seats($t));
+
+        $usedSlug = TicketStatus::USED;
+        $rev = $this->revenue($event);
+
+        $byStatus = Ticket::query()
+            ->where('event_id', $event->id)
+            ->selectRaw('status_id, COUNT(*) as total')
+            ->groupBy('status_id')->get()
+            ->mapWithKeys(fn ($r) => [
+                TicketStatus::query()->find($r->status_id)?->slug => (int) $r->total,
+            ]);
+
+        $sponsorshipPaid = (string) SponsorshipInstallment::query()
+            ->whereHas('sponsorship', fn ($q) => $q
+                ->where('event_id', $event->id)->where('status', '!=', 'cancelled'))
+            ->where('status', 'paid')->sum('paid_amount');
+
+        return [
+            'counters' => [
+                'capacity' => $event->total_capacity,
+                'registeredTotal' => $people($tickets),
+                'paidConfirmed' => $people($tickets->filter(fn (Ticket $t) => ! $t->is_courtesy
+                    && in_array($t->status?->slug, [TicketStatus::PAID, TicketStatus::CONFIRMED, $usedSlug], true))),
+                'courtesies' => $tickets->where('is_courtesy', true)->count(),
+                'present' => $people($tickets->filter(fn (Ticket $t) => $t->status?->slug === $usedSlug)),
+                'awaitingPayment' => ($byStatus[TicketStatus::RESERVED] ?? 0)
+                    + ($byStatus[TicketStatus::AWAITING_PAYMENT] ?? 0),
+                'cancelled' => $byStatus[TicketStatus::CANCELLED] ?? 0,
+                'refunded' => $byStatus[TicketStatus::REFUNDED] ?? 0,
+            ],
+            'financial' => [
+                'expected' => $rev['projected'],
+                'confirmed' => $rev['confirmed'],
+                'receivable' => $rev['pending'],
+                'sponsorshipPaid' => $this->money($sponsorshipPaid),
+            ],
+            'ticketsByStatus' => $this->ticketsByStatus($event),
+            'byTicketType' => $this->byTicketType($event, $tickets),
+            'inscriptionsByMonth' => $this->monthlySeries($tickets, null, null),
+        ];
+    }
+
+    /** Recorte por TIPO de ingresso (substitui o "por loja" do protótipo). */
+    public function byTicketType(Event $event, $tickets = null): array
+    {
+        $tickets ??= $this->eligibleTickets($event);
+
+        return $tickets->groupBy(fn (Ticket $t) => $t->ticketType?->name ?? '—')
+            ->map(fn ($group, $name) => [
+                'type' => $name,
+                'count' => (int) $group->sum(fn (Ticket $t) => $this->seats($t)),
+                'revenue' => $this->money((string) $group->sum(fn (Ticket $t) => (float) $t->unit_price)),
+            ])->values()->all();
+    }
+
+    /** Série mensal de inscrições (pessoas) por mês da compra, no fuso do evento. */
+    public function monthlySeries($tickets, ?Carbon $from, ?Carbon $to): array
+    {
+        $tz = config('events.timezone');
+
+        $counts = [];
+        foreach ($tickets as $ticket) {
+            $month = $ticket->created_at?->copy()->setTimezone($tz)->format('Y-m');
+            if ($month === null) {
+                continue;
+            }
+            $counts[$month] = ($counts[$month] ?? 0) + $this->seats($ticket);
+        }
+
+        // Janela contígua: do início ao fim (ou últimos 12 meses até hoje)
+        $end = $to?->copy()->setTimezone($tz) ?? Carbon::now($tz);
+        $start = $from?->copy()->setTimezone($tz)
+            ?? ($counts === [] ? $end->copy()->subMonths(11) : Carbon::createFromFormat('Y-m', min(array_keys($counts)), $tz));
+        if ($start->greaterThan($end->copy()->subMonths(11))) {
+            $start = $end->copy()->subMonths(11);
+        }
+
+        $series = [];
+        $cursor = $start->copy()->startOfMonth();
+        $last = $end->copy()->startOfMonth();
+        while ($cursor->lessThanOrEqualTo($last)) {
+            $key = $cursor->format('Y-m');
+            $series[] = ['month' => $key, 'count' => $counts[$key] ?? 0];
+            $cursor->addMonthNoOverflow();
+        }
+
+        return $series;
+    }
+
+    /** Lista de inscritos do evento (todas as situações) — sem coluna Loja. */
+    public function attendeesList(Event $event, array $filters): array
+    {
+        $query = Ticket::query()
+            ->where('event_id', $event->id)
+            ->with(['ticketType', 'status', 'shirtModel', 'shirtSize',
+                'companionShirtModel', 'companionShirtSize', 'order.status'])
+            ->orderBy('participant_name');
+
+        if (! empty($filters['search'])) {
+            $s = $filters['search'];
+            $query->where(fn ($q) => $q
+                ->where('participant_name', 'like', "%{$s}%")
+                ->orWhere('companion_name', 'like', "%{$s}%")
+                ->orWhere('code', 'like', "%{$s}%"));
+        }
+        if (! empty($filters['ticketType'])) {
+            $query->where('ticket_type_id', $filters['ticketType']);
+        }
+        if (! empty($filters['status'])) {
+            $query->whereHas('status', fn ($q) => $q->where('slug', $filters['status']));
+        }
+        if (! empty($filters['from'])) {
+            $query->where('created_at', '>=', $filters['from']);
+        }
+        if (! empty($filters['to'])) {
+            $query->where('created_at', '<=', $filters['to']);
+        }
+
+        // Total antes de paginar (contagem de cadastros)
+        $total = (clone $query)->count();
+
+        // Paginação opcional (a prévia de relatório não pagina)
+        $page = max(1, (int) ($filters['page'] ?? 1));
+        $perPage = (int) ($filters['perPage'] ?? 0);
+        if ($perPage > 0) {
+            $query->forPage($page, $perPage);
+        }
+
+        $items = $query->get()->map(fn (Ticket $t) => [
+            'code' => $t->code,
+            'participantName' => $t->participant_name,
+            'companionName' => $t->companion_name,
+            'isCouple' => (bool) $t->ticketType?->is_couple,
+            'isCourtesy' => (bool) $t->is_courtesy,
+            'ticketTypeName' => $t->ticketType?->name,
+            'shirt' => $this->shirtLabel($t->shirtSize?->label, $t->shirtModel?->label),
+            'companionShirt' => $this->shirtLabel($t->companionShirtSize?->label, $t->companionShirtModel?->label),
+            'amount' => $this->money((string) $t->unit_price),
+            'status' => $t->status?->slug,
+            'statusLabel' => $t->status?->name,
+            'purchasedAt' => $t->created_at?->toISOString(),
+            'orderCode' => $t->order?->code,
+            'orderStatus' => $t->order?->status?->slug,
+            'buyerUserId' => $t->order?->buyer_user_id,
+            // Pedido ainda precisa de baixa? (pago/parcial → não; cortesia → não)
+            'paymentPending' => ! $t->is_courtesy && in_array(
+                $t->order?->status?->slug,
+                [OrderStatus::PENDING, OrderStatus::PARTIALLY_PAID],
+                true
+            ),
+            'printable' => in_array($t->status?->slug, [
+                TicketStatus::PAID, TicketStatus::CONFIRMED, TicketStatus::COURTESY, TicketStatus::USED,
+            ], true),
+        ])->values();
+
+        return [
+            'items' => $items->all(),
+            'total' => $total,
+            'page' => $page,
+            'perPage' => $perPage > 0 ? $perPage : $total,
+            'lastPage' => $perPage > 0 ? max(1, (int) ceil($total / $perPage)) : 1,
+        ];
+    }
+
+    /** Pedidos do evento com situação de pagamento — Financeiro (baixa). */
+    public function ordersList(Event $event, ?string $status): array
+    {
+        $query = $event->orders()
+            ->with(['status', 'buyerUser', 'payments.status'])
+            ->orderByDesc('id');
+
+        if (! empty($status)) {
+            $query->whereHas('status', fn ($q) => $q->where('slug', $status));
+        }
+
+        $items = $query->get()->map(function ($order) {
+            $paid = $order->payments->firstWhere('status.slug', PaymentStatus::PAID);
+
+            return [
+                'code' => $order->code,
+                'buyerUserId' => $order->buyer_user_id,
+                'buyerName' => $order->buyer_name,
+                'buyerEmail' => $order->buyer_email,
+                'total' => $this->money((string) $order->total_amount),
+                'status' => $order->status?->slug,
+                'statusLabel' => $order->status?->name,
+                'method' => $paid?->method,
+                'paidAt' => $paid?->paid_at?->toISOString(),
+                'ticketCount' => $order->tickets()->count(),
+                'canSettle' => in_array($order->status?->slug,
+                    [OrderStatus::PENDING, OrderStatus::PARTIALLY_PAID], true),
+            ];
+        });
+
+        return ['items' => $items->all(), 'total' => $items->count()];
+    }
+
+    /** Contadores e lista de presença ESCOPADOS ao evento (mesma régua da 007). */
+    public function attendancePayload(Event $event, ?string $search): array
+    {
+        $usedId = TicketStatus::idFor(TicketStatus::USED);
+
+        $query = Ticket::query()
+            ->where('event_id', $event->id)
+            ->whereIn('status_id', TicketStatus::idsFor(self::ELIGIBLE))
+            ->with(['ticketType', 'status'])
+            ->orderBy('participant_name');
+
+        if ($search = trim((string) $search)) {
+            $query->where(fn ($q) => $q
+                ->where('participant_name', 'like', "%{$search}%")
+                ->orWhere('companion_name', 'like', "%{$search}%")
+                ->orWhere('code', 'like', "%{$search}%"));
+        }
+
+        $tickets = $query->get();
+        $people = fn ($c) => (int) $c->sum(fn (Ticket $t) => $this->seats($t));
+
+        $purchased = $people($tickets);
+        $present = $people($tickets->where('status_id', $usedId));
+
+        $validators = \App\Models\User::query()
+            ->whereIn('id', $tickets->pluck('validated_by')->filter()->unique())
+            ->pluck('name', 'id');
+
+        return [
+            'counters' => [
+                'purchased' => $purchased,
+                'present' => $present,
+                'absent' => $purchased - $present,
+                'presentPct' => $purchased > 0 ? (int) round($present / $purchased * 100) : 0,
+            ],
+            'presence' => ['present' => $present, 'absent' => $purchased - $present],
+            'items' => $tickets->map(fn (Ticket $t) => [
+                'code' => $t->code,
+                'participantName' => $t->participant_name,
+                'companionName' => $t->companion_name,
+                'seats' => $this->seats($t),
+                'present' => $t->status?->slug === TicketStatus::USED,
+                'usedAt' => $t->used_at?->toISOString(),
+                'validatedBy' => $t->validated_by ? ($validators[$t->validated_by] ?? null) : null,
+            ])->values()->all(),
+        ];
+    }
+
+    /** Tipos de relatório para prévia/export. */
+    public const REPORT_TYPES = ['inscritos', 'financeiro', 'presencas', 'camisas'];
+
+    /**
+     * Prévia de relatório: colunas + linhas + total. As MESMAS linhas
+     * alimentam o export .xlsx (invariante 5). `previewLimit` limita a
+     * exibição sem truncar o export (que passa limit=null).
+     */
+    public function reportPreview(Event $event, string $type, array $filters, ?int $previewLimit = 100): array
+    {
+        [$columns, $rows] = $this->reportRows($event, $type, $filters);
+        $total = count($rows);
+        $shown = $previewLimit !== null ? array_slice($rows, 0, $previewLimit) : $rows;
+
+        return [
+            'columns' => $columns,
+            'rows' => $shown,
+            'total' => $total,
+            'shown' => count($shown),
+        ];
+    }
+
+    /** Linhas cruas de cada relatório (fonte única de prévia e planilha). */
+    public function reportRows(Event $event, string $type, array $filters): array
+    {
+        return match ($type) {
+            'inscritos' => $this->rowsInscritos($event, $filters),
+            'financeiro' => $this->rowsFinanceiro($event, $filters),
+            'presencas' => $this->rowsPresencas($event),
+            'camisas' => $this->rowsCamisas($event),
+            default => [[], []],
+        };
+    }
+
+    private function rowsInscritos(Event $event, array $filters): array
+    {
+        $columns = ['Participante', 'Tipo', 'Situação', 'Cortesia', 'Tam.', 'Valor'];
+        $rows = collect($this->attendeesList($event, $filters)['items'])
+            ->map(fn ($i) => [
+                $i['participantName'], $i['ticketTypeName'], $i['statusLabel'],
+                $i['isCourtesy'] ? 'Sim' : 'Não', $i['shirt'] ?: '—', $i['amount'],
+            ])->all();
+
+        return [$columns, $rows];
+    }
+
+    private function rowsFinanceiro(Event $event, array $filters): array
+    {
+        $columns = ['Pedido', 'Comprador', 'Forma', 'Valor', 'Baixa em'];
+        $payments = $this->paymentsInPeriod($event, $filters['from'] ?? null, $filters['to'] ?? null)
+            ->with(['order'])->orderBy('paid_at')->get();
+        $rows = $payments->map(fn ($p) => [
+            $p->order?->code, $p->order?->buyer_name,
+            self::METHOD_LABELS[$p->method] ?? $p->method,
+            $this->money((string) $p->amount),
+            $p->paid_at?->setTimezone(config('events.timezone'))->format('d/m/Y H:i'),
+        ])->all();
+
+        return [$columns, $rows];
+    }
+
+    private function rowsPresencas(Event $event): array
+    {
+        $columns = ['Ingresso', 'Participante', 'Pessoas', 'Presença', 'Entrada'];
+        $rows = collect($this->attendancePayload($event, null)['items'])
+            ->map(fn ($i) => [
+                $i['code'], $i['participantName'], $i['seats'],
+                $i['present'] ? 'Presente' : 'Ausente',
+                $i['usedAt'] ? Carbon::parse($i['usedAt'])->setTimezone(config('events.timezone'))->format('d/m/Y H:i') : '—',
+            ])->all();
+
+        return [$columns, $rows];
+    }
+
+    private function rowsCamisas(Event $event): array
+    {
+        $columns = ['Modelo', 'Tamanho', 'Estoque', 'Vendidas', 'Disponível'];
+        $rows = [];
+        foreach ($event->shirtModels()->with('sizes')->orderBy('sort')->get() as $model) {
+            foreach ($model->sizes as $size) {
+                $available = $size->stock_quantity === null
+                    ? 'ilimitado'
+                    : (string) ($size->stock_quantity - $size->sold_count);
+                $rows[] = [$model->label, $size->label,
+                    $size->stock_quantity ?? 'ilimitado', $size->sold_count, $available];
+            }
+        }
+
+        return [$columns, $rows];
+    }
+
+    private function shirtLabel(?string $size, ?string $model): ?string
+    {
+        if ($size === null && $model === null) {
+            return null;
+        }
+
+        return trim(($size ?? '').($model ? '/'.$model : ''));
+    }
+
+    private function within(?Carbon $dt, ?Carbon $from, ?Carbon $to): bool
+    {
+        if ($dt === null) {
+            return false;
+        }
+        if ($from !== null && $dt->lessThan($from)) {
+            return false;
+        }
+        if ($to !== null && $dt->greaterThan($to)) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
 import ProtectedRoute from './auth/ProtectedRoute'
 import RoleRoute from './auth/RoleRoute'
@@ -18,25 +18,37 @@ import MinhaConta from './pages/MinhaConta'
 import AdminLayout from './admin/AdminLayout'
 import PagarPedido from './pages/PagarPedido'
 import Tesouraria from './admin/pages/Tesouraria'
-import Evento from './admin/pages/Evento'
 import TiposLotes from './admin/pages/TiposLotes'
 import Camisas from './admin/pages/Camisas'
 import Landing from './admin/pages/Landing'
 import Cortesias from './admin/pages/Cortesias'
 import Patrocinios from './admin/pages/Patrocinios'
 import Auditoria from './admin/pages/Auditoria'
-import Dashboard from './admin/pages/Dashboard'
 import Financeiro from './admin/pages/Financeiro'
+// Painel v2 (spec 009) — casca em duas camadas de abas
+import ModuloLayout from './admin/eventos/ModuloLayout'
+import PainelModulo from './admin/eventos/PainelModulo'
+import ListaEventos from './admin/eventos/ListaEventos'
+import TiposEvento from './admin/eventos/TiposEvento'
+import EventoLayout from './admin/eventos/EventoLayout'
+import PainelEvento from './admin/eventos/abas/PainelEvento'
+import Inscritos from './admin/eventos/abas/Inscritos'
+import CheckinEvento from './admin/eventos/abas/CheckinEvento'
+import Relatorios from './admin/eventos/abas/Relatorios'
+import FinanceiroEvento from './admin/eventos/abas/FinanceiroEvento'
+import Usuarios from './admin/eventos/Usuarios'
 
-// Home do painel por papel: admin → Dashboard; tesouraria → Tesouraria;
+// Home do painel por papel: admin → módulo Eventos; tesouraria → Financeiro;
 // portaria → Check-in direto
 function PainelHome() {
   const { user } = useAuth()
 
-  if (user.roles.includes('admin')) return <Dashboard />
-  if (user.roles.includes('treasury')) return <Tesouraria />
+  // Admin e financeiro entram no módulo inteiro (spec 009)
+  if (user.roles.includes('admin') || user.roles.includes('treasury')) {
+    return <Navigate to="/painel/modulo" replace />
+  }
 
-  return <Checkin />
+  return <Navigate to="/painel/checkin" replace />
 }
 
 function Home() {
@@ -129,17 +141,38 @@ export default function App() {
             }
           >
             <Route index element={<PainelHome />} />
-            <Route path="evento" element={<RoleRoute role="admin"><Evento /></RoleRoute>} />
-            <Route path="tipos-lotes" element={<RoleRoute role="admin"><TiposLotes /></RoleRoute>} />
-            <Route path="camisas" element={<RoleRoute role="admin"><Camisas /></RoleRoute>} />
-            <Route path="landing" element={<RoleRoute role="admin"><Landing /></RoleRoute>} />
-            <Route path="cortesias" element={<RoleRoute role="admin"><Cortesias /></RoleRoute>} />
-            <Route path="patrocinios" element={<RoleRoute role="admin"><Patrocinios /></RoleRoute>} />
+
+            {/* ── Módulo Eventos e Ingressos (1ª camada de abas) ── */}
+            <Route path="modulo" element={<RoleRoute roles={['admin', 'treasury']}><ModuloLayout /></RoleRoute>}>
+              <Route index element={<PainelModulo />} />
+              <Route path="eventos" element={<ListaEventos />} />
+              <Route path="atendimentos" element={<SuporteFila />} />
+              <Route path="tipos" element={<TiposEvento />} />
+            </Route>
+
+            {/* ── Usuários da equipe (módulo, admin) ── */}
+            <Route path="usuarios" element={<RoleRoute role="admin"><Usuarios /></RoleRoute>} />
+
+            {/* ── Dentro de um evento (2ª camada de abas) ── */}
+            <Route path="eventos/:eventId" element={<RoleRoute roles={['admin', 'treasury']}><EventoLayout /></RoleRoute>}>
+              <Route index element={<PainelEvento />} />
+              <Route path="inscritos" element={<Inscritos />} />
+              <Route path="ingressos" element={<TiposLotes />} />
+              <Route path="camisas" element={<Camisas />} />
+              <Route path="cortesias" element={<Cortesias />} />
+              <Route path="patrocinio" element={<Patrocinios />} />
+              <Route path="financeiro" element={<FinanceiroEvento />} />
+              <Route path="atendimento" element={<SuporteFila />} />
+              <Route path="relatorios" element={<Relatorios />} />
+              <Route path="checkin" element={<CheckinEvento />} />
+              <Route path="trilha" element={<Auditoria />} />
+            </Route>
+
+            {/* ── Rotas focadas (tesouraria/portaria) — sem regressão ── */}
             <Route path="tesouraria" element={<Tesouraria />} />
             <Route path="financeiro" element={<RoleRoute roles={['treasury', 'admin']}><Financeiro /></RoleRoute>} />
-            <Route path="suporte" element={<SuporteFila />} />
             <Route path="checkin" element={<Checkin />} />
-            <Route path="auditoria" element={<RoleRoute role="admin"><Auditoria /></RoleRoute>} />
+            <Route path="landing/:eventId?" element={<RoleRoute role="admin"><Landing /></RoleRoute>} />
           </Route>
         </Routes>
         </CartProvider>

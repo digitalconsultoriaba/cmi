@@ -21,6 +21,24 @@ class ReportExportService
     {
     }
 
+    /**
+     * Export escopado por evento (spec 009) — consome `reportRows` do
+     * ReportService: as MESMAS linhas da prévia na tela (invariante 5).
+     */
+    public function eventReport(Event $event, string $type, array $filters): StreamedResponse
+    {
+        [$columns, $rows] = $this->reports->reportRows($event, $type, $filters);
+
+        return $this->stream("{$type}.xlsx", function (Writer $writer) use ($columns, $rows) {
+            $writer->addRow(Row::fromValues($columns));
+            foreach ($rows as $row) {
+                $writer->addRow(Row::fromValues(array_map(
+                    fn ($cell) => $cell === null ? '' : $cell, $row
+                )));
+            }
+        });
+    }
+
     public function attendees(Event $event): StreamedResponse
     {
         $tickets = $this->reports->eligibleTickets($event);

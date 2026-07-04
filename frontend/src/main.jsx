@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import '@tabler/core/dist/css/tabler.min.css'
+import './theme/brand.css'
 import App from './App'
 
 const queryClient = new QueryClient({

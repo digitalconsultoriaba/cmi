@@ -1,29 +1,29 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
 import { apiGet } from '../lib/api'
 
-const MENU = [
-  { to: '/painel', label: 'Dashboard', end: true, roles: ['admin'] },
-  { to: '/painel/evento', label: 'Evento', roles: ['admin'] },
-  { to: '/painel/tipos-lotes', label: 'Tipos & Lotes', roles: ['admin'] },
-  { to: '/painel/camisas', label: 'Camisas', roles: ['admin'] },
-  { to: '/painel/landing', label: 'Landing', roles: ['admin'] },
-  { to: '/painel/cortesias', label: 'Cortesias', roles: ['admin'] },
-  { to: '/painel/patrocinios', label: 'Patrocínios', roles: ['admin'] },
-  { to: '/painel/tesouraria', label: 'Tesouraria', roles: ['treasury', 'admin'] },
-  { to: '/painel/financeiro', label: 'Financeiro', roles: ['treasury', 'admin'] },
-  { to: '/painel/suporte', label: 'Suporte', roles: ['treasury', 'admin'] },
-  { to: '/painel/checkin', label: 'Check-in', roles: ['gate', 'admin'] },
-  { to: '/painel/auditoria', label: 'Auditoria', roles: ['admin'] },
-]
+function homeFor(user) {
+  // Admin e financeiro entram no módulo inteiro (spec 009)
+  if (user?.roles.includes('admin') || user?.roles.includes('treasury')) return '/painel/modulo'
+  return '/painel/checkin'
+}
 
-/** Resolve o evento gerenciado (single-event no MVP — primeiro da lista). */
+/**
+ * Evento gerenciado. Dentro de `/painel/eventos/:eventId` resolve o evento da
+ * URL; fora dele (contexto tesouraria/portaria), cai no primeiro evento —
+ * assim as telas reembaladas operam no evento certo sem alteração.
+ */
 export function useAdminEvent() {
+  const { eventId } = useParams()
+
   return useQuery({
-    queryKey: ['admin', 'events'],
-    queryFn: () => apiGet('/admin/events'),
-    select: (events) => events[0] ?? null,
+    queryKey: ['admin', 'event', eventId ?? 'first'],
+    queryFn: async () => {
+      if (eventId) return apiGet(`/admin/events/${eventId}`)
+      const events = await apiGet('/admin/events')
+      return events[0] ?? null
+    },
   })
 }
 
@@ -36,22 +36,41 @@ export default function AdminLayout() {
     navigate('/entrar', { replace: true })
   }
 
+  const home = homeFor(user)
+  const isAdmin = user?.roles.includes('admin')
+  const isTreasury = user?.roles.includes('treasury')
+  const isGate = user?.roles.includes('gate')
+
   return (
-    <div className="page">
+    <div className="page" data-bs-theme="light">
       <aside className="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
         <div className="container-fluid">
-          <h1 className="navbar-brand">
-            <span className="fs-3">Plataforma de Eventos</span>
+          <h1 className="navbar-brand navbar-brand-autodark d-flex align-items-center">
+            <img src="/logo.png" alt="CMI · GLMEES" height="44"
+              style={{ background: '#fff', borderRadius: 8, padding: 4 }} />
           </h1>
+
           <ul className="navbar-nav pt-lg-3">
-            {MENU.filter((item) => item.roles.some((role) => user?.roles.includes(role)))
-              .map((item) => (
-                <li className="nav-item" key={item.to}>
-                  <NavLink className="nav-link" to={item.to} end={item.end}>
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
+            {(isAdmin || isTreasury) && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/modulo">Eventos e Ingressos</NavLink>
+              </li>
+            )}
+            {isTreasury && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/financeiro" end>Financeiro (consolidado)</NavLink>
+              </li>
+            )}
+            {isAdmin && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/usuarios">Usuários</NavLink>
+              </li>
+            )}
+            {isGate && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/checkin">Check-in</NavLink>
+              </li>
+            )}
           </ul>
         </div>
       </aside>
@@ -74,3 +93,5 @@ export default function AdminLayout() {
     </div>
   )
 }
+
+export { homeFor }

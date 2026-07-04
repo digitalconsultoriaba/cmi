@@ -155,10 +155,16 @@ class ExportTest extends LifecycleTestCase
         $treasury = $this->buyer();
         $treasury->assignRole(Role::TREASURY);
 
-        // Inscritos/presenças: só admin (treasury barrado)
-        $this->actingAs($treasury)->get('/api/admin/reports/attendees.xlsx',
+        // Inscritos/presenças: financeiro acessa tudo (spec 009)
+        $this->actingAs($treasury)->get('/api/admin/reports/attendees.xlsx')->assertOk();
+        $this->actingAs($treasury)->get('/api/admin/reports/attendance.xlsx')->assertOk();
+
+        // Portaria e inscrito comum barrados nos relatórios do admin
+        $gate = $this->buyer();
+        $gate->assignRole(Role::GATE);
+        $this->actingAs($gate)->get('/api/admin/reports/attendees.xlsx',
             ['Accept' => 'application/json'])->assertStatus(403);
-        $this->actingAs($treasury)->get('/api/admin/reports/attendance.xlsx',
+        $this->actingAs($this->buyer())->get('/api/admin/reports/attendees.xlsx',
             ['Accept' => 'application/json'])->assertStatus(403);
 
         // Financeiro: treasury E admin passam; attendee barrado

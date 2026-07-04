@@ -30,13 +30,13 @@ class TicketLifecycleService
     ) {
     }
 
-    public function cancelTicket(Ticket $ticket, User $actor, ?string $reason, bool $confirmNoRefund = false): Ticket
+    public function cancelTicket(Ticket $ticket, User $actor, ?string $reason, bool $confirmNoRefund = false, bool $byStaff = false): Ticket
     {
-        [$ticket, $case] = DB::transaction(function () use ($ticket, $actor, $reason, $confirmNoRefund) {
+        [$ticket, $case] = DB::transaction(function () use ($ticket, $actor, $reason, $confirmNoRefund, $byStaff) {
             Event::query()->whereKey($ticket->event_id)->lockForUpdate()->first();
             $ticket = Ticket::query()->whereKey($ticket->id)->lockForUpdate()->first();
 
-            $this->ensureCancellable($ticket->event, $ticket);
+            $this->ensureCancellable($ticket->event, $ticket, $byStaff);
 
             $isPaid = $this->isPaidTicket($ticket);
             $refund = $isPaid ? $this->policy->refundableAmount($ticket) : null;
@@ -78,9 +78,9 @@ class TicketLifecycleService
         return $ticket;
     }
 
-    public function cancelOrder(Order $order, User $actor, ?string $reason, bool $confirmNoRefund = false): Order
+    public function cancelOrder(Order $order, User $actor, ?string $reason, bool $confirmNoRefund = false, bool $byStaff = false): Order
     {
-        $order = DB::transaction(function () use ($order, $actor, $reason, $confirmNoRefund) {
+        $order = DB::transaction(function () use ($order, $actor, $reason, $confirmNoRefund, $byStaff) {
             Event::query()->whereKey($order->event_id)->lockForUpdate()->first();
             $order = Order::query()->whereKey($order->id)->lockForUpdate()->first();
 
@@ -88,7 +88,7 @@ class TicketLifecycleService
                 throw new DomainRuleViolation('Este pedido não pode mais ser cancelado.', 'terminal_status');
             }
 
-            $this->ensureCancellable($order->event, null);
+            $this->ensureCancellable($order->event, null, $byStaff);
 
             $paidAmount = $order->amountPaid();
             $hasPayment = bccomp($paidAmount, '0.00', 2) === 1;
@@ -236,9 +236,11 @@ class TicketLifecycleService
         return $case;
     }
 
-    private function ensureCancellable(Event $event, ?Ticket $ticket): void
+    private function ensureCancellable(Event $event, ?Ticket $ticket, bool $byStaff = false): void
     {
-        if (! $event->allow_user_cancel) {
+        // A organização (staff) pode cancelar mesmo com o autoatendimento
+        // desligado; o inscrito, não.
+        if (! $byStaff && ! $event->allow_user_cancel) {
             throw new DomainRuleViolation(
                 'Este evento não permite cancelamento pelo inscrito — abra um caso de suporte.',
                 'cancel_disabled'

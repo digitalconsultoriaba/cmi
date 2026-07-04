@@ -69,24 +69,42 @@ export default function Camisas() {
         </div>
       </div>
 
-      {models.map((model) => (
+      {models.map((model) => {
+        const stockTotal = model.sizes.reduce((s, z) => s + (z.stockQuantity ?? 0), 0)
+        const soldTotal = model.sizes.reduce((s, z) => s + z.soldCount, 0)
+        const hasUnlimited = model.sizes.some((z) => z.stockQuantity === null)
+        return (
         <Card key={model.id} title={model.label}
-          actions={<button className="btn btn-sm btn-outline-danger" onClick={() => removeModel(model)}>Excluir modelo</button>}>
+          actions={
+            <span className="btn-list">
+              <a className="btn btn-sm" href={`/api/admin/events/${eventId}/reports/camisas.xlsx`}>Relatório</a>
+              <button className="btn btn-sm btn-outline-danger" onClick={() => removeModel(model)}>Excluir modelo</button>
+            </span>
+          }>
+          <div className="alert alert-secondary py-2">
+            <strong>Estoque total:</strong> {hasUnlimited ? 'ilimitado' : stockTotal}
+            {' · '}<strong>Vendidas:</strong> {soldTotal}
+            {' · '}<strong>Disponível:</strong> {hasUnlimited ? 'ilimitado' : Math.max(0, stockTotal - soldTotal)}
+          </div>
           <table className="table table-vcenter">
-            <thead><tr><th>Tamanho</th><th>Estoque</th><th>Vendidas</th><th>Situação</th><th /></tr></thead>
+            <thead><tr><th>Tamanho</th><th>Estoque</th><th>Vendidas</th><th>Disponível</th><th /></tr></thead>
             <tbody>
               {model.sizes.map((size) => (
                 <tr key={size.id}>
-                  <td>{size.label}</td>
+                  <td className="fw-bold">{size.label}</td>
                   <td style={{ maxWidth: 140 }}>
                     <input type="number" className="form-control form-control-sm"
                       defaultValue={size.stockQuantity ?? ''}
-                      placeholder="ilimitado"
+                      placeholder="ilim."
                       onBlur={(e) => e.target.value !== String(size.stockQuantity ?? '') &&
                         updateStock(model, size, e.target.value)} />
                   </td>
                   <td>{size.soldCount}</td>
-                  <td><StatusBadge ok={!size.soldOut} okLabel="disponível" badLabel="esgotado" /></td>
+                  <td>
+                    {size.available === null
+                      ? <span className="text-secondary">ilimitado</span>
+                      : <span className={size.available === 0 ? 'text-red' : ''}>{size.available}</span>}
+                  </td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-danger" onClick={() => removeSize(model, size)}>Excluir</button>
                   </td>
@@ -110,7 +128,8 @@ export default function Camisas() {
             </div>
           </div>
         </Card>
-      ))}
+        )
+      })}
     </>
   )
 }

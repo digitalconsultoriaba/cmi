@@ -19,6 +19,10 @@ class ShirtModelResource extends JsonResource
                 'label' => $size->label,
                 'stockQuantity' => $size->stock_quantity,
                 'soldCount' => $size->sold_count,
+                // Disponível derivado: null = ilimitado (spec 009, FR-010)
+                'available' => $size->stock_quantity === null
+                    ? null
+                    : max(0, $size->stock_quantity - $size->sold_count),
                 'isActive' => $size->is_active,
                 'sort' => $size->sort,
                 'soldOut' => $size->soldOut(),

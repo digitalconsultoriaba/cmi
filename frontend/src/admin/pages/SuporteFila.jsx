@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Card, ApiErrorAlert, useApiAction } from '../components'
 import { apiGet, apiPost } from '../../lib/api'
@@ -8,6 +9,7 @@ const STATUS_LABEL = { open: 'Aberto', finished: 'Finalizado', reopened: 'Reaber
 const STATUS_BADGE = { open: 'bg-green-lt', finished: 'bg-secondary-lt', reopened: 'bg-yellow-lt' }
 
 export default function SuporteFila() {
+  const { eventId } = useParams() // dentro de um evento → filtra o atendimento
   const queryClient = useQueryClient()
   const { run, error, setError, busy } = useApiAction()
   const [filter, setFilter] = useState('')
@@ -16,8 +18,14 @@ export default function SuporteFila() {
   const [internal, setInternal] = useState(false)
 
   const { data: cases = [] } = useQuery({
-    queryKey: ['admin', 'support', filter],
-    queryFn: () => apiGet(`/admin/support-cases${filter ? `?status=${filter}` : ''}`),
+    queryKey: ['admin', 'support', filter, eventId ?? 'all'],
+    queryFn: () => {
+      const params = new URLSearchParams()
+      if (filter) params.set('status', filter)
+      if (eventId) params.set('event', eventId)
+      const qs = params.toString()
+      return apiGet(`/admin/support-cases${qs ? `?${qs}` : ''}`)
+    },
   })
 
   const { data: current } = useQuery({

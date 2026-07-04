@@ -26,6 +26,11 @@ class SupportQueueController extends Controller
             $query->where('type', $type);
         }
 
+        // Atendimento por evento (spec 009 — aba dentro do evento)
+        if ($event = $request->query('event')) {
+            $query->where('event_id', $event);
+        }
+
         return response()->json([
             'data' => $query->get()
                 ->map(fn (SupportCase $case) => SupportCaseResource::forStaff($case)->toArray($request))
