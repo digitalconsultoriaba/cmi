@@ -44,10 +44,16 @@ export default function MeusPedidos() {
           </div>
           <div className="card-body">
             <p className="mb-1">Total: <strong>{formatMoney(order.totalAmount)}</strong></p>
-            {order.status === 'pending' && order.reservedUntil && (
-              <p className="text-warning mb-2">
-                Reserva garantida até {new Date(order.reservedUntil).toLocaleString('pt-BR')} —
-                pagamento on-line disponível em breve.
+            {order.status === 'pending' && (
+              <p className="mb-2">
+                {order.reservedUntil && (
+                  <span className="text-warning me-2">
+                    Reserva garantida até {new Date(order.reservedUntil).toLocaleString('pt-BR')}.
+                  </span>
+                )}
+                <Link className="btn btn-primary btn-sm" to={`/pedido/${order.code}/pagar`}>
+                  Pagar agora
+                </Link>
               </p>
             )}
             <ul className="mb-0">

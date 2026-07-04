@@ -13,12 +13,21 @@ import EsqueciSenha from './pages/EsqueciSenha'
 import RedefinirSenha from './pages/RedefinirSenha'
 import MinhaConta from './pages/MinhaConta'
 import AdminLayout from './admin/AdminLayout'
+import PagarPedido from './pages/PagarPedido'
+import Tesouraria from './admin/pages/Tesouraria'
 import Evento from './admin/pages/Evento'
 import TiposLotes from './admin/pages/TiposLotes'
 import Camisas from './admin/pages/Camisas'
 import Landing from './admin/pages/Landing'
 import Cortesias from './admin/pages/Cortesias'
 import Patrocinios from './admin/pages/Patrocinios'
+
+// Home do painel: admin vê o Evento; tesouraria-só cai direto na Tesouraria
+function PainelHome() {
+  const { user } = useAuth()
+
+  return user.roles.includes('admin') ? <Evento /> : <Tesouraria />
+}
 
 function Home() {
   const { user } = useAuth()
@@ -62,6 +71,14 @@ export default function App() {
             }
           />
           <Route
+            path="/pedido/:code/pagar"
+            element={
+              <ProtectedRoute>
+                <PagarPedido />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/minha-conta/pedidos"
             element={
               <ProtectedRoute>
@@ -88,17 +105,18 @@ export default function App() {
           <Route
             path="/painel"
             element={
-              <RoleRoute role="admin">
+              <RoleRoute roles={['admin', 'treasury']}>
                 <AdminLayout />
               </RoleRoute>
             }
           >
-            <Route index element={<Evento />} />
-            <Route path="tipos-lotes" element={<TiposLotes />} />
-            <Route path="camisas" element={<Camisas />} />
-            <Route path="landing" element={<Landing />} />
-            <Route path="cortesias" element={<Cortesias />} />
-            <Route path="patrocinios" element={<Patrocinios />} />
+            <Route index element={<PainelHome />} />
+            <Route path="tipos-lotes" element={<RoleRoute role="admin"><TiposLotes /></RoleRoute>} />
+            <Route path="camisas" element={<RoleRoute role="admin"><Camisas /></RoleRoute>} />
+            <Route path="landing" element={<RoleRoute role="admin"><Landing /></RoleRoute>} />
+            <Route path="cortesias" element={<RoleRoute role="admin"><Cortesias /></RoleRoute>} />
+            <Route path="patrocinios" element={<RoleRoute role="admin"><Patrocinios /></RoleRoute>} />
+            <Route path="tesouraria" element={<Tesouraria />} />
           </Route>
         </Routes>
         </CartProvider>

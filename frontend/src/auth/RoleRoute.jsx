@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import { useAuth } from './AuthProvider'
 
-function RoleGate({ role, children }) {
+function RoleGate({ roles, children }) {
   const { user } = useAuth()
 
-  if (!user.roles.includes(role)) {
+  if (!roles.some((role) => user.roles.includes(role))) {
     return (
       <main style={{ maxWidth: 480, margin: '6rem auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
         <h1>403</h1>
@@ -19,10 +19,13 @@ function RoleGate({ role, children }) {
 }
 
 // Sem sessão → login (ProtectedRoute); logado sem papel → 403 (sem redirect).
-export default function RoleRoute({ role, children }) {
+// Aceita `role="admin"` ou `roles={['admin','treasury']}` (qualquer um).
+export default function RoleRoute({ role, roles, children }) {
+  const required = roles ?? [role]
+
   return (
     <ProtectedRoute>
-      <RoleGate role={role}>{children}</RoleGate>
+      <RoleGate roles={required}>{children}</RoleGate>
     </ProtectedRoute>
   )
 }

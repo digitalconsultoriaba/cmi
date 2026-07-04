@@ -18,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Fakes como singletons (banco simulado consistente); resolver por config.
+        $this->app->singleton(\App\Domain\Events\Payments\FakePixGateway::class);
+        $this->app->singleton(\App\Domain\Events\Payments\FakeCardGateway::class);
+        $this->app->singleton(\App\Domain\Events\Payments\PaymentGateways::class);
     }
 
     public function boot(): void
