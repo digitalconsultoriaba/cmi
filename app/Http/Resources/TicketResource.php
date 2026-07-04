@@ -38,6 +38,42 @@ class TicketResource extends JsonResource
                 [TicketStatus::PAID, TicketStatus::CONFIRMED, TicketStatus::COURTESY, TicketStatus::USED],
                 true
             ),
+            // Elegibilidade derivada no servidor (spec 006) — o front nunca
+            // reimplementa a política.
+            'cancellable' => $this->isCancellable(),
+            'transferable' => $this->isTransferable(),
+            'refundPreview' => $this->refundPreview(),
+            'transferredFromCode' => $this->transferredFrom?->code,
+            'transferredToCode' => $this->transferredTo?->code,
         ];
+    }
+
+    private function isCancellable(): bool
+    {
+        return (bool) $this->event?->allow_user_cancel
+            && in_array($this->status?->slug, TicketStatus::LIVE, true);
+    }
+
+    private function isTransferable(): bool
+    {
+        return (bool) $this->event?->allow_transfer
+            && in_array($this->status?->slug, [TicketStatus::PAID, TicketStatus::CONFIRMED], true)
+            && ($this->event?->starts_at === null || now()->lt($this->event->starts_at))
+            && ! \App\Domain\Events\Models\CourtesyVoucher::query()
+                ->where('redeemed_ticket_id', $this->id)->exists();
+    }
+
+    private function refundPreview(): ?string
+    {
+        $orderStatus = $this->order?->status?->slug;
+
+        if ($this->is_courtesy
+            || ! in_array($orderStatus, ['paid', 'partially_paid'], true)
+            || ! $this->isCancellable()) {
+            return null;
+        }
+
+        return app(\App\Domain\Events\Services\RefundPolicy::class)
+            ->refundableAmount($this->resource);
     }
 }

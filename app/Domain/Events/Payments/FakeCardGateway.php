@@ -94,4 +94,24 @@ class FakeCardGateway implements PaymentGatewayContract
     {
         // Cartão síncrono: nada a cancelar no fake.
     }
+
+    public function refundCharge(Payment $payment, string $amount): RefundResult
+    {
+        $key = self::CACHE_PREFIX.$payment->provider_charge_id;
+        $charge = Cache::get($key);
+
+        if ($charge === null || $charge['state'] !== ChargeStatus::PAID) {
+            return new RefundResult(refunded: false, raw: ['fake' => true, 'reason' => 'charge_not_paid']);
+        }
+
+        $charge['refunded_amount'] = $amount;
+        $charge['refunded_at'] = now()->toISOString();
+        Cache::put($key, $charge, now()->addDays(2));
+
+        return new RefundResult(
+            refunded: true,
+            externalId: 'refund-'.Str::lower(Str::random(12)),
+            raw: ['fake' => true, 'amount' => $amount],
+        );
+    }
 }

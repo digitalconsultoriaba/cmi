@@ -94,4 +94,10 @@ class SicoobGateway implements PaymentGatewayContract
     {
         $this->client->cancelPixCharge($payment->provider_charge_id);
     }
+
+    public function refundCharge(Payment $payment, string $amount): RefundResult
+    {
+        // Devolução Pix automática (API /pix/{e2eid}/devolucao) é Fase 2.
+        throw new RefundNotSupported('Devolução de Pix/boleto é operacional no MVP.');
+    }
 }

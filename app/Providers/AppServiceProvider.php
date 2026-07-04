@@ -30,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Event::class, EventPolicy::class);
         Gate::policy(Order::class, OrderPolicy::class);
         Gate::policy(Ticket::class, TicketPolicy::class);
+        Gate::policy(\App\Domain\Events\Models\SupportCase::class, \App\Policies\SupportCasePolicy::class);
 
         $this->configureRateLimiters();
     }

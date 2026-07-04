@@ -11,6 +11,7 @@ const MENU = [
   { to: '/painel/cortesias', label: 'Cortesias', roles: ['admin'] },
   { to: '/painel/patrocinios', label: 'Patrocínios', roles: ['admin'] },
   { to: '/painel/tesouraria', label: 'Tesouraria', roles: ['treasury', 'admin'] },
+  { to: '/painel/suporte', label: 'Suporte', roles: ['treasury', 'admin'] },
 ]
 
 /** Resolve o evento gerenciado (single-event no MVP — primeiro da lista). */

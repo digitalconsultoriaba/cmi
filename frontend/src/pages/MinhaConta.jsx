@@ -35,6 +35,8 @@ export default function MinhaConta() {
         <a href="/minha-conta/pedidos">Meus pedidos</a>
         {' · '}
         <a href="/minha-conta/ingressos">Meus ingressos</a>
+        {' · '}
+        <a href="/minha-conta/suporte">Suporte</a>
       </p>
 
       <dl>

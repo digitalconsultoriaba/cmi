@@ -7,6 +7,8 @@ import EventoPublico from './pages/EventoPublico'
 import Checkout from './pages/Checkout'
 import MeusPedidos from './pages/MeusPedidos'
 import MeusIngressos from './pages/MeusIngressos'
+import Suporte from './pages/Suporte'
+import SuporteFila from './admin/pages/SuporteFila'
 import Entrar from './pages/Entrar'
 import Cadastro from './pages/Cadastro'
 import EsqueciSenha from './pages/EsqueciSenha'
@@ -95,6 +97,14 @@ export default function App() {
             }
           />
           <Route
+            path="/minha-conta/suporte"
+            element={
+              <ProtectedRoute>
+                <Suporte />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/minha-conta"
             element={
               <ProtectedRoute>
@@ -117,6 +127,7 @@ export default function App() {
             <Route path="cortesias" element={<RoleRoute role="admin"><Cortesias /></RoleRoute>} />
             <Route path="patrocinios" element={<RoleRoute role="admin"><Patrocinios /></RoleRoute>} />
             <Route path="tesouraria" element={<Tesouraria />} />
+            <Route path="suporte" element={<SuporteFila />} />
           </Route>
         </Routes>
         </CartProvider>
