@@ -14,7 +14,7 @@ export default function Entrar() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
 
-  const from = location.state?.from?.pathname ?? '/minha-conta'
+  const from = location.state?.from?.pathname ?? null
   const verified = params.get('verified') === '1'
   const google = params.get('google')
 
@@ -22,8 +22,14 @@ export default function Entrar() {
     event.preventDefault()
     setError(null)
     try {
-      await login.mutateAsync({ email, password })
-      navigate(from, { replace: true })
+      const me = await login.mutateAsync({ email, password })
+      const roles = me?.roles ?? []
+      const isStaff = roles.some((r) => ['admin', 'treasury', 'gate'].includes(r))
+      // Staff vai ao painel (ou à página protegida de origem); inscrito à conta
+      const target = isStaff
+        ? (from && from.startsWith('/painel') ? from : '/painel')
+        : '/minha-conta'
+      navigate(target, { replace: true })
     } catch (err) {
       setError(parseApiError(err))
     }
@@ -44,7 +50,7 @@ export default function Entrar() {
       <div className="container container-tight py-4">
         <div className="text-center mb-4">
           <Link to="/">
-            <img src="/logo.png" alt="CMI · GLMEES" style={{ height: 48, maxWidth: 220, objectFit: 'contain' }} />
+            <img src="/logo.png" alt="CMI · GLMEES" style={{ height: 100, width: 'auto', objectFit: 'contain' }} />
           </Link>
         </div>
 

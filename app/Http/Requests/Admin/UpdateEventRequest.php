@@ -30,6 +30,8 @@ class UpdateEventRequest extends FormRequest
             'reservation_ttl_minutes' => ['sometimes', 'integer', 'min:5', 'max:1440'],
             'participation_rules' => ['nullable', 'string'],
             'internal_notes' => ['nullable', 'string'],
+            'support_whatsapp' => ['nullable', 'string', 'max:30'],
+            'support_email' => ['nullable', 'email', 'max:255'],
             'pricing_mode' => ['sometimes', Rule::in(['paid', 'free', 'mixed'])],
             'allow_card' => ['sometimes', 'boolean'],
             'allow_boleto' => ['sometimes', 'boolean'],

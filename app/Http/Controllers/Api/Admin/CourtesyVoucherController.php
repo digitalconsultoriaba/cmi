@@ -23,6 +23,49 @@ class CourtesyVoucherController extends Controller
         return CourtesyVoucherResource::collection($query->get());
     }
 
+    /**
+     * Relatório de cortesias do evento: geradas / utilizadas / canceladas,
+     * com a lista de pessoas (dados maçônicos do titular quando registrado).
+     */
+    public function stats(Request $request, Event $event)
+    {
+        $tickets = $event->tickets()
+            ->where('is_courtesy', true)
+            ->with(['status', 'order.buyerUser'])
+            ->get();
+
+        $person = fn ($t) => [
+            'name' => $t->participant_name,
+            'potencia' => $t->order?->buyerUser?->potencia,
+            'loja' => $t->order?->buyerUser?->loja,
+            'cargoLoja' => $t->order?->buyerUser?->cargo_loja,
+            'cargoPotencia' => $t->order?->buyerUser?->cargo_potencia,
+        ];
+
+        $geradas = $tickets;
+        $utilizadas = $tickets->filter(fn ($t) => $t->status?->slug === \App\Domain\Events\Models\TicketStatus::USED);
+        $canceladas = $tickets->filter(fn ($t) => in_array(
+            $t->status?->slug,
+            [\App\Domain\Events\Models\TicketStatus::CANCELLED, \App\Domain\Events\Models\TicketStatus::REFUNDED],
+            true
+        ));
+
+        return response()->json([
+            'data' => [
+                'counts' => [
+                    'geradas' => $geradas->count(),
+                    'utilizadas' => $utilizadas->count(),
+                    'canceladas' => $canceladas->count(),
+                ],
+                'people' => [
+                    'geradas' => $geradas->map($person)->values(),
+                    'utilizadas' => $utilizadas->map($person)->values(),
+                    'canceladas' => $canceladas->map($person)->values(),
+                ],
+            ],
+        ]);
+    }
+
     public function generate(GenerateVouchersRequest $request, Event $event)
     {
         $vouchers = DB::transaction(function () use ($request, $event) {

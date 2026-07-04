@@ -1,103 +1,116 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
-import { Card, ApiErrorAlert, StatusBadge, useApiAction } from '../components'
+import { Card, ApiErrorAlert, StatusBadge, Modal, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../lib/api'
 import { parseMoney, formatMoney } from '../../lib/money'
 
-function TypeForm({ initial, onSubmit, onCancel }) {
+function TypeForm({ initial, onSubmit, onCancel, busy }) {
   const [form, setForm] = useState(initial ?? {
     name: '', price: '', capacity: '', is_couple: false, includes_shirt: false, is_courtesy: false,
   })
 
+  const submit = () => onSubmit({
+    ...form,
+    price: parseMoney(form.price) ?? form.price,
+    capacity: form.capacity === '' ? null : Number(form.capacity),
+    seats_per_ticket: form.is_couple ? 2 : 1,
+  })
+
   return (
-    <div className="row g-2 align-items-end mb-3">
-      <div className="col-md-3">
-        <label className="form-label">Nome</label>
-        <input className="form-control" value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })} />
+    <Modal title={initial ? 'Editar tipo de ingresso' : 'Novo tipo de ingresso'} size="md" onClose={onCancel}
+      footer={
+        <>
+          <button className="btn" onClick={onCancel}>Cancelar</button>
+          <button className="btn btn-primary" disabled={busy || !form.name.trim()} onClick={submit}>Salvar</button>
+        </>
+      }>
+      <div className="row g-3">
+        <div className="col-md-7">
+          <label className="form-label required">Nome</label>
+          <input className="form-control" autoFocus value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div className="col-md-5">
+          <label className="form-label">Preço</label>
+          <input className="form-control" placeholder="250,00" value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })} />
+        </div>
+        <div className="col-md-5">
+          <label className="form-label">Capacidade</label>
+          <input type="number" className="form-control" placeholder="ilimitada" value={form.capacity ?? ''}
+            onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
+        </div>
+        <div className="col-12">
+          <div className="form-label">Opções</div>
+          {[['is_couple', 'Casal (2 lugares)'], ['includes_shirt', 'Inclui camisa'], ['is_courtesy', 'Cortesia']].map(([key, label]) => (
+            <label className="form-check form-switch" key={key}>
+              <input type="checkbox" className="form-check-input" checked={!!form[key]}
+                onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
+              <span className="form-check-label">{label}</span>
+            </label>
+          ))}
+        </div>
       </div>
-      <div className="col-md-2">
-        <label className="form-label">Preço</label>
-        <input className="form-control" placeholder="250,00" value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })} />
-      </div>
-      <div className="col-md-2">
-        <label className="form-label">Capacidade</label>
-        <input type="number" className="form-control" value={form.capacity ?? ''}
-          onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
-      </div>
-      <div className="col-md-3">
-        {[['is_couple', 'Casal'], ['includes_shirt', 'Camisa'], ['is_courtesy', 'Cortesia']].map(([key, label]) => (
-          <label className="form-check form-check-inline" key={key}>
-            <input type="checkbox" className="form-check-input" checked={!!form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
-            <span className="form-check-label">{label}</span>
-          </label>
-        ))}
-      </div>
-      <div className="col-md-2">
-        <button className="btn btn-primary me-1" onClick={() => onSubmit({
-          ...form,
-          price: parseMoney(form.price) ?? form.price,
-          capacity: form.capacity === '' ? null : Number(form.capacity),
-          seats_per_ticket: form.is_couple ? 2 : 1,
-        })}>Salvar</button>
-        {onCancel && <button className="btn" onClick={onCancel}>Fechar</button>}
-      </div>
-    </div>
+    </Modal>
   )
 }
 
-function LotForm({ types, initial, onSubmit, onCancel }) {
+function LotForm({ types, initial, onSubmit, onCancel, busy }) {
   const [form, setForm] = useState(initial ?? { name: '', price_override: '', starts_at: '', ends_at: '', quantity: '', ticket_type_id: '' })
 
+  const submit = () => onSubmit({
+    name: form.name,
+    price_override: form.price_override ? parseMoney(form.price_override) : null,
+    starts_at: form.starts_at || null,
+    ends_at: form.ends_at || null,
+    quantity: form.quantity === '' ? null : Number(form.quantity),
+    ticket_type_id: form.ticket_type_id === '' ? null : Number(form.ticket_type_id),
+  })
+
   return (
-    <div className="row g-2 align-items-end mb-3">
-      <div className="col-md-2">
-        <label className="form-label">Nome</label>
-        <input className="form-control" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+    <Modal title={initial ? 'Editar lote' : 'Novo lote'} size="md" onClose={onCancel}
+      footer={
+        <>
+          <button className="btn" onClick={onCancel}>Cancelar</button>
+          <button className="btn btn-primary" disabled={busy || !form.name.trim()} onClick={submit}>Salvar</button>
+        </>
+      }>
+      <div className="row g-3">
+        <div className="col-md-7">
+          <label className="form-label required">Nome</label>
+          <input className="form-control" autoFocus value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        </div>
+        <div className="col-md-5">
+          <label className="form-label">Preço promocional</label>
+          <input className="form-control" placeholder="opcional" value={form.price_override}
+            onChange={(e) => setForm({ ...form, price_override: e.target.value })} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Início</label>
+          <input type="datetime-local" className="form-control" value={form.starts_at}
+            onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Fim</label>
+          <input type="datetime-local" className="form-control" value={form.ends_at}
+            onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Quantidade</label>
+          <input type="number" className="form-control" placeholder="ilimitada" value={form.quantity}
+            onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Escopo</label>
+          <select className="form-select" value={form.ticket_type_id}
+            onChange={(e) => setForm({ ...form, ticket_type_id: e.target.value })}>
+            <option value="">Evento todo</option>
+            {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
       </div>
-      <div className="col-md-2">
-        <label className="form-label">Preço promocional</label>
-        <input className="form-control" placeholder="opcional" value={form.price_override}
-          onChange={(e) => setForm({ ...form, price_override: e.target.value })} />
-      </div>
-      <div className="col-md-2">
-        <label className="form-label">Início</label>
-        <input type="datetime-local" className="form-control" value={form.starts_at}
-          onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
-      </div>
-      <div className="col-md-2">
-        <label className="form-label">Fim</label>
-        <input type="datetime-local" className="form-control" value={form.ends_at}
-          onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
-      </div>
-      <div className="col-md-1">
-        <label className="form-label">Qtd.</label>
-        <input type="number" className="form-control" value={form.quantity}
-          onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
-      </div>
-      <div className="col-md-2">
-        <label className="form-label">Escopo</label>
-        <select className="form-select" value={form.ticket_type_id}
-          onChange={(e) => setForm({ ...form, ticket_type_id: e.target.value })}>
-          <option value="">Evento todo</option>
-          {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-      </div>
-      <div className="col-md-1">
-        <button className="btn btn-primary" onClick={() => onSubmit({
-          name: form.name,
-          price_override: form.price_override ? parseMoney(form.price_override) : null,
-          starts_at: form.starts_at || null,
-          ends_at: form.ends_at || null,
-          quantity: form.quantity === '' ? null : Number(form.quantity),
-          ticket_type_id: form.ticket_type_id === '' ? null : Number(form.ticket_type_id),
-        })}>Salvar</button>
-        {onCancel && <button className="btn mt-1" onClick={onCancel}>Fechar</button>}
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -186,7 +199,7 @@ export default function TiposLotes() {
       <Card title="Tipos de ingresso"
         actions={<button className="btn btn-primary btn-sm" onClick={() => setShowTypeForm(!showTypeForm)}>Novo tipo</button>}>
         {(showTypeForm || editingType) && (
-          <TypeForm key={editingType?.id ?? 'new'} initial={editingType}
+          <TypeForm key={editingType?.id ?? 'new'} initial={editingType} busy={busy}
             onSubmit={salvarType}
             onCancel={() => { setShowTypeForm(false); setEditingType(null) }} />
         )}
@@ -221,7 +234,7 @@ export default function TiposLotes() {
       <Card title="Lotes"
         actions={<button className="btn btn-primary btn-sm" onClick={() => setShowLotForm(!showLotForm)}>Novo lote</button>}>
         {(showLotForm || editingLot) && (
-          <LotForm key={editingLot?.id ?? 'new'} types={types} initial={editingLot}
+          <LotForm key={editingLot?.id ?? 'new'} types={types} initial={editingLot} busy={busy}
             onSubmit={salvarLot}
             onCancel={() => { setShowLotForm(false); setEditingLot(null) }} />
         )}

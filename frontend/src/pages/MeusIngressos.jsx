@@ -1,14 +1,19 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { apiGet, apiPost } from '../lib/api'
 import { formatMoney } from '../lib/money'
 import { parseApiError } from '../lib/forms'
+import QrCode from '../components/QrCode'
 
 const STATUS_LABEL = {
   reserved: 'Reservado', awaiting_payment: 'Aguardando pagamento', paid: 'Pago',
   confirmed: 'Confirmado', courtesy: 'Cortesia', cancelled: 'Cancelado',
   refunded: 'Estornado', transferred: 'Transferido', used: 'Utilizado',
+}
+const STATUS_BADGE = {
+  paid: 'bg-success text-white', confirmed: 'bg-success text-white', courtesy: 'bg-teal text-white',
+  used: 'bg-secondary text-white', cancelled: 'bg-danger text-white', refunded: 'bg-purple text-white',
+  transferred: 'bg-info text-white', reserved: 'bg-warning text-dark', awaiting_payment: 'bg-warning text-dark',
 }
 
 function CancelModal({ ticket, onClose, onDone }) {
@@ -132,7 +137,7 @@ export default function MeusIngressos() {
     queryFn: () => apiGet('/tickets'),
   })
 
-  if (isLoading) return <p style={{ padding: '2rem' }}>Carregando…</p>
+  if (isLoading) return <p>Carregando…</p>
 
   const refresh = () => {
     setAction(null)
@@ -140,15 +145,10 @@ export default function MeusIngressos() {
   }
 
   return (
-    <main className="container-xl py-4" style={{ maxWidth: 900 }}>
-      <h1>Meus ingressos</h1>
-      <p>
-        <Link to="/minha-conta">← Minha conta</Link>
-        {' · '}<Link to="/minha-conta/pedidos">Meus pedidos</Link>
-        {' · '}<Link to="/minha-conta/suporte">Suporte</Link>
-      </p>
-
-      {tickets.length === 0 && <p>Você ainda não tem ingressos.</p>}
+    <>
+      {tickets.length === 0 && (
+        <div className="empty"><p className="empty-title">Você ainda não tem ingressos.</p></div>
+      )}
 
       {action?.type === 'cancel' && (
         <CancelModal ticket={action.ticket} onClose={() => setAction(null)} onDone={refresh} />
@@ -157,41 +157,55 @@ export default function MeusIngressos() {
         <TransferModal ticket={action.ticket} onClose={() => setAction(null)} onDone={refresh} />
       )}
 
-      {tickets.length > 0 && (
-        <table className="table table-vcenter">
-          <thead>
-            <tr><th>Participante</th><th>Evento</th><th>Tipo</th><th>Situação</th><th /></tr>
-          </thead>
-          <tbody>
-            {tickets.map((ticket) => (
-              <tr key={ticket.code}>
-                <td>
-                  {ticket.participantName}
-                  {ticket.companion && <div className="text-secondary small">+ {ticket.companion.name}</div>}
-                  <code className="small">{ticket.code}</code>
-                </td>
-                <td>{ticket.event.name}</td>
-                <td>
-                  {ticket.ticketTypeName}
-                  {ticket.shirt && <div className="text-secondary small">Camisa {ticket.shirt.model} {ticket.shirt.size}</div>}
-                </td>
-                <td>
-                  <span className="badge bg-blue-lt">{STATUS_LABEL[ticket.status]}</span>
-                  {ticket.transferredToCode && (
-                    <div className="text-secondary small">→ {ticket.transferredToCode}</div>
+      <div className="row row-cards">
+        {tickets.map((ticket) => {
+          const isUsed = ticket.status === 'used'
+          const canDownload = ticket.receiptAvailable && !isUsed
+          const startsAt = ticket.event?.startsAt ? new Date(ticket.event.startsAt) : null
+          return (
+            <div className="col-md-6 col-xl-4" key={ticket.code}>
+              <div className={`card h-100 ${isUsed ? 'opacity-75' : ''}`}>
+                <div className="card-status-top bg-primary" />
+                <div className="card-body text-center">
+                  <div className="text-secondary text-uppercase small fw-bold">{ticket.event.name}</div>
+                  <div className="h3 mt-1 mb-0">{ticket.participantName}</div>
+                  {ticket.companion && <div className="text-secondary">+ {ticket.companion.name}</div>}
+                  <div className="mb-2">
+                    <span className="text-secondary">{ticket.ticketTypeName}</span>
+                    <span className={`badge ms-2 ${STATUS_BADGE[ticket.status] ?? 'bg-secondary'}`}>
+                      {STATUS_LABEL[ticket.status]}
+                    </span>
+                  </div>
+                  {startsAt && (
+                    <div className="text-secondary small mb-2">
+                      {startsAt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                    </div>
                   )}
-                </td>
-                <td className="text-end">
-                  <span className="btn-list justify-content-end">
-                    {ticket.receiptAvailable && (
-                      <a className="btn btn-sm btn-primary" target="_blank"
+
+                  <div className="d-flex justify-content-center my-3">
+                    <QrCode value={ticket.code} size={180} />
+                  </div>
+                  <div className="text-secondary"><code>{ticket.code}</code></div>
+                  {ticket.shirt && (
+                    <div className="text-secondary small mt-1">Camisa {ticket.shirt.model} {ticket.shirt.size}</div>
+                  )}
+                  {isUsed && (
+                    <div className="text-secondary small mt-1">Ingresso já utilizado na portaria.</div>
+                  )}
+                  {ticket.transferredToCode && (
+                    <div className="text-secondary small mt-1">Transferido → {ticket.transferredToCode}</div>
+                  )}
+                </div>
+                <div className="card-footer">
+                  <div className="btn-list justify-content-center">
+                    {canDownload && (
+                      <a className="btn btn-sm btn-primary" target="_blank" rel="noopener"
                         href={`/api/tickets/${ticket.code}/receipt`}>
-                        Comprovante
+                        Baixar ingresso
                       </a>
                     )}
                     {ticket.transferable && (
-                      <button className="btn btn-sm"
-                        onClick={() => setAction({ type: 'transfer', ticket })}>
+                      <button className="btn btn-sm" onClick={() => setAction({ type: 'transfer', ticket })}>
                         Transferir
                       </button>
                     )}
@@ -201,13 +215,13 @@ export default function MeusIngressos() {
                         Cancelar
                       </button>
                     )}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </main>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
   )
 }

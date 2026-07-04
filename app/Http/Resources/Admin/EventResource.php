@@ -28,6 +28,8 @@ class EventResource extends JsonResource
             'reservationTtlMinutes' => $this->reservation_ttl_minutes,
             'participationRules' => $this->participation_rules,
             'internalNotes' => $this->internal_notes,
+            'supportWhatsapp' => $this->support_whatsapp,
+            'supportEmail' => $this->support_email,
             'pricingMode' => $this->pricing_mode,
             'allowCard' => $this->allow_card,
             'allowBoleto' => $this->allow_boleto,

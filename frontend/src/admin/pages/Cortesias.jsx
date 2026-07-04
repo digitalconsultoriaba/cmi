@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
-import { Card, ApiErrorAlert, useApiAction } from '../components'
+import { Card, ApiErrorAlert, Modal, useApiAction } from '../components'
 import { apiGet, apiPost, apiPatch } from '../../lib/api'
 
 const STATUS_LABELS = { available: 'Disponível', distributed: 'Distribuído', redeemed: 'Resgatado' }
 const STATUS_BADGE = { available: 'bg-green-lt', distributed: 'bg-blue-lt', redeemed: 'bg-purple-lt' }
+
+const REPORT = [
+  { key: 'geradas', label: 'Geradas', color: 'bg-blue text-white' },
+  { key: 'utilizadas', label: 'Utilizadas', color: 'bg-green text-white' },
+  { key: 'canceladas', label: 'Canceladas', color: 'bg-red text-white' },
+]
 
 export default function Cortesias() {
   const { data: event } = useAdminEvent()
@@ -14,11 +20,17 @@ export default function Cortesias() {
   const [quantity, setQuantity] = useState(10)
   const [filter, setFilter] = useState('')
   const [notes, setNotes] = useState({})
+  const [reportCat, setReportCat] = useState(null) // categoria aberta no modal
 
   const eventId = event?.id
   const { data: vouchers = [] } = useQuery({
     queryKey: ['admin', eventId, 'vouchers', filter],
     queryFn: () => apiGet(`/admin/events/${eventId}/courtesy-vouchers${filter ? `?status=${filter}` : ''}`),
+    enabled: !!eventId,
+  })
+  const { data: stats } = useQuery({
+    queryKey: ['admin', eventId, 'courtesy-stats'],
+    queryFn: () => apiGet(`/admin/events/${eventId}/courtesy-vouchers/stats`),
     enabled: !!eventId,
   })
 
@@ -42,6 +54,24 @@ export default function Cortesias() {
     <>
       <h2>Cortesias</h2>
       <ApiErrorAlert error={error} onClose={() => setError(null)} />
+
+      <div className="row row-cards mb-3">
+        {REPORT.map((item) => (
+          <div className="col-sm-4" key={item.key}>
+            <div className="card card-sm" role="button" onClick={() => setReportCat(item.key)}>
+              <div className="card-body d-flex align-items-center">
+                <span className={`badge ${item.color} me-3`} style={{ fontSize: '1.5rem', padding: '0.5rem 0.9rem' }}>
+                  {stats?.counts?.[item.key] ?? 0}
+                </span>
+                <div>
+                  <div className="fw-bold">{item.label}</div>
+                  <div className="text-secondary small">clique para ver a lista</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <Card title="Regra do evento">
         <p className="mb-0">
@@ -96,6 +126,33 @@ export default function Cortesias() {
           </tbody>
         </table>
       </Card>
+
+      {reportCat && (
+        <Modal title={`Cortesias — ${REPORT.find((r) => r.key === reportCat)?.label}`}
+          onClose={() => setReportCat(null)}
+          footer={<button className="btn" onClick={() => setReportCat(null)}>Fechar</button>}>
+          {(() => {
+            const people = stats?.people?.[reportCat] ?? []
+            if (people.length === 0) return <p className="text-secondary mb-0">Nenhuma cortesia nesta situação.</p>
+            return (
+              <table className="table table-vcenter">
+                <thead><tr><th>Nome</th><th>Potência</th><th>Loja</th><th>Cargo na Loja</th><th>Cargo na Potência</th></tr></thead>
+                <tbody>
+                  {people.map((p, i) => (
+                    <tr key={i}>
+                      <td className="fw-bold">{p.name ?? '—'}</td>
+                      <td>{p.potencia ?? '—'}</td>
+                      <td>{p.loja ?? '—'}</td>
+                      <td>{p.cargoLoja ?? '—'}</td>
+                      <td>{p.cargoPotencia ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          })()}
+        </Modal>
+      )}
     </>
   )
 }

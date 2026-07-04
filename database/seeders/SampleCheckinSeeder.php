@@ -38,6 +38,7 @@ class SampleCheckinSeeder extends Seeder
             ['email' => 'checkin-demo@dev.local'],
             ['name' => 'Comprador Demo Portaria', 'password' => 'password', 'email_verified_at' => now()]
         );
+        $buyer->assignRole(\App\Domain\Events\Models\Role::ATTENDEE);
 
         $order = Order::query()->create([
             'event_id' => $event->id,

@@ -20,7 +20,15 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'document' => ['nullable', 'string', 'max:30'],
-        ], [], ['name' => 'nome', 'phone' => 'telefone', 'document' => 'documento']);
+            'potencia' => ['nullable', 'string', 'max:255'],
+            'loja' => ['nullable', 'string', 'max:255'],
+            'grau' => ['nullable', 'in:aprendiz,companheiro,mestre,mestre_instalado'],
+            'cargo_loja' => ['nullable', 'string', 'max:255'],
+            'cargo_potencia' => ['nullable', 'string', 'max:255'],
+            'endereco' => ['nullable', 'string', 'max:255'],
+            'cidade' => ['nullable', 'string', 'max:120'],
+            'pais' => ['nullable', 'string', 'max:120'],
+        ], [], ['name' => 'nome']);
 
         $request->user()->forceFill($data)->save();
 
@@ -59,11 +67,12 @@ class ProfileController extends Controller
         $old = $user->avatar_url;
 
         $path = $request->file('avatar')->store('avatars', 'public');
-        $user->forceFill(['avatar_url' => Storage::disk('public')->url($path)])->save();
+        // Caminho RELATIVO (/storage/…) — independente de origem/porta, funciona
+        // no dev (via proxy Vite) e em produção.
+        $user->forceFill(['avatar_url' => '/storage/'.$path])->save();
 
         if ($old) {
-            $oldPath = str_replace(Storage::disk('public')->url(''), '', $old);
-            Storage::disk('public')->delete($oldPath);
+            Storage::disk('public')->delete(ltrim(str_replace('/storage/', '', $old), '/'));
         }
 
         return UserResource::make($user->fresh());
