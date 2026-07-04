@@ -15,9 +15,13 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Http\Controllers\Api\Admin\SupportQueueController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\SupportCaseController;
+use App\Http\Controllers\Api\TicketLifecycleController;
+use App\Http\Controllers\Api\Treasury\RefundController;
 use App\Http\Controllers\Api\Treasury\TreasuryController;
 use App\Http\Controllers\Api\WebhookController;
 use App\Http\Controllers\Api\PublicEventController;
@@ -43,7 +47,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{order:code}/checkout/boleto', [CheckoutController::class, 'boleto']);
     Route::post('/orders/{order:code}/checkout/card', [CheckoutController::class, 'card']);
     Route::get('/orders/{order:code}/payment-status', [CheckoutController::class, 'paymentStatus']);
+
+    // ── Ciclo de vida (spec 006) ──
+    Route::post('/tickets/{ticket:code}/cancel', [TicketLifecycleController::class, 'cancelTicket']);
+    Route::post('/orders/{order:code}/cancel', [TicketLifecycleController::class, 'cancelOrder']);
+    Route::post('/tickets/{ticket:code}/transfer', [TicketLifecycleController::class, 'transfer']);
+
+    // ── Suporte do inscrito (spec 006) ──
+    Route::get('/support-cases', [SupportCaseController::class, 'index']);
+    Route::post('/support-cases', [SupportCaseController::class, 'store']);
+    Route::get('/support-cases/{supportCase}', [SupportCaseController::class, 'show']);
+    Route::post('/support-cases/{supportCase}/notes', [SupportCaseController::class, 'addNote']);
 });
+
+// ── Fila de suporte da organização (spec 006) ────────────────────────
+Route::prefix('admin/support-cases')
+    ->middleware(['auth:sanctum', 'require.role:admin,treasury'])
+    ->group(function () {
+        Route::get('/', [SupportQueueController::class, 'index']);
+        Route::get('/{supportCase}', [SupportQueueController::class, 'show']);
+        Route::post('/{supportCase}/notes', [SupportQueueController::class, 'addNote']);
+        Route::post('/{supportCase}/finish', [SupportQueueController::class, 'finish']);
+        Route::post('/{supportCase}/reopen', [SupportQueueController::class, 'reopen']);
+    });
 
 // ── Webhooks (spec 005 — sem sessão; verificação por segredo) ────────
 Route::post('/webhooks/sicoob', [WebhookController::class, 'sicoob']);
@@ -54,6 +80,10 @@ Route::prefix('treasury')->middleware(['auth:sanctum', 'require.role:treasury'])
     Route::get('/receivables', [TreasuryController::class, 'receivables']);
     Route::post('/reconcile', [TreasuryController::class, 'reconcile']);
     Route::post('/orders/{order:code}/pay-manual', [TreasuryController::class, 'payManual']);
+
+    // ── Estornos (spec 006) ──
+    Route::get('/refunds', [RefundController::class, 'index']);
+    Route::post('/refunds/{supportCase}/execute', [RefundController::class, 'execute']);
 });
 
 Route::prefix('auth')->group(function () {

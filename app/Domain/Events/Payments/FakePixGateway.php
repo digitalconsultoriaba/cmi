@@ -94,6 +94,12 @@ class FakePixGateway implements PaymentGatewayContract
         }
     }
 
+    public function refundCharge(Payment $payment, string $amount): RefundResult
+    {
+        // Devolução Pix por API é Fase 2 — MVP é operacional (spec 006).
+        throw new RefundNotSupported('Devolução de Pix/boleto é operacional no MVP.');
+    }
+
     /** Simula o pagamento no banco (usado por testes e pelo smoke de dev). */
     public function settle(string $externalId, ?string $amount = null): void
     {

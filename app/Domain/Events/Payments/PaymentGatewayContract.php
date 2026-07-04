@@ -27,4 +27,10 @@ interface PaymentGatewayContract
 
     /** Melhor esforço; falha não propaga. */
     public function cancelCharge(Payment $payment): void;
+
+    /**
+     * Estorno via provedor (emenda da spec 006). Provedores sem devolução por
+     * API lançam RefundNotSupported → fluxo operacional da tesouraria.
+     */
+    public function refundCharge(Payment $payment, string $amount): RefundResult;
 }

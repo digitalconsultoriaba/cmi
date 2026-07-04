@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
-import { apiGet } from '../lib/api'
+import { apiGet, apiPost } from '../lib/api'
 import { formatMoney } from '../lib/money'
+import { parseApiError } from '../lib/forms'
 
 const STATUS_LABEL = {
   pending: 'Aguardando pagamento', paid: 'Pago', partially_paid: 'Parcialmente pago',
@@ -14,10 +16,30 @@ const STATUS_BADGE = {
 
 export default function MeusPedidos() {
   const location = useLocation()
+  const queryClient = useQueryClient()
+  const [error, setError] = useState(null)
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my', 'orders'],
     queryFn: () => apiGet('/orders'),
   })
+
+  const cancelOrder = async (order, confirmNoRefund = false) => {
+    setError(null)
+    if (!confirmNoRefund && !window.confirm(`Cancelar o pedido ${order.code} inteiro?`)) return
+    try {
+      await apiPost(`/orders/${order.code}/cancel`, { confirm_no_refund: confirmNoRefund })
+      queryClient.invalidateQueries({ queryKey: ['my'] })
+    } catch (err) {
+      const parsed = parseApiError(err)
+      if (parsed.type === 'refund_confirmation_required') {
+        if (window.confirm('Pela política do evento, não há devolução. Cancelar mesmo assim?')) {
+          return cancelOrder(order, true)
+        }
+        return
+      }
+      setError(parsed)
+    }
+  }
 
   if (isLoading) return <p style={{ padding: '2rem' }}>Carregando…</p>
 
@@ -31,6 +53,7 @@ export default function MeusPedidos() {
           Pedido criado! Sua reserva está garantida pelo prazo indicado abaixo.
         </div>
       )}
+      {error && <div className="alert alert-danger">{error.message}</div>}
 
       {orders.length === 0 && <p>Você ainda não tem pedidos.</p>}
 
@@ -55,6 +78,11 @@ export default function MeusPedidos() {
                   Pagar agora
                 </Link>
               </p>
+            )}
+            {['pending', 'paid', 'partially_paid'].includes(order.status) && (
+              <button className="btn btn-sm btn-outline-danger mb-2" onClick={() => cancelOrder(order)}>
+                Cancelar pedido
+              </button>
             )}
             <ul className="mb-0">
               {order.tickets.map((ticket) => (

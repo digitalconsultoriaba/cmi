@@ -34,6 +34,13 @@ export default function Tesouraria() {
     queryFn: () => apiGet(`/treasury/receivables${query ? `?${query}` : ''}`),
   })
 
+  const { data: refunds = [] } = useQuery({
+    queryKey: ['treasury', 'refunds'],
+    queryFn: () => apiGet('/treasury/refunds'),
+  })
+  const [refundFor, setRefundFor] = useState(null)
+  const [refundJustification, setRefundJustification] = useState('')
+
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['treasury'] })
 
   const reconcile = () => run(
@@ -44,6 +51,13 @@ export default function Tesouraria() {
   const payManual = () => run(
     () => apiPost(`/treasury/orders/${manualFor}/pay-manual`, { justification }),
     { onSuccess: () => { setManualFor(null); setJustification(''); refresh() } }
+  )
+
+  const executeRefund = () => run(
+    () => apiPost(`/treasury/refunds/${refundFor.id}/execute`, {
+      justification: refundJustification,
+    }),
+    { onSuccess: () => { setRefundFor(null); setRefundJustification(''); refresh() } }
   )
 
   return (
@@ -125,6 +139,50 @@ export default function Tesouraria() {
           </tbody>
         </table>
       </Card>
+
+      <Card title={`Estornos pendentes (${refunds.length})`}>
+        {refunds.length === 0 && <p className="mb-0 text-secondary">Nenhuma devolução na fila.</p>}
+        {refunds.length > 0 && (
+          <table className="table table-vcenter">
+            <thead><tr><th>Pedido</th><th>Solicitante</th><th>Valor</th><th>Meio</th><th /></tr></thead>
+            <tbody>
+              {refunds.map((refund) => (
+                <tr key={refund.id}>
+                  <td><code>{refund.orderCode}</code>
+                    {refund.ticketCode && <div className="small text-secondary">{refund.ticketCode}</div>}</td>
+                  <td>{refund.requester}</td>
+                  <td>{formatMoney(refund.refundAmount)}</td>
+                  <td>{refund.paymentMethod ?? '—'}</td>
+                  <td className="text-end">
+                    <button className="btn btn-sm btn-primary" onClick={() => setRefundFor(refund)}>
+                      Executar estorno
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+
+      {refundFor && (
+        <Card title={`Estorno — ${refundFor.orderCode} (${formatMoney(refundFor.refundAmount)})`}>
+          <p className="text-secondary">
+            Cartão: o estorno é solicitado ao provedor automaticamente. Pix/boleto/manual:
+            faça a devolução por fora e registre aqui. Você não pode estornar um pedido seu.
+          </p>
+          <textarea className="form-control mb-2" rows={2}
+            placeholder="Justificativa obrigatória (ex.: devolução via Pix efetuada em 03/07)"
+            value={refundJustification} onChange={(e) => setRefundJustification(e.target.value)} />
+          <div className="btn-list">
+            <button className="btn btn-danger" disabled={busy || refundJustification.trim().length < 10}
+              onClick={executeRefund}>
+              Confirmar estorno
+            </button>
+            <button className="btn" onClick={() => setRefundFor(null)}>Cancelar</button>
+          </div>
+        </Card>
+      )}
 
       {manualFor && (
         <Card title={`Baixa manual — pedido ${manualFor}`}>

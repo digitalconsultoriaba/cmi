@@ -18,6 +18,10 @@ class AntiPanTest extends PaymentTestCase
 
     public function test_fluxos_de_pagamento_nao_persistem_nada_parecido_com_cartao(): void
     {
+        // Log limpo: a varredura cobre APENAS o que este teste produz
+        // (execuções anteriores poderiam contaminar o arquivo compartilhado)
+        @unlink(storage_path('logs/laravel.log'));
+
         [$buyer, $order] = $this->pendingOrder();
 
         // Fluxo completo: pix + boleto + cartão aprovado

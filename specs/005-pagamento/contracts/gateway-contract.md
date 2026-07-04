@@ -21,6 +21,15 @@ constituição: trocar provedor sem reescrever o fluxo.
 | `FakePixGateway` | `payments.pix_driver=fake` (default dev/teste) | gera externalId/copia-e-cola determinísticos; `getChargeStatus` responde de um "banco simulado" controlável em teste (marcar cobrança como paga) |
 | `FakeCardGateway` | `payments.card_driver=fake` (default) | `tok_ok_*` → aprovado (brand/last4 fake); `tok_declined_*` → recusado com motivo; nunca aceita nada parecido com PAN (guarda: token com 13+ dígitos seguidos → exceção) |
 
+## Emenda (spec 006 — 2026-07-03)
+
+| Método | Entrada | Saída | Obrigações |
+|---|---|---|---|
+| `refundCharge(Payment, amount)` | payment pago | `RefundResult{ refunded, externalId?, raw }` | estorno via provedor; quem não suporta lança `RefundNotSupported` → fluxo operacional da tesouraria |
+
+FakeCardGateway estorna no banco simulado; FakePixGateway/SicoobGateway lançam
+`RefundNotSupported` (devolução Pix por API é Fase 2).
+
 ## Regras transversais
 
 - Nenhum driver recebe, armazena ou loga PAN/CVV/validade (SC-005 varre).

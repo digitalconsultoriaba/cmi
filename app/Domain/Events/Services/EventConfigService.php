@@ -63,7 +63,7 @@ class EventConfigService
     {
         $this->ensureEditable($event);
 
-        return DB::transaction(function () use ($event, $reason) {
+        $event = DB::transaction(function () use ($event, $reason) {
             $event->forceFill([
                 'cancelled_at' => now(),
                 'cancelled_by' => auth()->id(),
@@ -72,5 +72,13 @@ class EventConfigService
 
             return $event->transitionTo(EventStatus::CANCELLED);
         });
+
+        // Cascata resiliente do pós-venda (spec 006): pedidos vivos cancelados,
+        // fila de devoluções 100% e avisos — falha em um pedido não interrompe.
+        if (auth()->user() !== null) {
+            app(CancelEventCascade::class)->run($event, auth()->user());
+        }
+
+        return $event;
     }
 }
