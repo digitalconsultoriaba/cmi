@@ -37,6 +37,12 @@ import CheckinEvento from './admin/eventos/abas/CheckinEvento'
 import Relatorios from './admin/eventos/abas/Relatorios'
 import FinanceiroEvento from './admin/eventos/abas/FinanceiroEvento'
 import Usuarios from './admin/eventos/Usuarios'
+// Módulo financeiro central (spec 010)
+import FinancasLayout from './admin/financas/FinancasLayout'
+import FinancasDashboard from './admin/financas/Dashboard'
+import Contas from './admin/financas/Contas'
+import FinancasCadastros from './admin/financas/Cadastros'
+import FinancasRelatorios from './admin/financas/Relatorios'
 
 // Home do painel por papel: admin → módulo Eventos; tesouraria → Financeiro;
 // portaria → Check-in direto
@@ -152,6 +158,15 @@ export default function App() {
 
             {/* ── Usuários da equipe (módulo, admin) ── */}
             <Route path="usuarios" element={<RoleRoute role="admin"><Usuarios /></RoleRoute>} />
+
+            {/* ── Módulo Financeiro central (spec 010, admin+financeiro) ── */}
+            <Route path="financas" element={<RoleRoute roles={['admin', 'treasury']}><FinancasLayout /></RoleRoute>}>
+              <Route index element={<FinancasDashboard />} />
+              <Route path="pagar" element={<Contas direction="payable" />} />
+              <Route path="receber" element={<Contas direction="receivable" />} />
+              <Route path="cadastros" element={<FinancasCadastros />} />
+              <Route path="relatorios" element={<FinancasRelatorios />} />
+            </Route>
 
             {/* ── Dentro de um evento (2ª camada de abas) ── */}
             <Route path="eventos/:eventId" element={<RoleRoute roles={['admin', 'treasury']}><EventoLayout /></RoleRoute>}>

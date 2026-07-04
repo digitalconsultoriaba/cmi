@@ -14,6 +14,7 @@ class StructuralSeeder extends Seeder
         $this->call([
             LookupSeeder::class,
             RoleSeeder::class,
+            FinancialSeeder::class,
         ]);
     }
 }

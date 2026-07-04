@@ -32,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Ticket::class, TicketPolicy::class);
         Gate::policy(\App\Domain\Events\Models\SupportCase::class, \App\Policies\SupportCasePolicy::class);
 
+        // Espelho financeiro (spec 010, FR-020): pedidos e parcelas de
+        // patrocínio refletem contas a receber sincronizadas.
+        Order::observe(\App\Domain\Events\Observers\OrderObserver::class);
+        \App\Domain\Events\Models\SponsorshipInstallment::observe(
+            \App\Domain\Events\Observers\SponsorshipInstallmentObserver::class
+        );
+
         $this->configureRateLimiters();
     }
 

@@ -56,9 +56,14 @@ export default function AdminLayout() {
                 <NavLink className="nav-link" to="/painel/modulo">Eventos e Ingressos</NavLink>
               </li>
             )}
+            {(isAdmin || isTreasury) && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/financas">Financeiro</NavLink>
+              </li>
+            )}
             {isTreasury && (
               <li className="nav-item">
-                <NavLink className="nav-link" to="/painel/financeiro" end>Financeiro (consolidado)</NavLink>
+                <NavLink className="nav-link" to="/painel/financeiro" end>Recebimentos (ingressos)</NavLink>
               </li>
             )}
             {isAdmin && (
