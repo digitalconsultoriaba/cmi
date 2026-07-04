@@ -57,6 +57,13 @@ class ExpireReservations extends Command
 
                 $order->transitionTo(OrderStatus::EXPIRED);
 
+                // Trilha (spec 008): ação do sistema — sem causer
+                activity('order.expired')
+                    ->performedOn($order)
+                    ->causedByAnonymous()
+                    ->withProperties(['reference' => $order->code, 'tickets' => $tickets->count()])
+                    ->log('Pedido '.$order->code.' expirado (reserva vencida)');
+
                 // Cancela cobranças ativas no provedor (spec 005 — melhor esforço)
                 app(\App\Domain\Events\Services\CreateCharge::class)->expirePendingPayments($order);
 

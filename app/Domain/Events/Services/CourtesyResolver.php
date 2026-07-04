@@ -114,6 +114,12 @@ class CourtesyResolver
         ]);
         $voucher->transitionTo(CourtesyVoucher::REDEEMED);
 
+        activity('courtesy.redeemed')
+            ->performedOn($ticket)
+            ->causedBy($buyer)
+            ->withProperties(['reference' => $ticket->code, 'voucher' => $voucher->code])
+            ->log('Voucher '.$voucher->code.' resgatado → ingresso '.$ticket->code);
+
         return $order->load('tickets');
     }
 }

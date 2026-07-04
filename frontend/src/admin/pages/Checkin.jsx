@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Html5Qrcode } from 'html5-qrcode'
 import { apiGet, apiPost } from '../../lib/api'
 import { parseApiError } from '../../lib/forms'
+import { useAuth } from '../../auth/AuthProvider'
 
 const RESULT_MS = 2500
 const DEBOUNCE_MS = 5000
@@ -51,6 +52,7 @@ function ResultOverlay({ result }) {
 
 export default function Checkin() {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const [tab, setTab] = useState('leitor')
   const [manual, setManual] = useState('')
   const [result, setResult] = useState(null)
@@ -175,8 +177,13 @@ export default function Checkin() {
             ))}
           </div>
 
-          <input className="form-control mb-2" placeholder="Buscar por nome, acompanhante ou código…"
-            value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="d-flex gap-2 mb-2">
+            <input className="form-control" placeholder="Buscar por nome, acompanhante ou código…"
+              value={search} onChange={(e) => setSearch(e.target.value)} />
+            {user?.roles.includes('admin') && (
+              <a className="btn" href="/api/admin/reports/attendance.xlsx">.xlsx</a>
+            )}
+          </div>
 
           <div className="card"><div className="card-body p-0">
             <table className="table table-vcenter mb-0">

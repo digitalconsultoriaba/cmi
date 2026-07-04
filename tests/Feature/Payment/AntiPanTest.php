@@ -58,8 +58,11 @@ class AntiPanTest extends PaymentTestCase
             $this->assertStringNotContainsString($pan, $haystack, 'PAN encontrado!');
         }
 
-        // Qualquer sequência de 13-19 dígitos que passe em Luhn = suspeita de PAN
-        preg_match_all('/\d{13,19}/', $haystack, $matches);
+        // Qualquer sequência MAXIMAL de 13-19 dígitos que passe em Luhn =
+        // suspeita de PAN. Sequências mais longas (código de barras de boleto,
+        // 44-47 dígitos) não são PAN — janelas internas delas seriam falso
+        // positivo aleatório (flakiness corrigida na spec 008).
+        preg_match_all('/(?<!\d)\d{13,19}(?!\d)/', $haystack, $matches);
         foreach ($matches[0] as $candidate) {
             $this->assertFalse(
                 $this->passesLuhn($candidate),

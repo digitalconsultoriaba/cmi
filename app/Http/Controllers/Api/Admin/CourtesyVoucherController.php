@@ -26,10 +26,22 @@ class CourtesyVoucherController extends Controller
     public function generate(GenerateVouchersRequest $request, Event $event)
     {
         $vouchers = DB::transaction(function () use ($request, $event) {
-            return collect(range(1, (int) $request->validated('quantity')))
+            $batch = collect(range(1, (int) $request->validated('quantity')))
                 ->map(fn () => $event->courtesyVouchers()->create([
                     'ticket_type_id' => $request->validated('ticket_type_id'),
                 ]));
+
+            // Trilha (spec 008): 1 ação de emissão = 1 registro (o lote inteiro)
+            activity('courtesy.issued')
+                ->performedOn($event)
+                ->withProperties([
+                    'reference' => $event->name,
+                    'quantity' => $batch->count(),
+                    'codes' => $batch->pluck('code')->all(),
+                ])
+                ->log($batch->count().' voucher(s) de cortesia emitido(s) para "'.$event->name.'"');
+
+            return $batch;
         });
 
         return CourtesyVoucherResource::collection($vouchers)

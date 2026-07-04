@@ -22,6 +22,10 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SupportCaseController;
 use App\Http\Controllers\Api\TicketLifecycleController;
+use App\Http\Controllers\Api\Admin\AuditLogController;
+use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\ReportExportController;
+use App\Http\Controllers\Api\Treasury\FinanceController;
 use App\Http\Controllers\Api\Treasury\RefundController;
 use App\Http\Controllers\Api\Treasury\TreasuryController;
 use App\Http\Controllers\Api\WebhookController;
@@ -93,6 +97,12 @@ Route::prefix('treasury')->middleware(['auth:sanctum', 'require.role:treasury'])
     Route::post('/refunds/{supportCase}/execute', [RefundController::class, 'execute']);
 });
 
+// ── Financeiro consolidado (spec 008 — leitura: tesouraria E admin) ──
+Route::prefix('treasury')->middleware(['auth:sanctum', 'require.role:treasury,admin'])->group(function () {
+    Route::get('/finance', [FinanceController::class, 'show']);
+    Route::get('/reports/finance.xlsx', [FinanceController::class, 'export']);
+});
+
 Route::prefix('auth')->group(function () {
     // Público
     Route::post('/register', RegisterController::class);
@@ -121,6 +131,12 @@ Route::prefix('auth')->group(function () {
 
 // ── Painel administrativo (spec 003) ────────────────────────────────
 Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin'])->scopeBindings()->group(function () {
+    // ── Painel e relatórios (spec 008) ──
+    Route::get('/dashboard', [DashboardController::class, 'show']);
+    Route::get('/audit', [AuditLogController::class, 'index']);
+    Route::get('/reports/attendees.xlsx', [ReportExportController::class, 'attendees']);
+    Route::get('/reports/attendance.xlsx', [ReportExportController::class, 'attendance']);
+
     Route::get('/events', [AdminEventController::class, 'index']);
     Route::get('/events/{event}', [AdminEventController::class, 'show']);
     Route::put('/events/{event}', [AdminEventController::class, 'update']);

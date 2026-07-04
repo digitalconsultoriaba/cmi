@@ -4,15 +4,18 @@ import { useAuth } from '../auth/AuthProvider'
 import { apiGet } from '../lib/api'
 
 const MENU = [
-  { to: '/painel', label: 'Evento', end: true, roles: ['admin'] },
+  { to: '/painel', label: 'Dashboard', end: true, roles: ['admin'] },
+  { to: '/painel/evento', label: 'Evento', roles: ['admin'] },
   { to: '/painel/tipos-lotes', label: 'Tipos & Lotes', roles: ['admin'] },
   { to: '/painel/camisas', label: 'Camisas', roles: ['admin'] },
   { to: '/painel/landing', label: 'Landing', roles: ['admin'] },
   { to: '/painel/cortesias', label: 'Cortesias', roles: ['admin'] },
   { to: '/painel/patrocinios', label: 'Patrocínios', roles: ['admin'] },
   { to: '/painel/tesouraria', label: 'Tesouraria', roles: ['treasury', 'admin'] },
+  { to: '/painel/financeiro', label: 'Financeiro', roles: ['treasury', 'admin'] },
   { to: '/painel/suporte', label: 'Suporte', roles: ['treasury', 'admin'] },
   { to: '/painel/checkin', label: 'Check-in', roles: ['gate', 'admin'] },
+  { to: '/painel/auditoria', label: 'Auditoria', roles: ['admin'] },
 ]
 
 /** Resolve o evento gerenciado (single-event no MVP — primeiro da lista). */

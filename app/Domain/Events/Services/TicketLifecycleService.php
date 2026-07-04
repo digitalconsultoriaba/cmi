@@ -58,6 +58,12 @@ class TicketLifecycleService
 
             $this->recountAround($ticket);
 
+            activity('ticket.cancelled')
+                ->performedOn($ticket)
+                ->causedBy($actor)
+                ->withProperties(['reference' => $ticket->code, 'reason' => $ticket->cancel_reason])
+                ->log('Ingresso '.$ticket->code.' cancelado');
+
             $case = null;
             if ($isPaid && bccomp($refund, '0.00', 2) === 1) {
                 $case = $this->openRefundCase($ticket->order, $ticket, $refund, $actor,
@@ -109,6 +115,12 @@ class TicketLifecycleService
 
             $this->createCharge->expirePendingPayments($order);
             $order->transitionTo(OrderStatus::CANCELLED);
+
+            activity('order.cancelled')
+                ->performedOn($order)
+                ->causedBy($actor)
+                ->withProperties(['reference' => $order->code])
+                ->log('Pedido '.$order->code.' cancelado');
 
             if ($hasPayment && bccomp($refund, '0.00', 2) === 1) {
                 $this->openRefundCase($order, null, $refund, $actor,
@@ -176,6 +188,17 @@ class TicketLifecycleService
             $ticket->transitionTo(TicketStatus::TRANSFERRED);
 
             $this->recountAround($ticket); // líquido neutro, caches coerentes
+
+            activity('ticket.transferred')
+                ->performedOn($ticket)
+                ->causedBy($actor)
+                ->withProperties([
+                    'reference' => $ticket->code,
+                    'transferredTo' => $new->code,
+                    'newParticipant' => $new->participant_name,
+                ])
+                ->log('Ingresso '.$ticket->code.' transferido para '.$new->participant_name
+                    .' ('.$new->code.')');
 
             return $new->fresh();
         });
