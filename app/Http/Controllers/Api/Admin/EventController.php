@@ -7,10 +7,13 @@ use App\Domain\Events\Models\Event;
 use App\Domain\Events\Services\EventConfigService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BannerRequest;
+use App\Http\Requests\Admin\StoreEventRequest;
 use App\Http\Requests\Admin\UpdateEventRequest;
 use App\Http\Resources\Admin\EventResource;
+use App\Domain\Events\Models\EventStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
@@ -26,6 +29,28 @@ class EventController extends Controller
     public function show(Event $event)
     {
         return EventResource::make($event);
+    }
+
+    /** Cria um evento em RASCUNHO (spec 009 — "Novo evento"). */
+    public function store(StoreEventRequest $request)
+    {
+        $data = $request->validated();
+
+        // slug único derivado do nome
+        $base = Str::slug($data['name']) ?: 'evento';
+        $slug = $base;
+        $i = 1;
+        while (Event::query()->where('slug', $slug)->exists()) {
+            $slug = $base.'-'.(++$i);
+        }
+
+        $event = Event::query()->create([
+            ...$data,
+            'slug' => $slug,
+            'status_id' => EventStatus::idFor(EventStatus::DRAFT),
+        ]);
+
+        return EventResource::make($event->fresh())->response()->setStatusCode(201);
     }
 
     public function update(UpdateEventRequest $request, Event $event)

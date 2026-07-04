@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Auth\GoogleController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\MeController;
+use App\Http\Controllers\Api\Auth\ProfileController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Admin\SupportQueueController;
@@ -23,8 +24,12 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SupportCaseController;
 use App\Http\Controllers\Api\TicketLifecycleController;
 use App\Http\Controllers\Api\Admin\AuditLogController;
+use App\Http\Controllers\Api\Admin\CustomerController;
 use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\EventPanelController;
+use App\Http\Controllers\Api\Admin\OverviewController;
 use App\Http\Controllers\Api\Admin\ReportExportController;
+use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Treasury\FinanceController;
 use App\Http\Controllers\Api\Treasury\RefundController;
 use App\Http\Controllers\Api\Treasury\TreasuryController;
@@ -126,18 +131,62 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [LoginController::class, 'logout']);
         Route::post('/email/resend', [EmailVerificationController::class, 'resend'])
             ->middleware('throttle:auth-email');
+        // Autoatendimento da conta (spec 009)
+        Route::put('/profile', [ProfileController::class, 'update']);
+        Route::post('/password', [ProfileController::class, 'changePassword']);
+        Route::post('/avatar', [ProfileController::class, 'uploadAvatar']);
     });
 });
 
-// ── Painel administrativo (spec 003) ────────────────────────────────
-Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin'])->scopeBindings()->group(function () {
+// ── Painel administrativo (spec 003; 009: financeiro acessa tudo) ────
+// Admin E tesouraria acessam o módulo inteiro; só a gestão de usuários da
+// equipe é exclusiva do admin (fronteira: quem cria contas de equipe).
+Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury'])->scopeBindings()->group(function () {
     // ── Painel e relatórios (spec 008) ──
     Route::get('/dashboard', [DashboardController::class, 'show']);
     Route::get('/audit', [AuditLogController::class, 'index']);
     Route::get('/reports/attendees.xlsx', [ReportExportController::class, 'attendees']);
     Route::get('/reports/attendance.xlsx', [ReportExportController::class, 'attendance']);
 
+    // ── Painel v2 escopado por evento (spec 009) ──
+    Route::get('/overview', [OverviewController::class, 'show']);
+    Route::prefix('events/{event}')->group(function () {
+        Route::get('/dashboard', [EventPanelController::class, 'dashboard']);
+        Route::get('/attendees', [EventPanelController::class, 'attendees']);
+        Route::get('/attendance', [EventPanelController::class, 'attendance']);
+        Route::get('/orders', [EventPanelController::class, 'orders']);
+        Route::get('/reports/preview', [EventPanelController::class, 'reportsPreview']);
+        Route::get('/reports/{type}.xlsx', [EventPanelController::class, 'reportsExport']);
+    });
+
+    // Baixa manual pelo admin (financeiro do evento); comprador nunca no
+    // próprio pedido — guarda no TreasuryController (constituição, III).
+    // Rota plana (binding por código, sem escopo aninhado).
+    Route::post('/orders/{order:code}/pay-manual', [TreasuryController::class, 'payManual']);
+
+    // Comprovante (PDF+QR) de qualquer ingresso — acesso do admin (spec 009)
+    Route::get('/tickets/{ticket:code}/receipt', [EventPanelController::class, 'receipt']);
+
+    // ── Ficha do cliente (spec 009): dados, compras, ingressos, mensagens ──
+    // withoutScopedBindings: o usuário não é filho do evento (não há relação)
+    Route::get('/events/{event}/customers/{user}', [CustomerController::class, 'show'])->withoutScopedBindings();
+    Route::get('/events/{event}/customers/{user}/messages', [CustomerController::class, 'messages'])->withoutScopedBindings();
+    Route::post('/events/{event}/customers/{user}/messages', [CustomerController::class, 'sendMessage'])->withoutScopedBindings();
+    Route::post('/events/{event}/customers/{user}/history', [CustomerController::class, 'addHistory'])->withoutScopedBindings();
+    // Cancelamento pelo staff (política de reembolso 006)
+    Route::post('/tickets/{ticket:code}/cancel', [CustomerController::class, 'cancelTicket']);
+    Route::post('/orders/{order:code}/cancel', [CustomerController::class, 'cancelOrder']);
+
+    // ── Gestão de usuários da equipe (spec 009) — SÓ admin ──
+    Route::middleware('require.role:admin')->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{user}', [UserController::class, 'update']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    });
+
     Route::get('/events', [AdminEventController::class, 'index']);
+    Route::post('/events', [AdminEventController::class, 'store']);
     Route::get('/events/{event}', [AdminEventController::class, 'show']);
     Route::put('/events/{event}', [AdminEventController::class, 'update']);
     Route::post('/events/{event}/publish', [AdminEventController::class, 'publish']);

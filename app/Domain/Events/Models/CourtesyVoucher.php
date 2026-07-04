@@ -41,6 +41,11 @@ class CourtesyVoucher extends BaseModel
         return $this->belongsTo(Ticket::class, 'redeemed_ticket_id');
     }
 
+    public function distributedBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'distributed_by');
+    }
+
     public function transitionTo(string $status): static
     {
         $from = array_search($this->status, self::FLOW, true);

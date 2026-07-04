@@ -1,0 +1,69 @@
+/* Identidade CMI/GLMEES (spec 009) — azul da marca + tema claro fixo.
+   Sobrescreve as variáveis do Tabler; a sidebar vertical fica azul. */
+
+:root {
+  --brand-blue: #1e3a8a;        /* azul principal (botões, links, acento) */
+  --brand-blue-dark: #17275e;   /* fundo da sidebar */
+  --brand-blue-darker: #101a42; /* borda/realce da sidebar */
+
+  --tblr-primary: var(--brand-blue);
+  --tblr-primary-rgb: 30, 58, 138;
+}
+
+/* Sidebar azul da marca (navbar-vertical) */
+.navbar-vertical.navbar-dark,
+.navbar-vertical {
+  background: var(--brand-blue-dark);
+  border-right: 1px solid var(--brand-blue-darker);
+}
+
+.navbar-vertical .navbar-brand {
+  padding: 1rem 0.75rem;
+}
+
+.navbar-vertical .nav-link {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.navbar-vertical .nav-link:hover,
+.navbar-vertical .nav-link.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+
+/* Rótulos de identidade não-navegáveis (sistema anfitrião) */
+.navbar-vertical .nav-host-label {
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.75rem;
+}
+
+/* Botões primários com o azul da marca */
+.btn-primary {
+  --tblr-btn-bg: var(--brand-blue);
+  --tblr-btn-border-color: var(--brand-blue);
+  --tblr-btn-hover-bg: var(--brand-blue-dark);
+  --tblr-btn-hover-border-color: var(--brand-blue-dark);
+}
+
+/* Abas ativas com o azul da marca */
+.nav-tabs .nav-link.active {
+  color: var(--brand-blue);
+  border-bottom-color: var(--brand-blue);
+}
+
+/* Linhas clicáveis: cursor + realce no hover (deixa o clique óbvio) */
+.table tr[role='button'] {
+  cursor: pointer;
+}
+.table tr[role='button']:hover {
+  background: rgba(30, 58, 138, 0.06);
+}
+
+/* Badges sólidos um pouco maiores para leitura forte */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.6em;
+}

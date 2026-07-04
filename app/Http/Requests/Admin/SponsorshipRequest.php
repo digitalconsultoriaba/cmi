@@ -20,6 +20,8 @@ class SponsorshipRequest extends FormRequest
             'payment_method' => ['nullable', 'string', 'max:50'],
             'installments_count' => ['required', 'integer', 'min:1', 'max:36'],
             'first_due_date' => ['nullable', 'date'],
+            'due_dates' => ['nullable', 'array', 'max:36'],
+            'due_dates.*' => ['nullable', 'date'],
             'notes' => ['nullable', 'string'],
         ];
     }

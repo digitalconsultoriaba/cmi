@@ -6,6 +6,21 @@ import { formatMoney } from '../lib/money'
 import { parseApiError } from '../lib/forms'
 import { useCart } from '../cart/CartProvider'
 
+/** Casca com header da marca (estilo Tabler). */
+function Shell({ children }) {
+  return (
+    <div className="page" data-bs-theme="light">
+      <header className="navbar navbar-expand-md d-print-none" style={{ background: '#fff', borderBottom: '1px solid #e6e7e9' }}>
+        <div className="container-xl">
+          <Link to="/"><img src="/logo.png" alt="CMI · GLMEES" height="40"
+            style={{ background: '#fff', borderRadius: 8, padding: 3 }} /></Link>
+        </div>
+      </header>
+      <div className="page-body"><div className="container-xl">{children}</div></div>
+    </div>
+  )
+}
+
 function ShirtSelect({ label, models, value, onChange }) {
   return (
     <div className="col-md-4">
@@ -57,16 +72,17 @@ export default function Checkout() {
 
   if (!cart && !voucher) {
     return (
-      <main className="container-xl py-5">
-        <h1>Checkout</h1>
-        <p>Seu carrinho está vazio.</p>
-        <p>Tem um voucher de cortesia? Informe abaixo para resgatar.</p>
-        <VoucherOnly />
-      </main>
+      <Shell>
+        <div className="card"><div className="card-body">
+          <h2 className="mb-1">Checkout</h2>
+          <p className="text-secondary">Seu carrinho está vazio. Tem um voucher de cortesia? Resgate abaixo.</p>
+          <VoucherOnly />
+        </div></div>
+      </Shell>
     )
   }
 
-  if (!event) return <p style={{ padding: '2rem' }}>Carregando…</p>
+  if (!event) return <Shell><p className="text-secondary">Carregando…</p></Shell>
 
   const set = (key, field, value) => setParticipants((current) => ({
     ...current,
@@ -109,9 +125,11 @@ export default function Checkout() {
   }
 
   return (
-    <main className="container-xl py-4" style={{ maxWidth: 860 }}>
-      <h1>Checkout — {event.name}</h1>
-      <p><Link to={`/evento/${cart.eventSlug}`}>← Voltar ao evento</Link></p>
+    <Shell>
+      <div className="d-flex align-items-center justify-content-between flex-wrap mb-3">
+        <h2 className="mb-0">Confirmar inscrição — {event.name}</h2>
+        <Link className="btn btn-sm" to={`/evento/${cart.eventSlug}`}>← Voltar ao evento</Link>
+      </div>
 
       {error && (
         <div className="alert alert-danger">
@@ -180,17 +198,21 @@ export default function Checkout() {
         </div>
       )}
 
-      <div className="d-flex justify-content-between align-items-center">
-        <div className="fs-2">Total: <strong>{formatMoney(String(total))}</strong></div>
-        <button className="btn btn-primary btn-lg" onClick={submit} disabled={pending || (rows.length === 0 && !voucher)}>
-          {pending ? 'Confirmando…' : 'Confirmar pedido'}
-        </button>
+      <div className="card">
+        <div className="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <div className="text-secondary">Total do pedido</div>
+            <div className="h1 mb-0 text-primary">{formatMoney(String(total))}</div>
+            <div className="text-secondary small">
+              Sua reserva fica garantida pelo prazo indicado no pedido.
+            </div>
+          </div>
+          <button className="btn btn-primary btn-lg" onClick={submit} disabled={pending || (rows.length === 0 && !voucher)}>
+            {pending ? 'Confirmando…' : 'Confirmar pedido'}
+          </button>
+        </div>
       </div>
-      <p className="text-secondary mt-2">
-        Sua reserva fica garantida pelo prazo indicado no pedido. O pagamento
-        on-line estará disponível em breve.
-      </p>
-    </main>
+    </Shell>
   )
 }
 

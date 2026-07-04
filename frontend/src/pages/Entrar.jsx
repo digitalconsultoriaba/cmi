@@ -40,56 +40,60 @@ export default function Entrar() {
   }
 
   return (
-    <main style={{ maxWidth: 420, margin: '4rem auto', fontFamily: 'sans-serif' }}>
-      <h1>Entrar</h1>
+    <div className="page page-center py-4" data-bs-theme="light" style={{ minHeight: '100vh' }}>
+      <div className="container container-tight py-4">
+        <div className="text-center mb-4">
+          <Link to="/">
+            <img src="/logo.png" alt="CMI · GLMEES" style={{ height: 48, maxWidth: 220, objectFit: 'contain' }} />
+          </Link>
+        </div>
 
-      {verified && <p role="status">✅ E-mail confirmado! Faça login para continuar.</p>}
-      {google === 'ok' && <p role="status">✅ Login com Google concluído. Redirecionando…</p>}
-      {google === 'erro' && (
-        <p role="alert">Não foi possível entrar com o Google. Tente novamente.</p>
-      )}
-      {error?.status === 429 && <p role="alert">{error.message}</p>}
-      {error && error.status !== 429 && !fieldError(error, 'email') && (
-        <p role="alert">{error.message}</p>
-      )}
+        <div className="card card-md">
+          <div className="card-body">
+            <h2 className="h2 text-center mb-4">Entrar na sua conta</h2>
 
-      <form onSubmit={submit}>
-        <label>
-          E-mail
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-          />
-        </label>
-        {fieldError(error, 'email') && <p role="alert">{fieldError(error, 'email')}</p>}
+            {verified && <div className="alert alert-success">E-mail confirmado! Faça login para continuar.</div>}
+            {google === 'ok' && <div className="alert alert-success">Login com Google concluído. Redirecionando…</div>}
+            {google === 'erro' && <div className="alert alert-danger">Não foi possível entrar com o Google. Tente novamente.</div>}
+            {error && error.status !== 429 && !fieldError(error, 'email') && (
+              <div className="alert alert-danger">{error.message}</div>
+            )}
+            {error?.status === 429 && <div className="alert alert-warning">{error.message}</div>}
 
-        <label>
-          Senha
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </label>
+            <form onSubmit={submit} autoComplete="on">
+              <div className="mb-3">
+                <label className="form-label">E-mail</label>
+                <input type="email" className="form-control" placeholder="voce@email.com"
+                  value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+                {fieldError(error, 'email') && <div className="text-danger small mt-1">{fieldError(error, 'email')}</div>}
+              </div>
+              <div className="mb-3">
+                <label className="form-label d-flex justify-content-between">
+                  <span>Senha</span>
+                  <Link to="/esqueci-senha" className="small">Esqueci a senha</Link>
+                </label>
+                <input type="password" className="form-control" placeholder="Sua senha"
+                  value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+              </div>
+              <div className="form-footer">
+                <button type="submit" className="btn btn-primary w-100" disabled={login.isPending}>
+                  {login.isPending ? 'Entrando…' : 'Entrar'}
+                </button>
+              </div>
+            </form>
 
-        <button type="submit" disabled={login.isPending}>
-          {login.isPending ? 'Entrando…' : 'Entrar'}
-        </button>
-      </form>
+            <div className="hr-text my-3">ou</div>
 
-      <button type="button" onClick={loginGoogle}>Entrar com Google</button>
+            <button type="button" className="btn w-100" onClick={loginGoogle}>
+              Entrar com Google
+            </button>
+          </div>
+        </div>
 
-      <p>
-        <Link to="/esqueci-senha">Esqueci minha senha</Link>
-      </p>
-      <p>
-        Não tem conta? <Link to="/cadastro">Cadastre-se</Link>
-      </p>
-    </main>
+        <div className="text-center text-secondary mt-3">
+          Não tem conta? <Link to="/cadastro">Cadastre-se</Link>
+        </div>
+      </div>
+    </div>
   )
 }

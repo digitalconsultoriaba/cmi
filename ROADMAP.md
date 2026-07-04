@@ -16,6 +16,7 @@ sua área. O pacote em `base/` é material de referência; a constituição est�
 | 006 | **ciclo-vida-suporte** | Cancelamento (pedido/ingresso/evento), transferência por e-mail, estorno (`RefundPayment`), suporte (cases + notas); telas do inscrito e tesouraria correspondentes | Fase 6 | ✅ |
 | 007 | **checkin-portaria** | Check-in por QR → `used` (recusa inválido/usado/cancelado; casal conta 2), lista presentes/ausentes; `CheckinPanel` (leitor QR) | Fase 7 (T070) + T086 | ✅ |
 | 008 | **painel-relatorios** | Dashboard do evento (contagens, previsto×confirmado, camisas, por lote/forma), relatórios + export .xlsx (filtros mês/ano/período), trilha de auditoria, financeiro da tesouraria | Fase 7 (T071–T073) | ✅ |
+| 009 | **refatoracao-telas** | Reorganização do ambiente administrativo pelo protótipo aprovado (14 refs): identidade CMI/GLMEES (sidebar azul + logo, tema claro), navegação em duas camadas de abas (módulo → evento), painéis com gráficos (rosca + curva mensal), check-in com presença manual, camisas com estoque na tela, relatórios com preview | Protótipo (pós-MVP) | ✅ |
 
 ## Regras
 

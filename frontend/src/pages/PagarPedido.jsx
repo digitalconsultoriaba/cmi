@@ -7,6 +7,21 @@ import { parseApiError } from '../lib/forms'
 
 const METHOD_LABEL = { pix: 'Pix', boleto: 'Boleto', card: 'Cartão' }
 
+/** Casca com header da marca (estilo Tabler). */
+function Shell({ children }) {
+  return (
+    <div className="page" data-bs-theme="light">
+      <header className="navbar navbar-expand-md d-print-none" style={{ background: '#fff', borderBottom: '1px solid #e6e7e9' }}>
+        <div className="container-xl">
+          <Link to="/"><img src="/logo.png" alt="CMI · GLMEES" height="40"
+            style={{ background: '#fff', borderRadius: 8, padding: 3 }} /></Link>
+        </div>
+      </header>
+      <div className="page-body"><div className="container-xl">{children}</div></div>
+    </div>
+  )
+}
+
 function CopyButton({ value, label = 'Copiar' }) {
   const [copied, setCopied] = useState(false)
 
@@ -56,26 +71,35 @@ export default function PagarPedido() {
     refetchInterval: (query) => (query.state.data?.status === 'pending' ? 3000 : false),
   })
 
-  if (!order || !event) return <p style={{ padding: '2rem' }}>Carregando…</p>
+  if (!order || !event) return <Shell><p className="text-secondary">Carregando…</p></Shell>
 
   const isPaid = status?.status === 'paid' || order.status === 'paid'
 
   if (isPaid) {
     return (
-      <main className="container-xl py-5 text-center" style={{ maxWidth: 640 }}>
-        <h1>🎉 Pagamento confirmado!</h1>
-        <p className="fs-3">Seus ingressos estão confirmados — enviamos um e-mail com os detalhes.</p>
-        <Link className="btn btn-primary btn-lg" to="/minha-conta/ingressos">Ver meus ingressos</Link>
-      </main>
+      <Shell>
+        <div className="empty">
+          <div className="empty-icon" style={{ fontSize: '3rem' }}>🎉</div>
+          <p className="empty-title">Pagamento confirmado!</p>
+          <p className="empty-subtitle text-secondary">
+            Seus ingressos estão confirmados — enviamos um e-mail com os detalhes.
+          </p>
+          <div className="empty-action">
+            <Link className="btn btn-primary btn-lg" to="/minha-conta/ingressos">Ver meus ingressos</Link>
+          </div>
+        </div>
+      </Shell>
     )
   }
 
   if (order.status !== 'pending') {
     return (
-      <main className="container-xl py-5 text-center">
-        <h1>Este pedido não está aguardando pagamento.</h1>
-        <Link to="/minha-conta/pedidos">Ver meus pedidos</Link>
-      </main>
+      <Shell>
+        <div className="empty">
+          <p className="empty-title">Este pedido não está aguardando pagamento.</p>
+          <div className="empty-action"><Link className="btn" to="/minha-conta/pedidos">Ver meus pedidos</Link></div>
+        </div>
+      </Shell>
     )
   }
 
@@ -107,26 +131,49 @@ export default function PagarPedido() {
   }
 
   return (
-    <main className="container-xl py-4" style={{ maxWidth: 720 }}>
-      <h1>Pagar pedido <code>{order.code}</code></h1>
-      <p className="fs-3">Total: <strong>{formatMoney(order.totalAmount)}</strong></p>
-      {order.reservedUntil && (
-        <p className="text-warning">
-          Reserva garantida até {new Date(order.reservedUntil).toLocaleString('pt-BR')}.
-        </p>
-      )}
+    <Shell>
+      <div className="row row-cards">
+        {/* Resumo do pedido (estilo pay.html) */}
+        <div className="col-lg-4 order-lg-2">
+          <div className="card">
+            <div className="card-header"><h3 className="card-title">Resumo do pedido</h3></div>
+            <div className="card-body">
+              <div className="d-flex justify-content-between mb-2">
+                <span className="text-secondary">Pedido</span><code>{order.code}</code>
+              </div>
+              <div className="d-flex justify-content-between mb-2">
+                <span className="text-secondary">Evento</span><span>{event.name}</span>
+              </div>
+              <hr />
+              <div className="d-flex justify-content-between align-items-center">
+                <span className="h3 mb-0">Total</span>
+                <span className="h2 mb-0 text-primary">{formatMoney(order.totalAmount)}</span>
+              </div>
+              {order.reservedUntil && (
+                <div className="alert alert-warning mt-3 mb-0 py-2 small">
+                  Reserva garantida até {new Date(order.reservedUntil).toLocaleString('pt-BR')}.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-      <div className="btn-group mb-3">
-        {methods.map((method) => (
-          <button key={method} type="button"
-            className={`btn ${tab === method ? 'btn-primary' : 'btn-outline-primary'}`}
-            onClick={() => { setTab(method); setPayment(null); setError(null) }}>
-            {METHOD_LABEL[method]}
-          </button>
-        ))}
-      </div>
+        {/* Métodos de pagamento */}
+        <div className="col-lg-8 order-lg-1">
+          <h2 className="mb-3">Pagamento</h2>
 
-      {error && <div className="alert alert-danger">{error.message}</div>}
+          <div className="btn-group mb-3">
+            {methods.map((method) => (
+              <button key={method} type="button"
+                className={`btn ${tab === method ? 'btn-primary' : 'btn-outline-primary'}`}
+                onClick={() => { setTab(method); setPayment(null); setError(null) }}>
+                {METHOD_LABEL[method]}
+              </button>
+            ))}
+          </div>
+
+          {error && <div className="alert alert-danger">{error.message}</div>}
+          {!tab && <div className="card"><div className="card-body text-secondary">Escolha uma forma de pagamento acima.</div></div>}
 
       {tab === 'pix' && (
         <div className="card"><div className="card-body text-center">
@@ -226,7 +273,9 @@ export default function PagarPedido() {
         </div></div>
       )}
 
-      <p className="mt-3"><Link to="/minha-conta/pedidos">← Meus pedidos</Link></p>
-    </main>
+          <p className="mt-3"><Link to="/minha-conta/pedidos">← Meus pedidos</Link></p>
+        </div>
+      </div>
+    </Shell>
   )
 }
