@@ -72,6 +72,17 @@ class SponsorshipService
 
             $installment->sponsorship->recalculateStatus();
 
+            activity('sponsorship.installment_paid')
+                ->performedOn($installment)
+                ->withProperties([
+                    'reference' => $installment->sponsorship->company_name,
+                    'number' => $installment->number,
+                    'amount' => $installment->paid_amount,
+                ])
+                ->log('Parcela '.$installment->number.' do patrocínio de '
+                    .$installment->sponsorship->company_name.' recebida (R$ '
+                    .number_format((float) $installment->paid_amount, 2, ',', '.').')');
+
             return $installment->fresh();
         });
     }

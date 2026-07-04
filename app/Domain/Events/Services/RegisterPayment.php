@@ -42,6 +42,23 @@ class RegisterPayment
             ]);
             $payment->transitionTo(PaymentStatus::PAID);
 
+            // Trilha (spec 008): a baixa é do operador quando manual; do
+            // SISTEMA quando a evidência vem de gateway/webhook/conciliação —
+            // nunca do usuário autenticado por acaso na request.
+            $logger = activity('payment.registered')
+                ->performedOn($payment)
+                ->withProperties([
+                    'reference' => $order->code,
+                    'amount' => $paidAmount,
+                    'method' => $payment->method,
+                    'source' => $evidence->source,
+                ]);
+            $evidence->actorId !== null
+                ? $logger->causedBy(\App\Models\User::query()->find($evidence->actorId))
+                : $logger->causedByAnonymous();
+            $logger->log('Pagamento de R$ '.number_format((float) $paidAmount, 2, ',', '.')
+                .' confirmado no pedido '.$order->code.' ('.$evidence->source.')');
+
             // Pedido em situação terminal: registra sem reativar (FR-012) —
             // a pendência aparece derivada na tesouraria.
             if (in_array($order->status?->slug, OrderStatus::TERMINAL, true)

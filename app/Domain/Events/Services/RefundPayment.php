@@ -113,6 +113,17 @@ class RefundPayment
 
             $case->forceFill(['status' => 'finished'])->save();
 
+            activity('payment.refunded')
+                ->performedOn($payment)
+                ->causedBy($operator)
+                ->withProperties([
+                    'reference' => $order->code,
+                    'amount' => $refundAmount,
+                    'partial' => bccomp($refundAmount, $payment->amount, 2) !== 0,
+                ])
+                ->log('Estorno de R$ '.number_format((float) $refundAmount, 2, ',', '.')
+                    .' no pedido '.$order->code);
+
             return $case->fresh();
         });
 

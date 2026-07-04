@@ -78,6 +78,12 @@ class CheckinService
             ]);
             $ticket->transitionTo(TicketStatus::USED);
 
+            activity('ticket.checked_in')
+                ->performedOn($ticket)
+                ->causedBy($operator)
+                ->withProperties(['reference' => $ticket->code])
+                ->log('Check-in do ingresso '.$ticket->code.' ('.$ticket->participant_name.')');
+
             return $ticket->fresh(['ticketType', 'status']);
         });
     }

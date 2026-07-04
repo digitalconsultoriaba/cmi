@@ -70,7 +70,14 @@ class EventConfigService
                 'cancel_reason' => $reason,
             ]);
 
-            return $event->transitionTo(EventStatus::CANCELLED);
+            $event = $event->transitionTo(EventStatus::CANCELLED);
+
+            activity('event.cancelled')
+                ->performedOn($event)
+                ->withProperties(['reference' => $event->name, 'reason' => $reason])
+                ->log('Evento "'.$event->name.'" cancelado: '.$reason);
+
+            return $event;
         });
 
         // Cascata resiliente do pós-venda (spec 006): pedidos vivos cancelados,

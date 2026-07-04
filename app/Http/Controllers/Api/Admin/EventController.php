@@ -45,6 +45,13 @@ class EventController extends Controller
 
         $event->update($data);
 
+        // Trilha (spec 008): alterações de configuração são ações sensíveis
+        activity('event.updated')
+            ->performedOn($event)
+            ->withProperties(['reference' => $event->name, 'changed' => array_keys($data)])
+            ->log('Configuração do evento "'.$event->name.'" alterada ('
+                .implode(', ', array_keys($data)).')');
+
         return EventResource::make($event->fresh());
     }
 

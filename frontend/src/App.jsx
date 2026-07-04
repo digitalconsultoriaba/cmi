@@ -24,13 +24,16 @@ import Camisas from './admin/pages/Camisas'
 import Landing from './admin/pages/Landing'
 import Cortesias from './admin/pages/Cortesias'
 import Patrocinios from './admin/pages/Patrocinios'
+import Auditoria from './admin/pages/Auditoria'
+import Dashboard from './admin/pages/Dashboard'
+import Financeiro from './admin/pages/Financeiro'
 
-// Home do painel por papel: admin → Evento; tesouraria → Tesouraria;
+// Home do painel por papel: admin → Dashboard; tesouraria → Tesouraria;
 // portaria → Check-in direto
 function PainelHome() {
   const { user } = useAuth()
 
-  if (user.roles.includes('admin')) return <Evento />
+  if (user.roles.includes('admin')) return <Dashboard />
   if (user.roles.includes('treasury')) return <Tesouraria />
 
   return <Checkin />
@@ -126,14 +129,17 @@ export default function App() {
             }
           >
             <Route index element={<PainelHome />} />
+            <Route path="evento" element={<RoleRoute role="admin"><Evento /></RoleRoute>} />
             <Route path="tipos-lotes" element={<RoleRoute role="admin"><TiposLotes /></RoleRoute>} />
             <Route path="camisas" element={<RoleRoute role="admin"><Camisas /></RoleRoute>} />
             <Route path="landing" element={<RoleRoute role="admin"><Landing /></RoleRoute>} />
             <Route path="cortesias" element={<RoleRoute role="admin"><Cortesias /></RoleRoute>} />
             <Route path="patrocinios" element={<RoleRoute role="admin"><Patrocinios /></RoleRoute>} />
             <Route path="tesouraria" element={<Tesouraria />} />
+            <Route path="financeiro" element={<RoleRoute roles={['treasury', 'admin']}><Financeiro /></RoleRoute>} />
             <Route path="suporte" element={<SuporteFila />} />
             <Route path="checkin" element={<Checkin />} />
+            <Route path="auditoria" element={<RoleRoute role="admin"><Auditoria /></RoleRoute>} />
           </Route>
         </Routes>
         </CartProvider>
