@@ -71,7 +71,7 @@ export default function EventoLayout() {
           <div className="card mb-3">
             <div className="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
               <div className="d-flex align-items-center gap-3">
-                <button className="btn btn-sm" onClick={() => navigate('/painel/modulo/eventos')}>← Voltar</button>
+                <button className="btn btn-sm" onClick={() => navigate('/painel/eventos')}>← Voltar</button>
                 <h2 className="mb-0">{event.name}</h2>
                 <span className={`badge ${STATUS_BADGE[event.status] ?? 'bg-secondary'} text-white`}>
                   {STATUS_LABEL[event.status] ?? event.status}

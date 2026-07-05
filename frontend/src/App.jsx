@@ -27,10 +27,8 @@ import Patrocinios from './admin/pages/Patrocinios'
 import Auditoria from './admin/pages/Auditoria'
 import Financeiro from './admin/pages/Financeiro'
 // Painel v2 (spec 009) — casca em duas camadas de abas
-import ModuloLayout from './admin/eventos/ModuloLayout'
 import PainelModulo from './admin/eventos/PainelModulo'
 import ListaEventos from './admin/eventos/ListaEventos'
-import TiposEvento from './admin/eventos/TiposEvento'
 import EventoLayout from './admin/eventos/EventoLayout'
 import PainelEvento from './admin/eventos/abas/PainelEvento'
 import Inscritos from './admin/eventos/abas/Inscritos'
@@ -50,9 +48,9 @@ import FinancasRelatorios from './admin/financas/Relatorios'
 function PainelHome() {
   const { user } = useAuth()
 
-  // Admin e financeiro entram no módulo inteiro (spec 009)
+  // Admin e financeiro entram no Dashboard
   if (user.roles.includes('admin') || user.roles.includes('treasury')) {
-    return <Navigate to="/painel/modulo" replace />
+    return <Navigate to="/painel/dashboard" replace />
   }
 
   return <Navigate to="/painel/checkin" replace />
@@ -130,12 +128,9 @@ export default function App() {
           >
             <Route index element={<PainelHome />} />
 
-            {/* ── Módulo Eventos (1ª camada de abas) ── */}
-            <Route path="modulo" element={<RoleRoute roles={['admin', 'treasury']}><ModuloLayout /></RoleRoute>}>
-              <Route index element={<PainelModulo />} />
-              <Route path="eventos" element={<ListaEventos />} />
-              <Route path="tipos" element={<TiposEvento />} />
-            </Route>
+            {/* ── Dashboard (visão geral) e Eventos (lista direta) ── */}
+            <Route path="dashboard" element={<RoleRoute roles={['admin', 'treasury']}><PainelModulo /></RoleRoute>} />
+            <Route path="eventos" element={<RoleRoute roles={['admin', 'treasury']}><ListaEventos /></RoleRoute>} />
 
             {/* ── Atendimento centralizado (sidebar, admin+financeiro) ── */}
             <Route path="atendimentos" element={<RoleRoute roles={['admin', 'treasury']}><Atendimentos /></RoleRoute>} />
