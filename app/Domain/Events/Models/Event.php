@@ -6,6 +6,7 @@ use App\Domain\Events\Models\Concerns\TransitionsStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 class Event extends BaseModel
@@ -42,6 +43,11 @@ class Event extends BaseModel
     public function eventType(): BelongsTo
     {
         return $this->belongsTo(EventType::class);
+    }
+
+    public function budgetPlan(): HasOne
+    {
+        return $this->hasOne(BudgetPlan::class);
     }
 
     public function landingBlocks(): HasMany

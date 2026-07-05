@@ -17,6 +17,7 @@ const TABS = [
   { to: 'camisas', label: 'Camisas' },
   { to: 'cortesias', label: 'Cortesias' },
   { to: 'patrocinio', label: 'Patrocínio' },
+  { to: 'orcamento', label: 'Orçamento' },
   { to: 'financeiro', label: 'Financeiro' },
   { to: 'relatorios', label: 'Relatórios' },
   { to: 'checkin', label: 'Check-in' },
