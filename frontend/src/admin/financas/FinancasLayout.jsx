@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
 const TABS = [
-  { to: '/painel/financas', label: 'Dashboard', end: true },
+  { to: '/painel/financas', label: 'Painel', end: true },
   { to: '/painel/financas/pagar', label: 'Contas a Pagar' },
   { to: '/painel/financas/receber', label: 'Contas a Receber' },
   { to: '/painel/financas/cadastros', label: 'Cadastros' },

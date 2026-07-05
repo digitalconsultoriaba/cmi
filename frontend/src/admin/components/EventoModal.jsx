@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiErrorAlert, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut } from '../../lib/api'
 
@@ -22,11 +22,20 @@ const snake = (obj) => obj
 /** Modal criar/editar evento (spec 009, imagens 12–13). */
 export default function EventoModal({ event, onClose, onSaved }) {
   const isEdit = !!event
+  const queryClient = useQueryClient()
   const { run, error, setError, busy } = useApiAction()
+  const [newType, setNewType] = useState(null) // nome do novo tipo (null = fechado)
 
   const { data: types = [] } = useQuery({
     queryKey: ['admin', 'event-types'],
     queryFn: () => apiGet('/admin/event-types'),
+  })
+
+  const salvarTipo = () => run(async () => {
+    const created = await apiPost('/admin/event-types', { name: newType })
+    await queryClient.invalidateQueries({ queryKey: ['admin', 'event-types'] })
+    setForm((f) => ({ ...f, event_type_id: created.id }))
+    setNewType(null)
   })
 
   const [form, setForm] = useState(() => ({
@@ -81,10 +90,22 @@ export default function EventoModal({ event, onClose, onSaved }) {
               </div>
               <div className="col-md-4">
                 <label className="form-label required">Tipo</label>
-                <select className="form-select" value={form.event_type_id} onChange={set('event_type_id')}>
-                  <option value="">Selecione…</option>
-                  {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
+                {newType === null ? (
+                  <div className="input-group">
+                    <select className="form-select" value={form.event_type_id} onChange={set('event_type_id')}>
+                      <option value="">Selecione…</option>
+                      {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>
+                    <button type="button" className="btn" title="Cadastrar novo tipo" onClick={() => setNewType('')}>+ Novo</button>
+                  </div>
+                ) : (
+                  <div className="input-group">
+                    <input className="form-control" autoFocus placeholder="Nome do novo tipo"
+                      value={newType} onChange={(e) => setNewType(e.target.value)} />
+                    <button type="button" className="btn btn-primary" disabled={busy || !newType.trim()} onClick={salvarTipo}>Salvar</button>
+                    <button type="button" className="btn" onClick={() => setNewType(null)}>×</button>
+                  </div>
+                )}
               </div>
               <div className="col-12">
                 <label className="form-label">Descrição</label>

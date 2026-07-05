@@ -86,19 +86,28 @@ class FinancialReportService
     public function dashboard(array $filters): array
     {
         $tz = config('events.timezone');
-        $monthFrom = Carbon::now($tz)->startOfMonth()->toDateString();
-        $monthTo = Carbon::now($tz)->endOfMonth()->toDateString();
+        // Mês do painel: informado (Y-m) ou o mês atual.
+        $ref = ! empty($filters['month'])
+            ? Carbon::createFromFormat('Y-m', $filters['month'], $tz)->startOfMonth()
+            : Carbon::now($tz);
+        $monthFrom = $ref->copy()->startOfMonth()->toDateString();
+        $monthTo = $ref->copy()->endOfMonth()->toDateString();
 
         $monthScope = array_merge($filters, ['from' => $monthFrom, 'to' => $monthTo]);
         $mBase = $this->scoped($monthScope);
 
-        // Recebido/pago no mês = baixas (settlements) com settled_on no mês
-        $receivedMonth = (string) FinancialSettlement::query()
+        // Recebido/pago no mês = baixas (settlements) com settled_on no mês,
+        // respeitando o filtro de evento quando informado.
+        $scopeEvent = fn ($q) => ! empty($filters['event'])
+            ? $q->whereHas('entry', fn ($e) => $e->where('event_id', $filters['event']))
+            : $q;
+
+        $receivedMonth = (string) $scopeEvent(FinancialSettlement::query()
             ->where('kind', FinancialSettlement::RECEIPT)
-            ->whereBetween('settled_on', [$monthFrom, $monthTo])->sum('amount');
-        $paidMonth = (string) FinancialSettlement::query()
+            ->whereBetween('settled_on', [$monthFrom, $monthTo]))->sum('amount');
+        $paidMonth = (string) $scopeEvent(FinancialSettlement::query()
             ->where('kind', FinancialSettlement::PAYMENT)
-            ->whereBetween('settled_on', [$monthFrom, $monthTo])->sum('amount');
+            ->whereBetween('settled_on', [$monthFrom, $monthTo]))->sum('amount');
 
         $toReceive = (string) (clone $mBase)->where('direction', FinancialEntry::RECEIVABLE)
             ->sum(\DB::raw('amount - settled_amount'));

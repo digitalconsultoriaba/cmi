@@ -4,8 +4,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../../../lib/api'
 import { ApiErrorAlert, useApiAction } from '../../components'
 import ClienteFicha from './ClienteFicha'
+import FinanceiroEvento from './FinanceiroEvento'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const dateTime = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : null)
 
 // Badges sólidos (cores fortes) — texto branco
 const STATUS_BADGE = {
@@ -15,11 +17,14 @@ const STATUS_BADGE = {
   cancelled: 'bg-danger text-white', transferred: 'bg-secondary text-white',
   refunded: 'bg-danger text-white',
 }
+// "Confirmado" (ingresso pago e confirmado) é exibido como "Pago".
+const statusLabel = (i) => (i.status === 'confirmed' ? 'Pago' : i.statusLabel)
 
 export default function Inscritos() {
   const { eventId } = useParams()
   const queryClient = useQueryClient()
   const { run, error, setError, busy } = useApiAction()
+  const [tab, setTab] = useState('inscritos') // inscritos | financeiro
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [perPage, setPerPage] = useState(25)
@@ -56,6 +61,17 @@ export default function Inscritos() {
 
   return (
     <>
+      <ul className="nav nav-pills mb-3">
+        <li className="nav-item">
+          <button className={`nav-link ${tab === 'inscritos' ? 'active' : ''}`} onClick={() => setTab('inscritos')}>Inscritos</button>
+        </li>
+        <li className="nav-item">
+          <button className={`nav-link ${tab === 'financeiro' ? 'active' : ''}`} onClick={() => setTab('financeiro')}>Financeiro</button>
+        </li>
+      </ul>
+
+      {tab === 'financeiro' ? <FinanceiroEvento /> : (
+      <>
       <ApiErrorAlert error={error} onClose={() => setError(null)} />
 
       <div className="card mb-3">
@@ -121,8 +137,11 @@ export default function Inscritos() {
                       {i.shirt ?? '—'}
                       {i.companionShirt && <div className="text-secondary">acomp.: {i.companionShirt}</div>}
                     </td>
-                    <td className="text-end">{money(i.amount)}</td>
-                    <td><span className={`badge ${STATUS_BADGE[i.status] ?? 'bg-secondary text-white'}`}>{i.statusLabel}</span></td>
+                    <td className="text-end">
+                      {money(i.amount)}
+                      {i.paidAt && <div className="small text-secondary">pago em {dateTime(i.paidAt)}</div>}
+                    </td>
+                    <td><span className={`badge ${STATUS_BADGE[i.status] ?? 'bg-secondary text-white'}`}>{statusLabel(i)}</span></td>
                     <td className="text-end">
                       {i.paymentPending && (
                         <button className="btn btn-sm btn-success" disabled={busy}
@@ -165,6 +184,8 @@ export default function Inscritos() {
           </div>
         )}
       </div>
+      </>
+      )}
     </>
   )
 }

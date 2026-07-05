@@ -6,6 +6,7 @@ import { ApiErrorAlert, useApiAction } from '../../components'
 import ClienteFicha from './ClienteFicha'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+const dateTime = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : null)
 
 // Badges sólidos (cores fortes)
 const STATUS_BADGE = {
@@ -66,7 +67,7 @@ export default function FinanceiroEvento() {
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead>
-              <tr><th>Pedido</th><th>Comprador</th><th className="text-end">Valor</th><th>Ingressos</th><th>Forma</th><th>Situação</th><th /></tr>
+              <tr><th>Pedido</th><th>Comprador</th><th className="text-end">Valor</th><th>Ingressos</th><th>Forma</th><th>Recebido por</th><th>Situação</th><th /></tr>
             </thead>
             <tbody>
               {items.map((o) => (
@@ -77,6 +78,11 @@ export default function FinanceiroEvento() {
                   <td className="text-end">{money(o.total)}</td>
                   <td>{o.ticketCount}</td>
                   <td className="text-capitalize">{o.method ?? '—'}</td>
+                  <td>
+                    {o.receivedBy
+                      ? <>{o.receivedBy}{o.paidAt && <div className="small text-secondary">{dateTime(o.paidAt)}</div>}</>
+                      : <span className="text-secondary">—</span>}
+                  </td>
                   <td><span className={`badge ${STATUS_BADGE[o.status] ?? 'bg-secondary text-white'}`}>{o.statusLabel}</span></td>
                   <td className="text-end" onClick={(e) => e.stopPropagation()}>
                     {o.canSettle && (
@@ -99,7 +105,7 @@ export default function FinanceiroEvento() {
                 </tr>
               ))}
               {items.length === 0 && (
-                <tr><td colSpan={7} className="text-secondary">Nenhum pedido no filtro.</td></tr>
+                <tr><td colSpan={8} className="text-secondary">Nenhum pedido no filtro.</td></tr>
               )}
             </tbody>
           </table>

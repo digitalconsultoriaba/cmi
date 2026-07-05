@@ -40,9 +40,9 @@ export default function Orcamento() {
 
       <ResumoCards summary={data.summary} />
 
-      <ItensCusto base={base} items={data.costItems} onChange={refresh} />
       <Lotes base={base} lots={data.ticketLots} onChange={refresh} />
       <Patrocinios base={base} sponsorships={data.sponsorships} onChange={refresh} />
+      <ItensCusto base={base} items={data.costItems} onChange={refresh} />
       <Participantes base={base} plan={data.plan} onChange={refresh} />
 
       <Graficos costItems={data.costItems} summary={data.summary} />

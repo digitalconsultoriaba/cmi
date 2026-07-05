@@ -17,6 +17,9 @@ class PublicEventController extends Controller
         // Rascunho não existe para o público (FR-002)
         abort_if($status === EventStatus::DRAFT, 404);
 
+        // Oculto do site (interruptor "Mostrar no site") → não aparece/inscreve.
+        abort_if(! $event->visible_on_site, 404);
+
         if ($status === EventStatus::CANCELLED) {
             return ApiResponse::data([
                 'name' => $event->name,

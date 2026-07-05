@@ -31,6 +31,7 @@ class Event extends BaseModel
         'allow_user_cancel' => 'boolean',
         'allow_refund_request' => 'boolean',
         'allow_courtesy' => 'boolean',
+        'visible_on_site' => 'boolean',
     ];
 
     // ── Relacionamentos ─────────────────────────────────────────────

@@ -10,15 +10,15 @@ import EventoModal from '../components/EventoModal'
 const EventoUI = createContext(null)
 export const useEventoUI = () => useContext(EventoUI)
 
+// `when` opcional: só entra na barra quando a condição é verdadeira.
 const TABS = [
   { to: '', label: 'Painel', end: true },
-  { to: 'inscritos', label: 'Inscritos' },
+  { to: 'inscritos', label: 'Inscritos' }, // Financeiro foi agrupado aqui
   { to: 'ingressos', label: 'Ingressos' },
-  { to: 'camisas', label: 'Camisas' },
+  { to: 'camisas', label: 'Camisas', when: (e) => e.allowShirtChoice || e.requiresShirt },
   { to: 'cortesias', label: 'Cortesias' },
   { to: 'patrocinio', label: 'Patrocínio' },
   { to: 'orcamento', label: 'Orçamento' },
-  { to: 'financeiro', label: 'Financeiro' },
   { to: 'relatorios', label: 'Relatórios' },
   { to: 'checkin', label: 'Check-in' },
   { to: 'trilha', label: 'Logs' },
@@ -59,6 +59,11 @@ export default function EventoLayout() {
     run(() => apiPost(`/admin/events/${event.id}/cancel`, { reason }), { onSuccess: refresh })
   }
 
+  const toggleVisibilidade = () => run(
+    () => apiPost(`/admin/events/${event.id}/visibility`, { visible: !event.visibleOnSite }),
+    { onSuccess: refresh },
+  )
+
   return (
     <EventoUI.Provider value={{ hideChrome, setHideChrome }}>
       {!hideChrome && (
@@ -73,6 +78,10 @@ export default function EventoLayout() {
                 </span>
               </div>
               <div className="btn-list">
+                <button className={`btn btn-sm ${event.visibleOnSite ? 'btn-success' : 'btn-outline-secondary'}`}
+                  disabled={busy} onClick={toggleVisibilidade}>
+                  {event.visibleOnSite ? '● Mostrando no site' : '○ Oculto do site'}
+                </button>
                 <button className="btn btn-sm" onClick={() => setEditing(true)}>Editar</button>
                 <label className="btn btn-sm mb-0">
                   Adicionar banner
@@ -97,7 +106,7 @@ export default function EventoLayout() {
           <ApiErrorAlert error={error} onClose={() => setError(null)} />
 
           <ul className="nav nav-tabs mb-3">
-            {TABS.map((tab) => (
+            {TABS.filter((tab) => !tab.when || tab.when(event)).map((tab) => (
               <li className="nav-item" key={tab.to || 'painel'}>
                 <NavLink className="nav-link" end={tab.end}
                   to={tab.to ? `/painel/eventos/${event.id}/${tab.to}` : `/painel/eventos/${event.id}`}>

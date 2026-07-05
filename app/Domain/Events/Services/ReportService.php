@@ -388,7 +388,10 @@ class ReportService
     public function eventPanel(Event $event): array
     {
         $tickets = $this->eligibleTickets($event);
-        $people = fn ($collection) => (int) $collection->sum(fn (Ticket $t) => $this->seats($t));
+        // Contagem por INGRESSO (linha), para casar com a lista de Inscritos —
+        // um casal é 1 inscrição (não 2 assentos). Assentos seguem só na
+        // capacidade/portaria.
+        $people = fn ($collection) => (int) $collection->count();
 
         $usedSlug = TicketStatus::USED;
         $rev = $this->revenue($event);
@@ -439,7 +442,7 @@ class ReportService
         return $tickets->groupBy(fn (Ticket $t) => $t->ticketType?->name ?? '—')
             ->map(fn ($group, $name) => [
                 'type' => $name,
-                'count' => (int) $group->sum(fn (Ticket $t) => $this->seats($t)),
+                'count' => $group->count(), // por INGRESSO (linha), igual à lista de Inscritos
                 'revenue' => $this->money((string) $group->sum(fn (Ticket $t) => (float) $t->unit_price)),
             ])->values()->all();
     }
@@ -484,7 +487,7 @@ class ReportService
         $query = Ticket::query()
             ->where('event_id', $event->id)
             ->with(['ticketType', 'status', 'shirtModel', 'shirtSize',
-                'companionShirtModel', 'companionShirtSize', 'order.status'])
+                'companionShirtModel', 'companionShirtSize', 'order.status', 'order.payments.status'])
             ->orderBy('participant_name');
 
         if (! empty($filters['search'])) {
@@ -529,6 +532,8 @@ class ReportService
             'amount' => $this->money((string) $t->unit_price),
             'status' => $t->status?->slug,
             'statusLabel' => $t->status?->name,
+            'paidAt' => $t->order?->payments
+                ?->firstWhere('status.slug', PaymentStatus::PAID)?->paid_at?->toISOString(),
             'purchasedAt' => $t->created_at?->toISOString(),
             'orderCode' => $t->order?->code,
             'orderStatus' => $t->order?->status?->slug,
@@ -557,7 +562,7 @@ class ReportService
     public function ordersList(Event $event, ?string $status): array
     {
         $query = $event->orders()
-            ->with(['status', 'buyerUser', 'payments.status'])
+            ->with(['status', 'buyerUser', 'payments.status', 'payments.registeredBy'])
             ->orderByDesc('id');
 
         if (! empty($status)) {
@@ -577,6 +582,8 @@ class ReportService
                 'statusLabel' => $order->status?->name,
                 'method' => $paid?->method,
                 'paidAt' => $paid?->paid_at?->toISOString(),
+                // Recebido por: operador da baixa manual OU "Sistema" (automático).
+                'receivedBy' => $paid ? ($paid->registeredBy?->name ?? 'Sistema') : null,
                 'ticketCount' => $order->tickets()->count(),
                 'canSettle' => in_array($order->status?->slug,
                     [OrderStatus::PENDING, OrderStatus::PARTIALLY_PAID], true),
@@ -642,17 +649,22 @@ class ReportService
      * alimentam o export .xlsx (invariante 5). `previewLimit` limita a
      * exibição sem truncar o export (que passa limit=null).
      */
-    public function reportPreview(Event $event, string $type, array $filters, ?int $previewLimit = 100): array
+    public function reportPreview(Event $event, string $type, array $filters, int $page = 1, int $perPage = 25): array
     {
         [$columns, $rows] = $this->reportRows($event, $type, $filters);
         $total = count($rows);
-        $shown = $previewLimit !== null ? array_slice($rows, 0, $previewLimit) : $rows;
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, $page), $lastPage);
+        $shown = array_slice($rows, ($page - 1) * $perPage, $perPage);
 
         return [
             'columns' => $columns,
-            'rows' => $shown,
+            'rows' => array_values($shown),
             'total' => $total,
             'shown' => count($shown),
+            'page' => $page,
+            'perPage' => $perPage,
+            'lastPage' => $lastPage,
         ];
     }
 
