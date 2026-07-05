@@ -10,11 +10,18 @@ export default function Usuarios() {
   const queryClient = useQueryClient()
   const { run, error, setError, busy } = useApiAction()
   const [creating, setCreating] = useState(false)
+  const [search, setSearch] = useState('')
 
   const { data: users = [] } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: () => apiGet('/admin/users'),
   })
+
+  const termo = search.trim().toLowerCase()
+  const filtrados = termo
+    ? users.filter((u) => `${u.name} ${u.email} ${u.roles.map((r) => ROLE_LABEL[r] ?? r).join(' ')}`
+        .toLowerCase().includes(termo))
+    : users
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
 
@@ -42,12 +49,18 @@ export default function Usuarios() {
       {creating && <CriarUsuarioModal busy={busy} onClose={() => setCreating(false)} onCreate={criar} />}
 
       <div className="card">
-        <div className="card-header"><h3 className="card-title">Equipe ({users.length})</h3></div>
+        <div className="card-header d-flex align-items-center">
+          <h3 className="card-title mb-0">Equipe ({filtrados.length})</h3>
+          <div className="ms-auto">
+            <input className="form-control" style={{ minWidth: 240 }} placeholder="Buscar por nome, e-mail ou papel…"
+              value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        </div>
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th /></tr></thead>
             <tbody>
-              {users.map((u) => (
+              {filtrados.map((u) => (
                 <tr key={u.id}>
                   <td className="fw-bold">{u.name}</td>
                   <td>{u.email}</td>
@@ -64,7 +77,9 @@ export default function Usuarios() {
                   </td>
                 </tr>
               ))}
-              {users.length === 0 && <tr><td colSpan={4} className="text-secondary">Nenhum usuário de equipe.</td></tr>}
+              {filtrados.length === 0 && <tr><td colSpan={4} className="text-secondary">
+                {users.length === 0 ? 'Nenhum usuário de equipe.' : 'Nenhum usuário no filtro.'}
+              </td></tr>}
             </tbody>
           </table>
         </div>

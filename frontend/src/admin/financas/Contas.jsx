@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
 import LancamentoModal from './LancamentoModal'
 import LancamentoDetalhe from './LancamentoDetalhe'
+import MonthYearSelect, { CURRENT_MONTH, CURRENT_YEAR, monthRange } from './MonthYearSelect'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const STATUS_BADGE = {
@@ -14,6 +15,8 @@ export default function Contas({ direction }) {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
+  const [month, setMonth] = useState(CURRENT_MONTH)
+  const [year, setYear] = useState(CURRENT_YEAR)
   const [perPage, setPerPage] = useState(25)
   const [page, setPage] = useState(1)
   const [creating, setCreating] = useState(false)
@@ -22,9 +25,14 @@ export default function Contas({ direction }) {
   const params = new URLSearchParams({ direction, perPage, page })
   if (search) params.set('search', search)
   if (status) params.set('status', status)
+  if (month !== '') {
+    const { from, to } = monthRange(year, month)
+    params.set('from', from)
+    params.set('to', to)
+  }
 
   const { data } = useQuery({
-    queryKey: ['finance', 'entries', direction, search, status, perPage, page],
+    queryKey: ['finance', 'entries', direction, search, status, month, year, perPage, page],
     queryFn: () => apiGet(`/finance/entries?${params}`),
     keepPreviousData: true,
   })
@@ -42,9 +50,13 @@ export default function Contas({ direction }) {
     <>
       <div className="card mb-3"><div className="card-body">
         <div className="row g-2 align-items-end">
-          <div className="col-md-5"><label className="form-label">Buscar</label>
+          <div className="col-md-4"><label className="form-label">Buscar</label>
             <input className="form-control" placeholder="Descrição…" value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }} /></div>
+          <div className="col-md-4">
+            <MonthYearSelect month={month} year={year} allowAll
+              onChange={({ month: m, year: y }) => { setMonth(m); setYear(y); setPage(1) }} />
+          </div>
           <div className="col-md-4"><label className="form-label">Situação</label>
             <select className="form-select" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}>
               <option value="">Todas</option>
@@ -54,11 +66,8 @@ export default function Contas({ direction }) {
               <option value="overdue">Vencido</option>
               <option value="cancelled">Cancelado</option>
             </select></div>
-          <div className="col-md-3"><label className="form-label">Por página</label>
-            <select className="form-select" value={perPage} onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1) }}>
-              <option value={25}>25</option><option value={50}>50</option><option value={100}>100</option>
-            </select></div>
         </div>
+        <div className="form-hint mt-1">Filtro por mês aplica-se ao vencimento das contas.</div>
       </div></div>
 
       <div className="card">
@@ -95,17 +104,28 @@ export default function Contas({ direction }) {
             </tbody>
           </table>
         </div>
-        {data && data.lastPage > 1 && (
-          <div className="card-footer d-flex align-items-center">
-            <p className="m-0 text-secondary">Página {data.page} de {data.lastPage} · {data.total} conta(s)</p>
-            <ul className="pagination m-0 ms-auto">
-              <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => setPage((p) => Math.max(1, p - 1))}>Anteriores</button></li>
-              <li className={`page-item ${page >= data.lastPage ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => setPage((p) => p + 1)}>Próximos</button></li>
-            </ul>
+        <div className="card-footer d-flex align-items-center flex-wrap gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-secondary">Por página</span>
+            <select className="form-select form-select-sm w-auto" value={perPage}
+              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1) }}>
+              <option value={25}>25</option><option value={50}>50</option><option value={100}>100</option>
+            </select>
           </div>
-        )}
+          {data && (
+            <div className="ms-auto d-flex align-items-center gap-3">
+              <span className="text-secondary">Página {data.page} de {data.lastPage} · {data.total} conta(s)</span>
+              {data.lastPage > 1 && (
+                <ul className="pagination m-0">
+                  <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => setPage((p) => Math.max(1, p - 1))}>Anteriores</button></li>
+                  <li className={`page-item ${page >= data.lastPage ? 'disabled' : ''}`}>
+                    <button className="page-link" onClick={() => setPage((p) => p + 1)}>Próximos</button></li>
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {creating && (

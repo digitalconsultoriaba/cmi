@@ -51,6 +51,10 @@ export default function PainelModulo() {
 
   return (
     <>
+      <div className="page-header d-print-none mb-3">
+        <div className="page-pretitle">Visão geral</div>
+        <h2 className="page-title mb-0">Dashboard</h2>
+      </div>
       <div className="card mb-3">
         <div className="card-body">
           <div className="row g-2 align-items-end">

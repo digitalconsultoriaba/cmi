@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
 import EventoModal from '../components/EventoModal'
+import TiposEventoModal from './TiposEventoModal'
 
 const STATUS_BADGE = {
   published: 'bg-green-lt', draft: 'bg-secondary-lt',
@@ -16,6 +17,7 @@ export default function ListaEventos() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [creating, setCreating] = useState(false)
+  const [showTipos, setShowTipos] = useState(false)
 
   const { data: events = [] } = useQuery({
     queryKey: ['admin', 'events'],
@@ -23,10 +25,16 @@ export default function ListaEventos() {
   })
 
   return (
+    <>
+    <div className="page-header d-print-none mb-3">
+      <div className="page-pretitle">Gestão</div>
+      <h2 className="page-title mb-0">Eventos</h2>
+    </div>
     <div className="card">
       <div className="card-header">
         <h3 className="card-title">Eventos ({events.length})</h3>
-        <div className="card-actions">
+        <div className="card-actions btn-list">
+          <button className="btn" onClick={() => setShowTipos(true)}>Tipos</button>
           <button className="btn btn-primary" onClick={() => setCreating(true)}>Novo evento</button>
         </div>
       </div>
@@ -65,5 +73,8 @@ export default function ListaEventos() {
           }} />
       )}
     </div>
+
+    {showTipos && <TiposEventoModal onClose={() => setShowTipos(false)} />}
+    </>
   )
 }

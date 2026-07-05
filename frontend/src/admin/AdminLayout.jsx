@@ -7,7 +7,7 @@ import { Modal, ApiErrorAlert, useApiAction } from './components'
 
 function homeFor(user) {
   // Admin e financeiro entram no módulo inteiro (spec 009)
-  if (user?.roles.includes('admin') || user?.roles.includes('treasury')) return '/painel/modulo'
+  if (user?.roles.includes('admin') || user?.roles.includes('treasury')) return '/painel/dashboard'
   return '/painel/checkin'
 }
 
@@ -56,7 +56,12 @@ export default function AdminLayout() {
           <ul className="navbar-nav pt-lg-3">
             {(isAdmin || isTreasury) && (
               <li className="nav-item">
-                <NavLink className="nav-link" to="/painel/modulo">Eventos</NavLink>
+                <NavLink className="nav-link" to="/painel/dashboard">Dashboard</NavLink>
+              </li>
+            )}
+            {(isAdmin || isTreasury) && (
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/painel/eventos" end>Eventos</NavLink>
               </li>
             )}
             {(isAdmin || isTreasury) && (
@@ -84,10 +89,11 @@ export default function AdminLayout() {
                 <NavLink className="nav-link" to="/painel/checkin">Check-in</NavLink>
               </li>
             )}
-            {/* Sair — sempre por último, abaixo dos demais menus */}
-            <li className="nav-item mt-auto">
-              <button type="button" className="nav-link btn btn-link text-start w-100" onClick={sair}>
-                Sair
+            {/* Sair — logo abaixo dos demais menus (ex.: Usuários) */}
+            <li className="nav-item" style={{ borderTop: '1px solid rgba(255,255,255,.12)', marginTop: 4, paddingTop: 4 }}>
+              <button type="button" className="nav-link border-0 bg-transparent text-start w-100"
+                onClick={sair} style={{ cursor: 'pointer' }}>
+                <span className="nav-link-title">Sair</span>
               </button>
             </li>
           </ul>

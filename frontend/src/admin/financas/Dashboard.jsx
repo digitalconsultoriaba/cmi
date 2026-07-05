@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
+import MonthYearSelect, { CURRENT_MONTH, CURRENT_YEAR, monthRange } from './MonthYearSelect'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -18,19 +19,18 @@ function Stat({ label, value, hint, className = '' }) {
 
 export default function Dashboard() {
   const [event, setEvent] = useState('')
-  const [monthSel, setMonthSel] = useState('')
+  const [month, setMonth] = useState(CURRENT_MONTH)
+  const [year, setYear] = useState(CURRENT_YEAR)
 
   const { data: events = [] } = useQuery({ queryKey: ['admin', 'events'], queryFn: () => apiGet('/admin/events') })
 
   const params = new URLSearchParams()
   if (event) params.set('event', event)
-  if (monthSel) {
-    params.set('month', monthSel)
-    // agrupa também o escopo geral pelo mês selecionado
-    const [y, m] = monthSel.split('-').map(Number)
-    params.set('from', `${monthSel}-01`)
-    params.set('to', `${monthSel}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`)
-  }
+  const mm = String(month).padStart(2, '0')
+  params.set('month', `${year}-${mm}`)
+  const { from, to } = monthRange(year, month)
+  params.set('from', from)
+  params.set('to', to)
   const qs = params.toString()
 
   const { data } = useQuery({
@@ -40,32 +40,31 @@ export default function Dashboard() {
   })
 
   if (!data) return <p className="text-secondary">Carregando…</p>
-  const { month, overdue, balances, bestEvents, worstEvents, dueBuckets, upcoming } = data
+  const { month: monthData, overdue, balances, bestEvents, worstEvents, dueBuckets, upcoming } = data
 
   return (
     <>
       <div className="card mb-3"><div className="card-body">
         <div className="row g-2 align-items-end">
-          <div className="col-md-7">
+          <div className="col-md-6">
             <label className="form-label">Evento</label>
             <select className="form-select" value={event} onChange={(e) => setEvent(e.target.value)}>
               <option value="">Todos os eventos</option>
               {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
             </select>
           </div>
-          <div className="col-md-3"><label className="form-label">Mês</label>
-            <input type="month" className="form-control" value={monthSel} onChange={(e) => setMonthSel(e.target.value)} /></div>
-          <div className="col-md-2 d-flex align-items-end">
-            <button className="btn w-100" onClick={() => setMonthSel('')} disabled={!monthSel}>Mês atual</button>
+          <div className="col-md-6">
+            <MonthYearSelect month={month} year={year}
+              onChange={({ month: m, year: y }) => { setMonth(m); setYear(y) }} />
           </div>
         </div>
       </div></div>
 
       <div className="row row-deck row-cards mb-3">
-        <Stat label="A receber no mês" value={money(month.toReceive)} className="text-blue" />
-        <Stat label="Recebido no mês" value={money(month.received)} className="text-green" />
-        <Stat label="A pagar no mês" value={money(month.toPay)} className="text-orange" />
-        <Stat label="Pago no mês" value={money(month.paid)} className="text-red" />
+        <Stat label="A receber no mês" value={money(monthData.toReceive)} className="text-blue" />
+        <Stat label="Recebido no mês" value={money(monthData.received)} className="text-green" />
+        <Stat label="A pagar no mês" value={money(monthData.toPay)} className="text-orange" />
+        <Stat label="Pago no mês" value={money(monthData.paid)} className="text-red" />
       </div>
       <div className="row row-deck row-cards mb-3">
         <Stat label="Saldo previsto" value={money(balances.expected)} />
