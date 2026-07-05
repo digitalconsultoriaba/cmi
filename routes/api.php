@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\BudgetController;
+use App\Http\Controllers\Api\Admin\BudgetCostItemController;
+use App\Http\Controllers\Api\Admin\BudgetScenarioController;
+use App\Http\Controllers\Api\Admin\BudgetSponsorshipController;
+use App\Http\Controllers\Api\Admin\BudgetTicketLotController;
 use App\Http\Controllers\Api\Admin\CourtesyVoucherController;
 use App\Http\Controllers\Api\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Api\Admin\EventTypeController;
@@ -275,5 +280,30 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::put('/sponsorships/{sponsorship}', [SponsorshipController::class, 'update']);
         Route::post('/sponsorships/{sponsorship}/cancel', [SponsorshipController::class, 'cancel']);
         Route::post('/sponsorships/{sponsorship}/installments/{number}/pay', [SponsorshipController::class, 'payInstallment']);
+
+        // ── Aba Orçamento (spec 011) — planejamento por evento ──
+        // Filhos ligados ao plano (não ao evento) → sem scoped bindings.
+        Route::get('/budget', [BudgetController::class, 'show']);
+        Route::put('/budget', [BudgetController::class, 'update']);
+        Route::get('/budget/comparison', [BudgetController::class, 'comparison']);
+        Route::get('/budget/export.xlsx', [BudgetController::class, 'exportXlsx']);
+        Route::get('/budget/export.pdf', [BudgetController::class, 'exportPdf']);
+
+        Route::post('/budget/cost-items', [BudgetCostItemController::class, 'store']);
+        Route::put('/budget/cost-items/{item}', [BudgetCostItemController::class, 'update'])->withoutScopedBindings();
+        Route::delete('/budget/cost-items/{item}', [BudgetCostItemController::class, 'destroy'])->withoutScopedBindings();
+        Route::post('/budget/cost-items/{item}/duplicate', [BudgetCostItemController::class, 'duplicate'])->withoutScopedBindings();
+        Route::post('/budget/cost-items/{item}/generate-payable', [BudgetCostItemController::class, 'generatePayable'])->withoutScopedBindings();
+
+        Route::post('/budget/ticket-lots', [BudgetTicketLotController::class, 'store']);
+        Route::put('/budget/ticket-lots/{lot}', [BudgetTicketLotController::class, 'update'])->withoutScopedBindings();
+        Route::delete('/budget/ticket-lots/{lot}', [BudgetTicketLotController::class, 'destroy'])->withoutScopedBindings();
+
+        Route::post('/budget/sponsorships', [BudgetSponsorshipController::class, 'store']);
+        Route::put('/budget/sponsorships/{sponsorship}', [BudgetSponsorshipController::class, 'update'])->withoutScopedBindings();
+        Route::delete('/budget/sponsorships/{sponsorship}', [BudgetSponsorshipController::class, 'destroy'])->withoutScopedBindings();
+        Route::post('/budget/sponsorships/{sponsorship}/generate-receivable', [BudgetSponsorshipController::class, 'generateReceivable'])->withoutScopedBindings();
+
+        Route::put('/budget/scenarios/{key}', [BudgetScenarioController::class, 'upsert']);
     });
 });

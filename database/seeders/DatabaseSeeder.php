@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
                 AdminUserSeeder::class,
                 SampleEventSeeder::class,
                 SampleCheckinSeeder::class,
+                BudgetSeeder::class,
             ]);
         }
     }
