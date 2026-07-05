@@ -238,6 +238,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
     Route::get('/events/{event}', [AdminEventController::class, 'show']);
     Route::put('/events/{event}', [AdminEventController::class, 'update']);
     Route::post('/events/{event}/publish', [AdminEventController::class, 'publish']);
+    Route::post('/events/{event}/visibility', [AdminEventController::class, 'visibility']);
     Route::post('/events/{event}/cancel', [AdminEventController::class, 'cancel']);
     Route::post('/events/{event}/banner', [AdminEventController::class, 'banner']);
 

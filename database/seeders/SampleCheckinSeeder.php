@@ -107,5 +107,15 @@ class SampleCheckinSeeder extends Seeder
             ),
         ]);
         $lot?->recountSold();
+
+        // Pagamento confirmado (demo) — sem operador → "Sistema" no financeiro.
+        $order->payments()->create([
+            'method' => 'manual',
+            'provider' => 'manual',
+            'provider_charge_id' => 'demo-'.$order->code,
+            'amount' => $order->total_amount,
+            'status_id' => \App\Domain\Events\Models\PaymentStatus::idFor(\App\Domain\Events\Models\PaymentStatus::PAID),
+            'paid_at' => now(),
+        ]);
     }
 }

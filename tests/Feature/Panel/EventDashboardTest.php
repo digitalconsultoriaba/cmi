@@ -45,7 +45,7 @@ class EventDashboardTest extends LifecycleTestCase
         $response = $this->panel($this->event->id)->assertOk();
 
         $response->assertJsonPath('data.counters.capacity', 50)
-            ->assertJsonPath('data.counters.registeredTotal', 3)   // casal = 2
+            ->assertJsonPath('data.counters.registeredTotal', 2)   // por ingresso: individual + casal
             ->assertJsonPath('data.counters.awaitingPayment', 1);
 
         // Financeiro: previsto = confirmado + a receber
@@ -59,7 +59,7 @@ class EventDashboardTest extends LifecycleTestCase
         // Recorte por tipo de ingresso (no lugar de "por loja")
         $byType = collect($response->json('data.byTicketType'));
         $this->assertSame(1, $byType->firstWhere('type', 'Individual')['count']);
-        $this->assertSame(2, $byType->firstWhere('type', 'Casal')['count']); // pessoas
+        $this->assertSame(1, $byType->firstWhere('type', 'Casal')['count']); // por ingresso
         $this->assertNotEmpty($response->json('data.ticketsByStatus'));
         $this->assertNotEmpty($response->json('data.inscriptionsByMonth'));
     }

@@ -70,12 +70,13 @@ class EventController extends Controller
 
         $event->update($data);
 
-        // Trilha (spec 008): alterações de configuração são ações sensíveis
+        // Trilha (spec 008): alterações de configuração são ações sensíveis.
+        // A lista de campos vai nas propriedades (detalhe), não na descrição.
         activity('event.updated')
             ->performedOn($event)
             ->withProperties(['reference' => $event->name, 'changed' => array_keys($data)])
             ->log('Configuração do evento "'.$event->name.'" alterada ('
-                .implode(', ', array_keys($data)).')');
+                .count($data).' campo(s))');
 
         return EventResource::make($event->fresh());
     }
@@ -83,6 +84,21 @@ class EventController extends Controller
     public function publish(Event $event)
     {
         return EventResource::make($this->service->publish($event));
+    }
+
+    /** Interruptor "Mostrar no site" — visibilidade pública (independe do status). */
+    public function visibility(Request $request, Event $event)
+    {
+        $data = $request->validate(['visible' => ['required', 'boolean']]);
+
+        $event->update(['visible_on_site' => $data['visible']]);
+
+        activity('event.updated')
+            ->performedOn($event)
+            ->withProperties(['reference' => $event->name, 'visibleOnSite' => $data['visible']])
+            ->log('Evento "'.$event->name.'" '.($data['visible'] ? 'exibido no' : 'ocultado do').' site');
+
+        return EventResource::make($event->fresh());
     }
 
     public function cancel(Request $request, Event $event)

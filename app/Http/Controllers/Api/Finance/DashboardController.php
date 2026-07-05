@@ -16,6 +16,7 @@ class DashboardController extends Controller
     {
         $filters = $request->validate([
             'from' => ['nullable', 'date'], 'to' => ['nullable', 'date', 'after_or_equal:from'],
+            'month' => ['nullable', 'date_format:Y-m'], // agrupa o painel por mês
             'event' => ['nullable', 'integer'], 'direction' => ['nullable', 'in:payable,receivable'],
             'category' => ['nullable', 'integer'], 'paymentMethod' => ['nullable', 'integer'],
         ]);

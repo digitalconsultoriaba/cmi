@@ -17,6 +17,7 @@ class EventResource extends JsonResource
             'description' => $this->description,
             'eventTypeId' => $this->event_type_id,
             'eventTypeName' => $this->eventType?->name,
+            'visibleOnSite' => (bool) $this->visible_on_site,
             'startsAt' => $this->starts_at?->toISOString(),
             'endsAt' => $this->ends_at?->toISOString(),
             'location' => $this->location,

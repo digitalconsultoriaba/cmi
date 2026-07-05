@@ -36,7 +36,6 @@ import PainelEvento from './admin/eventos/abas/PainelEvento'
 import Inscritos from './admin/eventos/abas/Inscritos'
 import CheckinEvento from './admin/eventos/abas/CheckinEvento'
 import Relatorios from './admin/eventos/abas/Relatorios'
-import FinanceiroEvento from './admin/eventos/abas/FinanceiroEvento'
 import Orcamento from './admin/eventos/abas/Orcamento'
 import Usuarios from './admin/eventos/Usuarios'
 // Módulo financeiro central (spec 010)
@@ -162,7 +161,6 @@ export default function App() {
               <Route path="cortesias" element={<Cortesias />} />
               <Route path="patrocinio" element={<Patrocinios />} />
               <Route path="orcamento" element={<Orcamento />} />
-              <Route path="financeiro" element={<FinanceiroEvento />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="checkin" element={<CheckinEvento />} />
               <Route path="trilha" element={<Auditoria />} />

@@ -82,9 +82,12 @@ class EventPanelController extends Controller
     public function reportsPreview(Request $request, Event $event, ReportService $reports)
     {
         $f = $this->reportFilters($request);
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = (int) $request->query('perPage', 25);
+        $perPage = in_array($perPage, [25, 50, 100], true) ? $perPage : 25;
 
         return ApiResponse::data(
-            $reports->reportPreview($event, $f['reportType'], $f['filters'])
+            $reports->reportPreview($event, $f['reportType'], $f['filters'], $page, $perPage)
         );
     }
 

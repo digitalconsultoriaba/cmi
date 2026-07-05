@@ -18,15 +18,19 @@ function Stat({ label, value, hint, className = '' }) {
 
 export default function Dashboard() {
   const [event, setEvent] = useState('')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [monthSel, setMonthSel] = useState('')
 
   const { data: events = [] } = useQuery({ queryKey: ['admin', 'events'], queryFn: () => apiGet('/admin/events') })
 
   const params = new URLSearchParams()
   if (event) params.set('event', event)
-  if (from) params.set('from', from)
-  if (to) params.set('to', to)
+  if (monthSel) {
+    params.set('month', monthSel)
+    // agrupa também o escopo geral pelo mês selecionado
+    const [y, m] = monthSel.split('-').map(Number)
+    params.set('from', `${monthSel}-01`)
+    params.set('to', `${monthSel}-${String(new Date(y, m, 0).getDate()).padStart(2, '0')}`)
+  }
   const qs = params.toString()
 
   const { data } = useQuery({
@@ -42,17 +46,18 @@ export default function Dashboard() {
     <>
       <div className="card mb-3"><div className="card-body">
         <div className="row g-2 align-items-end">
-          <div className="col-md-6">
+          <div className="col-md-7">
             <label className="form-label">Evento</label>
             <select className="form-select" value={event} onChange={(e) => setEvent(e.target.value)}>
               <option value="">Todos os eventos</option>
               {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
             </select>
           </div>
-          <div className="col-md-3"><label className="form-label">De</label>
-            <input type="date" className="form-control" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-          <div className="col-md-3"><label className="form-label">Até</label>
-            <input type="date" className="form-control" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+          <div className="col-md-3"><label className="form-label">Mês</label>
+            <input type="month" className="form-control" value={monthSel} onChange={(e) => setMonthSel(e.target.value)} /></div>
+          <div className="col-md-2 d-flex align-items-end">
+            <button className="btn w-100" onClick={() => setMonthSel('')} disabled={!monthSel}>Mês atual</button>
+          </div>
         </div>
       </div></div>
 

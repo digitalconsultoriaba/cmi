@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
-import { apiGet } from '../lib/api'
+import { apiGet, apiPost } from '../lib/api'
+import { Modal, ApiErrorAlert, useApiAction } from './components'
 
 function homeFor(user) {
   // Admin e financeiro entram no módulo inteiro (spec 009)
@@ -30,6 +32,7 @@ export function useAdminEvent() {
 export default function AdminLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [showPwd, setShowPwd] = useState(false)
 
   const sair = async () => {
     await logout.mutateAsync()
@@ -81,6 +84,12 @@ export default function AdminLayout() {
                 <NavLink className="nav-link" to="/painel/checkin">Check-in</NavLink>
               </li>
             )}
+            {/* Sair — sempre por último, abaixo dos demais menus */}
+            <li className="nav-item mt-auto">
+              <button type="button" className="nav-link btn btn-link text-start w-100" onClick={sair}>
+                Sair
+              </button>
+            </li>
           </ul>
         </div>
       </aside>
@@ -88,12 +97,14 @@ export default function AdminLayout() {
       <div className="page-wrapper">
         <header className="navbar navbar-expand-md d-print-none">
           <div className="container-xl justify-content-end">
-            <span className="me-3 text-secondary">{user?.name}</span>
-            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={sair}>
-              Sair
+            <button type="button" className="btn btn-ghost-secondary btn-sm"
+              onClick={() => setShowPwd(true)}>
+              {user?.name} ▾
             </button>
           </div>
         </header>
+
+        {showPwd && <AlterarSenhaModal onClose={() => setShowPwd(false)} />}
         <div className="page-body">
           <div className="container-xl">
             <Outlet />
@@ -105,3 +116,42 @@ export default function AdminLayout() {
 }
 
 export { homeFor }
+
+/** Modal de troca de senha do próprio usuário (topo do painel). */
+function AlterarSenhaModal({ onClose }) {
+  const { run, error, setError, busy } = useApiAction()
+  const [pwd, setPwd] = useState({ current_password: '', password: '', password_confirmation: '' })
+  const [ok, setOk] = useState(false)
+  const set = (f) => (e) => setPwd({ ...pwd, [f]: e.target.value })
+
+  const salvar = () => run(() => apiPost('/auth/password', pwd), {
+    onSuccess: () => { setOk(true); setPwd({ current_password: '', password: '', password_confirmation: '' }) },
+  })
+
+  return (
+    <Modal title="Alterar minha senha" size="sm" onClose={onClose}
+      footer={<>
+        <button className="btn" onClick={onClose}>Fechar</button>
+        <button className="btn btn-primary" disabled={busy || !pwd.password || pwd.password !== pwd.password_confirmation}
+          onClick={salvar}>Alterar senha</button>
+      </>}>
+      <ApiErrorAlert error={error} onClose={() => setError(null)} />
+      {ok && <div className="alert alert-success">Senha alterada.</div>}
+      <div className="mb-3">
+        <label className="form-label">Senha atual</label>
+        <input type="password" className="form-control" value={pwd.current_password}
+          onChange={set('current_password')} autoComplete="current-password" />
+      </div>
+      <div className="mb-3">
+        <label className="form-label">Nova senha</label>
+        <input type="password" className="form-control" value={pwd.password}
+          onChange={set('password')} placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
+      </div>
+      <div className="mb-1">
+        <label className="form-label">Confirme a nova senha</label>
+        <input type="password" className="form-control" value={pwd.password_confirmation}
+          onChange={set('password_confirmation')} autoComplete="new-password" />
+      </div>
+    </Modal>
+  )
+}

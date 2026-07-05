@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPut, apiDelete } from '../../lib/api'
-import { ApiErrorAlert, useApiAction } from '../components'
+import { ApiErrorAlert, Modal, useApiAction } from '../components'
 
 const ROLE_LABEL = { admin: 'Administração', treasury: 'Financeiro', gate: 'Recepção (QR)' }
 const ROLE_BADGE = { admin: 'bg-blue-lt', treasury: 'bg-green-lt', gate: 'bg-purple-lt' }
 
-const EMPTY = { name: '', email: '', password: '', role: 'gate' }
-
 export default function Usuarios() {
   const queryClient = useQueryClient()
   const { run, error, setError, busy } = useApiAction()
-  const [form, setForm] = useState(EMPTY)
+  const [creating, setCreating] = useState(false)
 
   const { data: users = [] } = useQuery({
     queryKey: ['admin', 'users'],
@@ -19,13 +17,9 @@ export default function Usuarios() {
   })
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
-  const set = (f) => (e) => setForm({ ...form, [f]: e.target.value })
 
-  const criar = () => run(() => apiPost('/admin/users', form),
-    { onSuccess: () => { setForm(EMPTY); refresh() } })
-
-  const trocarPapel = (user, role) => run(() => apiPut(`/admin/users/${user.id}`, { role }),
-    { onSuccess: refresh })
+  const criar = (payload) => run(() => apiPost('/admin/users', payload),
+    { onSuccess: () => { setCreating(false); refresh() } })
 
   const remover = (user) => run(() => apiDelete(`/admin/users/${user.id}`), { onSuccess: refresh })
 
@@ -35,47 +29,17 @@ export default function Usuarios() {
 
   return (
     <>
-      <div className="page-header d-print-none">
-        <div className="page-pretitle">Equipe</div>
-        <h2 className="page-title">Usuários</h2>
+      <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+          <div className="page-pretitle">Equipe</div>
+          <h2 className="page-title mb-0">Usuários</h2>
+        </div>
+        <button className="btn btn-primary" onClick={() => setCreating(true)}>Criar usuário</button>
       </div>
 
       <ApiErrorAlert error={error} onClose={() => setError(null)} />
 
-      <div className="card mb-3">
-        <div className="card-header"><h3 className="card-title">Novo usuário da equipe</h3></div>
-        <div className="card-body">
-          <div className="row g-2 align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">Nome</label>
-              <input className="form-control" value={form.name} onChange={set('name')} />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label">E-mail</label>
-              <input type="email" className="form-control" value={form.email} onChange={set('email')} />
-            </div>
-            <div className="col-md-2">
-              <label className="form-label">Senha inicial</label>
-              <input type="text" className="form-control" value={form.password} onChange={set('password')} />
-            </div>
-            <div className="col-md-2">
-              <label className="form-label">Papel</label>
-              <select className="form-select" value={form.role} onChange={set('role')}>
-                <option value="gate">Recepção (QR)</option>
-                <option value="treasury">Financeiro</option>
-                <option value="admin">Administração</option>
-              </select>
-            </div>
-            <div className="col-md-2">
-              <button className="btn btn-primary w-100" onClick={criar}
-                disabled={busy || !form.name.trim() || !form.email.trim() || form.password.length < 8}>
-                Criar usuário
-              </button>
-            </div>
-          </div>
-          <small className="form-hint">A pessoa entra com esse e-mail e senha. Senha mínima de 8 caracteres.</small>
-        </div>
-      </div>
+      {creating && <CriarUsuarioModal busy={busy} onClose={() => setCreating(false)} onCreate={criar} />}
 
       <div className="card">
         <div className="card-header"><h3 className="card-title">Equipe ({users.length})</h3></div>
@@ -111,6 +75,43 @@ export default function Usuarios() {
           onClose={() => setEditing(null)} onSave={salvarEdicao} />
       )}
     </>
+  )
+}
+
+function CriarUsuarioModal({ busy, onClose, onCreate }) {
+  const [f, setF] = useState({ name: '', email: '', password: '', role: 'gate' })
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  const valido = f.name.trim() && f.email.trim() && f.password.length >= 8
+
+  return (
+    <Modal title="Criar usuário" size="sm" onClose={onClose}
+      footer={<>
+        <button className="btn" onClick={onClose}>Cancelar</button>
+        <button className="btn btn-primary" disabled={busy || !valido} onClick={() => onCreate(f)}>Salvar</button>
+      </>}>
+      <div className="mb-3">
+        <label className="form-label required">Nome</label>
+        <input className="form-control" autoFocus value={f.name} onChange={set('name')} />
+      </div>
+      <div className="mb-3">
+        <label className="form-label required">E-mail</label>
+        <input type="email" className="form-control" value={f.email} onChange={set('email')} />
+      </div>
+      <div className="mb-3">
+        <label className="form-label required">Papel</label>
+        <select className="form-select" value={f.role} onChange={set('role')}>
+          <option value="gate">Recepção (QR)</option>
+          <option value="treasury">Financeiro</option>
+          <option value="admin">Administração</option>
+        </select>
+      </div>
+      <div className="mb-1">
+        <label className="form-label required">Senha inicial</label>
+        <input type="text" className="form-control" placeholder="Mínimo 8 caracteres"
+          value={f.password} onChange={set('password')} />
+        <small className="form-hint">A pessoa entra com esse e-mail e senha.</small>
+      </div>
+    </Modal>
   )
 }
 
