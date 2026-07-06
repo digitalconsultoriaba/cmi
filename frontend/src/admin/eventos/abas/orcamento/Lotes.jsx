@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, Modal, useApiAction } from '../../../components'
 import { apiPost, apiPut, apiDelete } from '../../../../lib/api'
 import { formatMoney, parseMoney } from '../../../../lib/money'
+import MoneyInput from '../../../../components/MoneyInput'
 
 function LoteForm({ base, initial, onDone, onClose }) {
   const { run, busy } = useApiAction()
@@ -29,7 +30,7 @@ function LoteForm({ base, initial, onDone, onClose }) {
         <div className="col-md-6"><label className="form-label required">Nome do lote</label>
           <input className="form-control" autoFocus value={f.name} onChange={set('name')} /></div>
         <div className="col-md-6"><label className="form-label required">Valor do ingresso</label>
-          <input className="form-control" placeholder="0,00" value={f.unitPrice} onChange={set('unitPrice')} /></div>
+          <MoneyInput value={f.unitPrice} onChange={(v) => setF({ ...f, unitPrice: v })} /></div>
         <div className="col-md-6"><label className="form-label">Quantidade prevista</label>
           <input type="number" className="form-control" value={f.expectedQuantity} onChange={set('expectedQuantity')} /></div>
         <div className="col-md-6"><label className="form-label">Pagantes estimados</label>

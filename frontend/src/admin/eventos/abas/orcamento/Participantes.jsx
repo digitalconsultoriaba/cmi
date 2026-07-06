@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, useApiAction } from '../../../components'
 import { apiPut } from '../../../../lib/api'
 import { parseMoney } from '../../../../lib/money'
+import MoneyInput from '../../../../components/MoneyInput'
 
 const SEG = [
   ['expectedPaying', 'Pagantes'], ['expectedCourtesy', 'Cortesias'], ['expectedGuests', 'Convidados'],
@@ -47,7 +48,7 @@ export default function Participantes({ base, plan, onChange }) {
         </div>
         <div className="col-md-4">
           <label className="form-label">Outras receitas previstas</label>
-          <input className="form-control" placeholder="0,00" value={f.otherRevenue} onChange={set('otherRevenue')} />
+          <MoneyInput value={f.otherRevenue} onChange={(v) => setF({ ...f, otherRevenue: v })} />
         </div>
         <div className="col-md-4">
           <label className="form-label">Margem de segurança (%)</label>

@@ -43,7 +43,6 @@ export default function CheckinEvento() {
     queryFn: () => apiGet(`${base}/days`),
   })
 
-  // Seleciona o dia de hoje (ou o primeiro) ao carregar
   useEffect(() => {
     if (selectedDay || days.length === 0) return
     setSelectedDay(String((days.find((d) => d.date === todayISO()) ?? days[0]).id))
@@ -91,66 +90,51 @@ export default function CheckinEvento() {
 
   const counters = data?.counters
   const items = data?.items ?? []
-  const selDay = days.find((d) => String(d.id) === String(selectedDay))
-  const selectedDayFinished = selDay?.status === 'finished' || selDay?.status === 'blocked'
-  const lockMsg = selDay?.status === 'blocked'
-    ? 'Dia ainda não liberado. O registro de presença será liberado automaticamente 3 horas antes do horário de início do evento, permitindo o check-in dos participantes durante o período de recepção e entrada.'
-    : 'Dia finalizado — reabra para registrar presença.'
 
   return (
     <>
       <ApiErrorAlert error={error} onClose={() => setError(null)} />
 
+      {/* Dias do evento */}
       <DiasEvento days={days} selectedId={selectedDay} onSelect={(id) => setSelectedDay(String(id))}
         onFinalize={finalizar} onReopen={(d) => setReopening(d)} canReopen={isAdmin} busy={busy} />
 
-      <div className="row row-deck row-cards mb-3">
-        <div className="col-lg-6">
-          <div className="card">
-            <div className="card-header"><h3 className="card-title">Validação de entrada</h3></div>
-            <div className="card-body">
-              {selectedDayFinished
-                ? <div className="alert alert-secondary mb-2">{lockMsg}</div>
-                : <p className="text-secondary">Leia o QR (câmera) ou digite o código e valide a entrada no dia selecionado.</p>}
-              {cameraError && <div className="alert alert-warning">{cameraError}</div>}
-              <div id="qr-reader-evento" style={{ maxWidth: 320, margin: cameraOn ? '0 auto 1rem' : 0 }} />
-              <form onSubmit={(e) => { e.preventDefault(); if (code.trim()) validate(code.trim()) }}>
-                <input className="form-control mb-2" placeholder="Código do ingresso"
-                  value={code} onChange={(e) => setCode(e.target.value)} disabled={selectedDayFinished} />
-                <button type="button" className="btn w-100 mb-2" onClick={() => setCameraOn(!cameraOn)} disabled={selectedDayFinished}>
-                  📷 {cameraOn ? 'Fechar câmera' : 'Ler QR-Code'}
-                </button>
-                <button type="submit" className="btn btn-primary w-100" disabled={busy || !code.trim() || selectedDayFinished}>
-                  Validar ingresso
-                </button>
-              </form>
-            </div>
-          </div>
+      {/* Números do dia */}
+      {counters && (
+        <div className="row row-deck row-cards mb-3">
+          <Stat label="Comprados" value={counters.purchased} />
+          <Stat label="Presentes" value={counters.present} className="text-green" />
+          <Stat label="Ausentes" value={counters.absent} className="text-orange" />
+          <Stat label="% presença" value={`${counters.presentPct}%`} className="text-blue" />
         </div>
-        {counters && (
-          <>
-            <Stat label="Comprados" value={counters.purchased} />
-            <Stat label="Presentes" value={counters.present} className="text-green" />
-            <Stat label="Ausentes" value={counters.absent} className="text-orange" />
-            <div className="col-6 col-lg-3">
-              <div className="card card-sm"><div className="card-body">
-                <div className="subheader">% presença</div>
-                <div className="h1 mb-0 text-blue">{counters.presentPct}%</div>
-              </div></div>
-            </div>
-          </>
-        )}
-      </div>
+      )}
 
+      {/* Participantes + validação no cabeçalho */}
       <div className="card">
-        <div className="card-header d-flex align-items-center">
-          <h3 className="card-title mb-0">Participantes</h3>
-          <div className="ms-auto">
-            <input className="form-control" style={{ minWidth: 320 }}
-              placeholder="Buscar por nome, acompanhante ou código…"
-              value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
+        <div className="card-header d-flex align-items-center flex-wrap gap-2">
+          <h3 className="card-title mb-0 me-2">Participantes</h3>
+          <input className="form-control" style={{ flex: '1 1 260px', maxWidth: 460 }}
+            placeholder="Buscar por nome ou código…"
+            value={search} onChange={(e) => setSearch(e.target.value)} />
+          <form className="d-flex ms-auto" onSubmit={(e) => { e.preventDefault(); if (code.trim()) validate(code.trim()) }}>
+            <div className="input-group" style={{ minWidth: 320 }}>
+              <input className="form-control" placeholder="Código do ingresso"
+                value={code} onChange={(e) => setCode(e.target.value)} />
+              <button type="button" className="btn" onClick={() => setCameraOn(!cameraOn)}>
+                {cameraOn ? 'Fechar' : 'Ler QR'}
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={busy || !code.trim()}>Validar</button>
+            </div>
+          </form>
         </div>
+
+        {cameraOn && (
+          <div className="card-body text-center border-bottom">
+            {cameraError && <div className="alert alert-warning">{cameraError}</div>}
+            <div id="qr-reader-evento" style={{ maxWidth: 320, margin: '0 auto' }} />
+          </div>
+        )}
+
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead><tr><th>Participante</th><th>Presença</th><th>Registro</th><th /></tr></thead>
@@ -166,7 +150,7 @@ export default function CheckinEvento() {
                     {i.usedAt ? `${new Date(i.usedAt).toLocaleString('pt-BR')}${i.validatedBy ? ` · ${i.validatedBy}` : ''}` : '—'}
                   </td>
                   <td className="text-end">
-                    {!i.present && !selectedDayFinished && (
+                    {!i.present && (
                       <button className="btn btn-sm btn-success" disabled={busy}
                         onClick={() => validate(i.code, 'manual')}>Registrar presença</button>
                     )}
