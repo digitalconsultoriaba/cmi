@@ -82,12 +82,13 @@ class CheckinTest extends LifecycleTestCase
         $this->scan($gate, $ticket->code)->assertOk();
 
         // Segunda validação (qualquer operador) → exatamente uma entrada
+        // (spec 012 emenda: check-in por dia → "já possui check-in neste dia")
         $response = $this->scan($this->gate(), $ticket->code)
             ->assertStatus(409)
-            ->assertJsonPath('type', 'already_used');
+            ->assertJsonPath('type', 'already_checked_in_day');
 
-        $this->assertNotNull($response->json('errors.usedAt'));
-        $this->assertSame($gate->name, $response->json('errors.validatedBy'));
+        $this->assertNotNull($response->json('errors.checkedInAt'));
+        $this->assertSame($gate->name, $response->json('errors.operator'));
         $this->assertSame(
             1,
             $order->tickets()->whereNotNull('used_at')->count(),

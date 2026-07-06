@@ -86,7 +86,7 @@ export default function AdminLayout() {
             )}
             {isGate && (
               <li className="nav-item">
-                <NavLink className="nav-link" to="/painel/checkin">Check-in</NavLink>
+                <NavLink className="nav-link" to="/painel/checkin">Eventos</NavLink>
               </li>
             )}
             {/* Sair — logo abaixo dos demais menus (ex.: Usuários) */}

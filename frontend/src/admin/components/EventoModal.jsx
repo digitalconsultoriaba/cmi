@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiErrorAlert, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut } from '../../lib/api'
@@ -60,6 +60,49 @@ export default function EventoModal({ event, onClose, onSaved }) {
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value })
   const setFlag = (f) => (e) => setForm({ ...form, [f]: e.target.checked })
 
+  // ── Duração / dias do evento (spec 012) ──
+  const { data: existingDays = [] } = useQuery({
+    queryKey: ['admin', 'event', event?.id, 'days'],
+    queryFn: () => apiGet(`/admin/events/${event.id}/days`),
+    enabled: isEdit,
+  })
+  const [duration, setDuration] = useState(1)
+  const [day1Label, setDay1Label] = useState('')
+  const [extraDays, setExtraDays] = useState([
+    { date: '', startsAt: '', endsAt: '', label: '' },
+    { date: '', startsAt: '', endsAt: '', label: '' },
+  ])
+
+  // Sincroniza a UI com os dias já cadastrados (uma vez que chegam).
+  useEffect(() => {
+    if (!isEdit || existingDays.length === 0) return
+    setDuration(existingDays.length)
+    setDay1Label(existingDays[0]?.label ?? '')
+    setExtraDays([1, 2].map((i) => {
+      const d = existingDays[i]
+      return d
+        ? { date: d.date ?? '', startsAt: d.startsAt ?? '', endsAt: d.endsAt ?? '', label: d.label ?? '' }
+        : { date: '', startsAt: '', endsAt: '', label: '' }
+    }))
+  }, [existingDays, isEdit])
+
+  const setExtra = (idx, k) => (e) =>
+    setExtraDays((arr) => arr.map((d, i) => (i === idx ? { ...d, [k]: e.target.value } : d)))
+
+  const buildDays = () => {
+    const days = [{
+      date: (form.starts_at || '').slice(0, 10),
+      startsAt: form.starts_at ? form.starts_at.slice(11, 16) : null,
+      endsAt: form.ends_at ? form.ends_at.slice(11, 16) : null,
+      label: day1Label || null,
+    }]
+    for (let i = 2; i <= duration; i++) {
+      const d = extraDays[i - 2]
+      days.push({ date: d.date, startsAt: d.startsAt || null, endsAt: d.endsAt || null, label: d.label || null })
+    }
+    return days
+  }
+
   const salvar = () => run(async () => {
     const payload = snake({ ...form })
     for (const k of ['total_capacity', 'courtesy_paid_threshold', 'courtesy_limit_per_account', 'courtesy_grant_per_threshold']) {
@@ -68,8 +111,16 @@ export default function EventoModal({ event, onClose, onSaved }) {
     for (const k of ['ends_at', 'sales_start_at', 'sales_end_at']) {
       if (payload[k] === '') payload[k] = null
     }
-    if (isEdit) await apiPut(`/admin/events/${event.id}`, payload)
-    else await apiPost('/admin/events', payload)
+    const saved = isEdit
+      ? await apiPut(`/admin/events/${event.id}`, payload)
+      : await apiPost('/admin/events', payload)
+
+    // Grava os dias (Dia 1 = data principal; 2/3 dos campos extras)
+    const eventId = isEdit ? event.id : saved?.id
+    if (eventId && form.starts_at) {
+      await apiPut(`/admin/events/${eventId}/days`, { days: buildDays() })
+    }
+    return saved
   }, { onSuccess: onSaved })
 
   return (
@@ -112,13 +163,50 @@ export default function EventoModal({ event, onClose, onSaved }) {
                 <textarea className="form-control" rows={2} value={form.description} onChange={set('description')} />
               </div>
               <div className="col-md-6">
-                <label className="form-label required">Data/hora</label>
+                <label className="form-label required">Data/hora (Dia 1)</label>
                 <input type="datetime-local" className="form-control" value={form.starts_at} onChange={set('starts_at')} />
               </div>
               <div className="col-md-6">
                 <label className="form-label">Local</label>
                 <input className="form-control" value={form.location} onChange={set('location')} />
               </div>
+
+              {/* ── Duração / dias do evento (spec 012) ── */}
+              <div className="col-md-4">
+                <label className="form-label">Duração do evento</label>
+                <select className="form-select" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                  <option value={1}>1 dia</option>
+                  <option value={2}>2 dias</option>
+                  <option value={3}>3 dias</option>
+                </select>
+              </div>
+              <div className="col-md-8">
+                <label className="form-label">Rótulo do Dia 1 (opcional)</label>
+                <input className="form-control" placeholder="ex.: Abertura" value={day1Label}
+                  onChange={(e) => setDay1Label(e.target.value)} />
+              </div>
+              {duration >= 2 && [2, 3].slice(0, duration - 1).map((n) => {
+                const idx = n - 2
+                const d = extraDays[idx]
+                return (
+                  <div className="col-12" key={n}>
+                    <div className="card card-sm"><div className="card-body">
+                      <div className="row g-2 align-items-end">
+                        <div className="col-md-3"><label className="form-label required">Data do Dia {n}</label>
+                          <input type="date" className="form-control" value={d.date} onChange={setExtra(idx, 'date')} /></div>
+                        <div className="col-md-2"><label className="form-label">Início</label>
+                          <input type="time" className="form-control" value={d.startsAt} onChange={setExtra(idx, 'startsAt')} /></div>
+                        <div className="col-md-2"><label className="form-label">Término</label>
+                          <input type="time" className="form-control" value={d.endsAt} onChange={setExtra(idx, 'endsAt')} /></div>
+                        <div className="col-md-5"><label className="form-label">Rótulo</label>
+                          <input className="form-control" placeholder={`ex.: ${n === 2 ? 'Palestras' : 'Encerramento'}`}
+                            value={d.label} onChange={setExtra(idx, 'label')} /></div>
+                      </div>
+                    </div></div>
+                  </div>
+                )
+              })}
+
               <div className="col-md-4">
                 <label className="form-label">Capacidade total</label>
                 <input type="number" className="form-control" value={form.total_capacity} onChange={set('total_capacity')} />

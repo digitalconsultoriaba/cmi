@@ -51,6 +51,19 @@ class Event extends BaseModel
         return $this->hasOne(BudgetPlan::class);
     }
 
+    public function eventDays(): HasMany
+    {
+        return $this->hasMany(EventDay::class)->orderBy('day_number');
+    }
+
+    /** Duração do evento em dias (spec 012) — derivada da contagem de dias. */
+    public function durationDays(): int
+    {
+        return $this->relationLoaded('eventDays')
+            ? $this->eventDays->count()
+            : $this->eventDays()->count();
+    }
+
     public function landingBlocks(): HasMany
     {
         return $this->hasMany(LandingBlock::class);

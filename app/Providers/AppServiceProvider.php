@@ -39,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
             \App\Domain\Events\Observers\SponsorshipInstallmentObserver::class
         );
 
+        // Todo evento nasce com o Dia 1 (spec 012).
+        Event::observe(\App\Domain\Events\Observers\EventObserver::class);
+
         $this->configureRateLimiters();
     }
 

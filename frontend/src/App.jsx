@@ -10,6 +10,7 @@ import MeusIngressos from './pages/MeusIngressos'
 import Suporte from './pages/Suporte'
 import Atendimentos from './admin/pages/Atendimentos'
 import Checkin from './admin/pages/Checkin'
+import PortariaEventos from './admin/pages/PortariaEventos'
 import Entrar from './pages/Entrar'
 import Cadastro from './pages/Cadastro'
 import EsqueciSenha from './pages/EsqueciSenha'
@@ -164,7 +165,8 @@ export default function App() {
             {/* ── Rotas focadas (tesouraria/portaria) — sem regressão ── */}
             <Route path="tesouraria" element={<Tesouraria />} />
             <Route path="financeiro" element={<RoleRoute roles={['treasury', 'admin']}><Financeiro /></RoleRoute>} />
-            <Route path="checkin" element={<Checkin />} />
+            <Route path="checkin" element={<PortariaEventos />} />
+            <Route path="checkin/:eventId" element={<Checkin />} />
             <Route path="landing/:eventId?" element={<RoleRoute role="admin"><Landing /></RoleRoute>} />
           </Route>
         </Routes>
