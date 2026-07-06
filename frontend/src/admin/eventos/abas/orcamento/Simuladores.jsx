@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Card, useApiAction } from '../../../components'
 import { apiPut } from '../../../../lib/api'
 import { parseMoney, formatMoney } from '../../../../lib/money'
+import MoneyInput from '../../../../components/MoneyInput'
+import Help from '../../../../components/Help'
 
 const CENARIOS = [['conservative', 'Conservador'], ['realistic', 'Realista'], ['optimistic', 'Otimista']]
 
-function num(v) { return Number(String(v).replace('.', '').replace(',', '.')) || 0 }
+function num(v) { return Number(parseMoney(v) ?? 0) }
 
 /** Simulador de preço mínimo (client-side, não persiste). */
 function PrecoMinimo() {
@@ -16,14 +18,18 @@ function PrecoMinimo() {
   const min = paying > 0 ? toCover / paying : null
 
   return (
-    <Card title="Simulador de preço do ingresso">
+    <Card title={<>Simulador de preço do ingresso <Help width={320} text="Descubra o valor mínimo que o ingresso precisa ter para o evento fechar a conta. Informe o custo total, quanto espera de patrocínio, outras receitas e quantos pagantes você prevê. O sistema calcula: (custo − patrocínio − outras receitas) ÷ pagantes. É apenas uma simulação — não altera o orçamento." /></>}>
+      <p className="text-secondary">
+        Informe os valores previstos e a quantidade de pagantes; o sistema sugere o
+        <strong> preço mínimo do ingresso</strong> para cobrir o custo do evento.
+      </p>
       <div className="row g-2">
         <div className="col-md-3"><label className="form-label">Custo total</label>
-          <input className="form-control" placeholder="0,00" value={f.cost} onChange={set('cost')} /></div>
+          <MoneyInput value={f.cost} onChange={(v) => setF({ ...f, cost: v })} /></div>
         <div className="col-md-3"><label className="form-label">Patrocínio</label>
-          <input className="form-control" placeholder="0,00" value={f.sponsorship} onChange={set('sponsorship')} /></div>
+          <MoneyInput value={f.sponsorship} onChange={(v) => setF({ ...f, sponsorship: v })} /></div>
         <div className="col-md-3"><label className="form-label">Outras receitas</label>
-          <input className="form-control" placeholder="0,00" value={f.other} onChange={set('other')} /></div>
+          <MoneyInput value={f.other} onChange={(v) => setF({ ...f, other: v })} /></div>
         <div className="col-md-3"><label className="form-label">Pagantes</label>
           <input type="number" className="form-control" value={f.paying} onChange={set('paying')} /></div>
       </div>
@@ -67,7 +73,7 @@ function Cenarios({ base, scenarios, onChange }) {
   }
 
   return (
-    <Card title="Simulador de cenários">
+    <Card title={<>Simulador de cenários <Help width={320} text="Compare três hipóteses (Conservador, Realista, Otimista) com pagantes, ticket médio, patrocínio, custo e outras receitas diferentes. Cada cartão mostra se aquele cenário 'fecha' (receita ≥ custo). Os cenários são salvos por evento." /></>}>
       <div className="row">
         {CENARIOS.map(([k, label]) => (
           <div className="col-md-4" key={k}>
@@ -82,7 +88,10 @@ function Cenarios({ base, scenarios, onChange }) {
                 {[['paying', 'Pagantes'], ['avgTicket', 'Ticket médio'], ['sponsorship', 'Patrocínio'], ['cost', 'Custo'], ['otherRevenue', 'Outras receitas']].map(([field, lbl]) => (
                   <div className="mb-2" key={field}>
                     <label className="form-label small mb-0">{lbl}</label>
-                    <input className="form-control form-control-sm" value={draft[k][field]} onChange={set(k, field)} />
+                    {field === 'paying'
+                      ? <input type="number" className="form-control form-control-sm" value={draft[k][field]} onChange={set(k, field)} />
+                      : <MoneyInput sm value={draft[k][field]}
+                          onChange={(v) => setDraft((dr) => ({ ...dr, [k]: { ...dr[k], [field]: v } }))} />}
                   </div>
                 ))}
                 <button className="btn btn-sm btn-primary w-100" disabled={busy} onClick={() => salvar(k)}>Salvar cenário</button>

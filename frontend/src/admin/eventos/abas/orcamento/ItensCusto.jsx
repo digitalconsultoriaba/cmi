@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, Modal, ApiErrorAlert, useApiAction } from '../../../components'
 import { apiPost, apiPut, apiDelete } from '../../../../lib/api'
 import { formatMoney, parseMoney } from '../../../../lib/money'
+import MoneyInput from '../../../../components/MoneyInput'
 
 const CATEGORIES = [
   'Espaço', 'Hospedagem', 'Alimentação', 'Bebidas', 'Som e iluminação', 'Infraestrutura',
@@ -20,21 +21,30 @@ const STATUS_BADGE = {
 
 function ItemForm({ base, initial, onDone, onClose }) {
   const { run, busy } = useApiAction()
-  const [f, setF] = useState(initial ?? {
-    description: '', category: 'Outros', quantity: '', unitPrice: '', totalAmount: '',
-    supplierName: '', status: 'planned', notes: '',
-  })
+  // Normaliza o item vindo da API (null → '') para o formato do formulário.
+  const [f, setF] = useState(() => ({
+    description: initial?.description ?? '',
+    category: initial?.category ?? 'Outros',
+    quantity: initial?.quantity ?? '',
+    unitPrice: initial?.unitPrice ?? '',
+    totalAmount: initial?.totalAmount ?? '',
+    supplierName: initial?.supplierName ?? '',
+    status: initial?.status ?? 'planned',
+    notes: initial?.notes ?? '',
+  }))
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+
+  const has = (v) => v !== '' && v !== null && v !== undefined
 
   const salvar = () => {
     const payload = {
       description: f.description, category: f.category, status: f.status,
       supplierName: f.supplierName || null, notes: f.notes || null,
     }
-    if (f.quantity !== '' && f.unitPrice !== '') {
+    if (has(f.quantity) && has(f.unitPrice)) {
       payload.quantity = Number(f.quantity)
       payload.unitPrice = parseMoney(f.unitPrice)
-    } else if (f.totalAmount !== '') {
+    } else if (has(f.totalAmount)) {
       payload.totalAmount = parseMoney(f.totalAmount)
     }
     const req = initial ? apiPut(`${base}/cost-items/${initial.id}`, payload) : apiPost(`${base}/cost-items`, payload)
@@ -64,11 +74,11 @@ function ItemForm({ base, initial, onDone, onClose }) {
         </div>
         <div className="col-md-4">
           <label className="form-label">Valor unitário</label>
-          <input className="form-control" placeholder="0,00" value={f.unitPrice} onChange={set('unitPrice')} />
+          <MoneyInput value={f.unitPrice} onChange={(v) => setF({ ...f, unitPrice: v })} />
         </div>
         <div className="col-md-4">
           <label className="form-label">Valor total</label>
-          <input className="form-control" placeholder="ou informe só o total" value={f.totalAmount} onChange={set('totalAmount')} />
+          <MoneyInput value={f.totalAmount} onChange={(v) => setF({ ...f, totalAmount: v })} placeholder="ou informe só o total" />
         </div>
         <div className="col-md-6">
           <label className="form-label">Fornecedor previsto</label>

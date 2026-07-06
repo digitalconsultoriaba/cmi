@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card, Modal, ApiErrorAlert, useApiAction } from '../../../components'
 import { apiPost, apiPut, apiDelete } from '../../../../lib/api'
 import { formatMoney, parseMoney } from '../../../../lib/money'
+import MoneyInput from '../../../../components/MoneyInput'
 
 const STATUS = [
   ['planned', 'Previsto'], ['negotiating', 'Em negociação'], ['confirmed', 'Confirmado'],
@@ -37,7 +38,7 @@ function PatForm({ base, initial, onDone, onClose }) {
         <div className="col-md-6"><label className="form-label required">Nome da cota</label>
           <input className="form-control" autoFocus value={f.name} onChange={set('name')} /></div>
         <div className="col-md-6"><label className="form-label required">Valor</label>
-          <input className="form-control" placeholder="0,00" value={f.unitValue} onChange={set('unitValue')} /></div>
+          <MoneyInput value={f.unitValue} onChange={(v) => setF({ ...f, unitValue: v })} /></div>
         <div className="col-md-6"><label className="form-label">Quantidade de cotas</label>
           <input type="number" className="form-control" value={f.quantity} onChange={set('quantity')} /></div>
         <div className="col-md-6"><label className="form-label">Status</label>
