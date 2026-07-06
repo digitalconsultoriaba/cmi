@@ -30,7 +30,7 @@ export default function PortariaEventos() {
                   {ev.startsAt ? new Date(ev.startsAt).toLocaleString('pt-BR') : '—'}
                 </div>
                 <div className="mt-3">
-                  <span className="btn btn-primary btn-sm">Fazer check-in →</span>
+                  <span className="btn btn-primary btn-sm">Iniciar check-in →</span>
                 </div>
               </div>
             </div>

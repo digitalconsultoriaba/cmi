@@ -21,14 +21,24 @@ class EventDayController extends Controller
 
     public function index(Event $event)
     {
-        return EventDayResource::collection($event->eventDays()->withCount('checkins')->get());
+        return EventDayResource::collection($this->daysFor($event));
     }
 
     public function upsert(EventDaysRequest $request, Event $event)
     {
         $this->service->upsertDays($event, $request->days(), $request->user());
 
-        return EventDayResource::collection($event->eventDays()->withCount('checkins')->get());
+        return EventDayResource::collection($this->daysFor($event->fresh()));
+    }
+
+    /** Dias com contagem + back-link do evento (evita N+1 na situação derivada). */
+    private function daysFor(Event $event)
+    {
+        $days = $event->eventDays()->withCount('checkins')->get();
+        $event->setRelation('eventDays', $days);
+        $days->each(fn ($d) => $d->setRelation('event', $event));
+
+        return $days;
     }
 
     public function finalize(Request $request, Event $event, EventDay $day)

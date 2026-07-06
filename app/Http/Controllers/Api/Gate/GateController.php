@@ -26,12 +26,16 @@ class GateController extends Controller
             ->orderByDesc('starts_at')
             ->get();
 
-        return ApiResponse::data($events->map(fn (Event $e) => [
-            'id' => $e->id,
-            'name' => $e->name,
-            'startsAt' => $e->starts_at?->toISOString(),
-            'days' => $e->eventDays->map(fn (EventDay $d) => $this->dayPayload($d))->values(),
-        ])->values());
+        return ApiResponse::data($events->map(function (Event $e) {
+            $e->eventDays->each(fn (EventDay $d) => $d->setRelation('event', $e));
+
+            return [
+                'id' => $e->id,
+                'name' => $e->name,
+                'startsAt' => $e->starts_at?->toISOString(),
+                'days' => $e->eventDays->map(fn (EventDay $d) => $this->dayPayload($d))->values(),
+            ];
+        })->values());
     }
 
     /**

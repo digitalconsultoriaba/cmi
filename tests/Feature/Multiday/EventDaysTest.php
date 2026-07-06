@@ -60,8 +60,9 @@ class EventDaysTest extends MultidayTestCase
         [$d1, $d2] = $this->twoDays();
         $admin = $this->admin();
 
-        // presença no Dia 2
+        // presença no Dia 2 (viaja para o Dia 2)
         $code = $this->paidTicketCode();
+        $this->operateDay($d2);
         $this->actingAs($this->gate())->postJson('/api/gate/checkin', ['code' => $code, 'day' => $d2->id])->assertOk();
 
         // tentar reduzir para 1 dia (removeria o Dia 2 com presença) → 409

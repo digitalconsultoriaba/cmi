@@ -17,9 +17,12 @@ class AttendanceReportTest extends MultidayTestCase
         $a = $this->paidTicketCode();
         $b = $this->paidTicketCode();
 
+        // Dia 1: A e B presentes
         $this->actingAs($gate)->postJson('/api/gate/checkin', ['code' => $a, 'day' => $d1->id])->assertOk();
-        $this->actingAs($gate)->postJson('/api/gate/checkin', ['code' => $a, 'day' => $d2->id])->assertOk();
         $this->actingAs($gate)->postJson('/api/gate/checkin', ['code' => $b, 'day' => $d1->id])->assertOk();
+        // Dia 2: só A presente
+        $this->operateDay($d2);
+        $this->actingAs($gate)->postJson('/api/gate/checkin', ['code' => $a, 'day' => $d2->id])->assertOk();
 
         $report = $this->actingAs($this->admin())
             ->getJson("/api/admin/events/{$this->event->id}/attendance-report")->assertOk()->json('data');

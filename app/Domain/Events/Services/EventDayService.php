@@ -5,6 +5,7 @@ namespace App\Domain\Events\Services;
 use App\Domain\Events\Exceptions\DomainRuleViolation;
 use App\Domain\Events\Models\Event;
 use App\Domain\Events\Models\EventDay;
+use App\Domain\Events\Models\EventDayStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -79,8 +80,9 @@ class EventDayService
 
     public function reopen(EventDay $day, User $actor, string $reason): EventDay
     {
-        if (! $day->isFinished()) {
-            throw new DomainRuleViolation('Só é possível reabrir um dia finalizado.', 'not_finished');
+        // Aceita dia finalizado manualmente OU encerrado automaticamente (por tempo).
+        if ($day->status() !== EventDayStatus::FINISHED) {
+            throw new DomainRuleViolation('Só é possível reabrir um dia encerrado.', 'not_finished');
         }
 
         $day->forceFill([

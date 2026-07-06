@@ -84,7 +84,11 @@ export default function Checkin() {
     keepPreviousData: true,
   })
 
-  const dayFinished = days.find((d) => String(d.id) === String(selectedDay))?.status === 'finished'
+  const selStatus = days.find((d) => String(d.id) === String(selectedDay))?.status
+  const dayFinished = selStatus === 'finished' || selStatus === 'blocked'
+  const dayLockMsg = selStatus === 'blocked'
+    ? 'Dia ainda não liberado. O registro de presença será liberado automaticamente 3 horas antes do horário de início do evento, permitindo o check-in dos participantes durante o período de recepção e entrada.'
+    : 'Dia finalizado — não aceita novo check-in.'
 
   const validate = async (rawCode, origin = 'qr') => {
     const code = rawCode.trim().toUpperCase()
@@ -136,7 +140,7 @@ export default function Checkin() {
 
       {/* Bloco de check-in */}
       <div className="card mb-3"><div className="card-body text-center">
-        {dayFinished && <div className="alert alert-secondary">Dia finalizado — não aceita novo check-in.</div>}
+        {dayFinished && <div className="alert alert-secondary">{dayLockMsg}</div>}
         {cameraError && <div className="alert alert-warning">{cameraError}</div>}
         <div id="qr-reader" style={{ maxWidth: 360, margin: '0 auto' }} />
         <button className="btn btn-primary my-3" onClick={() => setCameraOn(!cameraOn)} disabled={!selectedDay || dayFinished}>
