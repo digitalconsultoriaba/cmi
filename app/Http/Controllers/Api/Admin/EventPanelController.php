@@ -51,8 +51,15 @@ class EventPanelController extends Controller
 
     public function attendance(Request $request, Event $event, ReportService $reports)
     {
+        // Dia opcional (spec 012): presença derivada dos check-ins daquele dia.
+        $day = null;
+        if ($dayId = $request->query('day')) {
+            $day = \App\Domain\Events\Models\EventDay::query()
+                ->where('event_id', $event->id)->findOrFail($dayId);
+        }
+
         return ApiResponse::data(
-            $reports->attendancePayload($event, $request->query('search'))
+            $reports->attendancePayload($event, $request->query('search'), $day)
         );
     }
 
@@ -60,6 +67,12 @@ class EventPanelController extends Controller
     public function orders(Request $request, Event $event, ReportService $reports)
     {
         return ApiResponse::data($reports->ordersList($event, $request->query('status')));
+    }
+
+    /** Relatório de presença por dia + consolidado + individual (spec 012). */
+    public function attendanceReport(Event $event, \App\Domain\Events\Services\AttendanceReportService $reports)
+    {
+        return ApiResponse::data($reports->report($event));
     }
 
     /** Comprovante PDF+QR de qualquer ingresso confirmado (acesso admin). */

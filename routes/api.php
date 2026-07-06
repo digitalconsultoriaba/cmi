@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\BudgetSponsorshipController;
 use App\Http\Controllers\Api\Admin\BudgetTicketLotController;
 use App\Http\Controllers\Api\Admin\CourtesyVoucherController;
 use App\Http\Controllers\Api\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Api\Admin\EventDayController;
 use App\Http\Controllers\Api\Admin\EventTypeController;
 use App\Http\Controllers\Api\Admin\LandingBlockController;
 use App\Http\Controllers\Api\Admin\ShirtModelController;
@@ -92,8 +93,10 @@ Route::post('/webhooks/card', [WebhookController::class, 'card']);
 
 // ── Portaria (spec 007) ───────────────────────────────────────────────
 Route::prefix('gate')->middleware(['auth:sanctum', 'require.role:gate,admin'])->group(function () {
+    Route::get('/events', [GateController::class, 'events']);
     Route::post('/checkin', [GateController::class, 'checkin']);
     Route::get('/attendance', [GateController::class, 'attendance']);
+    Route::post('/days/{day}/finalize', [GateController::class, 'finalizeDay']);
 });
 
 // ── Tesouraria (spec 005) ─────────────────────────────────────────────
@@ -202,6 +205,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::get('/dashboard', [EventPanelController::class, 'dashboard']);
         Route::get('/attendees', [EventPanelController::class, 'attendees']);
         Route::get('/attendance', [EventPanelController::class, 'attendance']);
+        Route::get('/attendance-report', [EventPanelController::class, 'attendanceReport']);
         Route::get('/orders', [EventPanelController::class, 'orders']);
         Route::get('/reports/preview', [EventPanelController::class, 'reportsPreview']);
         Route::get('/reports/{type}.xlsx', [EventPanelController::class, 'reportsExport']);
@@ -306,5 +310,16 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::post('/budget/sponsorships/{sponsorship}/generate-receivable', [BudgetSponsorshipController::class, 'generateReceivable'])->withoutScopedBindings();
 
         Route::put('/budget/scenarios/{key}', [BudgetScenarioController::class, 'upsert']);
+
+        // ── Dias do evento (spec 012) ──
+        Route::get('/days', [EventDayController::class, 'index']);
+        Route::put('/days', [EventDayController::class, 'upsert']);
+        Route::post('/days/{day}/finalize', [EventDayController::class, 'finalize'])->withoutScopedBindings();
+        // Reabrir/bloquear: só admin.
+        Route::middleware('require.role:admin')->group(function () {
+            Route::post('/days/{day}/reopen', [EventDayController::class, 'reopen'])->withoutScopedBindings();
+            Route::post('/days/{day}/block', [EventDayController::class, 'block'])->withoutScopedBindings();
+            Route::post('/days/{day}/unblock', [EventDayController::class, 'unblock'])->withoutScopedBindings();
+        });
     });
 });

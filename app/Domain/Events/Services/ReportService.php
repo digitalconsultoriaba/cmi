@@ -593,8 +593,12 @@ class ReportService
         return ['items' => $items->all(), 'total' => $items->count()];
     }
 
-    /** Contadores e lista de presença ESCOPADOS ao evento (mesma régua da 007). */
-    public function attendancePayload(Event $event, ?string $search): array
+    /**
+     * Contadores e lista de presença ESCOPADOS ao evento. Com `$day` (spec 012),
+     * a presença é derivada dos check-ins DAQUELE dia; sem dia, cai na régua
+     * legada (status "used") para compatibilidade.
+     */
+    public function attendancePayload(Event $event, ?string $search, ?\App\Domain\Events\Models\EventDay $day = null): array
     {
         $usedId = TicketStatus::idFor(TicketStatus::USED);
 
@@ -614,8 +618,20 @@ class ReportService
         $tickets = $query->get();
         $people = fn ($c) => (int) $c->sum(fn (Ticket $t) => $this->seats($t));
 
+        // Presenças do dia (quando informado)
+        $checkins = $day
+            ? \App\Domain\Events\Models\TicketDayCheckin::query()
+                ->where('event_day_id', $day->id)
+                ->whereIn('ticket_id', $tickets->pluck('id'))
+                ->with('operator')->get()->keyBy('ticket_id')
+            : collect();
+
+        $isPresent = fn (Ticket $t) => $day
+            ? $checkins->has($t->id)
+            : $t->status?->slug === TicketStatus::USED;
+
         $purchased = $people($tickets);
-        $present = $people($tickets->where('status_id', $usedId));
+        $present = $people($tickets->filter($isPresent));
 
         $validators = \App\Models\User::query()
             ->whereIn('id', $tickets->pluck('validated_by')->filter()->unique())
@@ -629,15 +645,21 @@ class ReportService
                 'presentPct' => $purchased > 0 ? (int) round($present / $purchased * 100) : 0,
             ],
             'presence' => ['present' => $present, 'absent' => $purchased - $present],
-            'items' => $tickets->map(fn (Ticket $t) => [
-                'code' => $t->code,
-                'participantName' => $t->participant_name,
-                'companionName' => $t->companion_name,
-                'seats' => $this->seats($t),
-                'present' => $t->status?->slug === TicketStatus::USED,
-                'usedAt' => $t->used_at?->toISOString(),
-                'validatedBy' => $t->validated_by ? ($validators[$t->validated_by] ?? null) : null,
-            ])->values()->all(),
+            'items' => $tickets->map(function (Ticket $t) use ($isPresent, $checkins, $validators, $day) {
+                $c = $day ? $checkins->get($t->id) : null;
+
+                return [
+                    'code' => $t->code,
+                    'participantName' => $t->participant_name,
+                    'companionName' => $t->companion_name,
+                    'seats' => $this->seats($t),
+                    'present' => $isPresent($t),
+                    'usedAt' => $day ? $c?->checked_in_at?->toISOString() : $t->used_at?->toISOString(),
+                    'validatedBy' => $day
+                        ? $c?->operator?->name
+                        : ($t->validated_by ? ($validators[$t->validated_by] ?? null) : null),
+                ];
+            })->values()->all(),
         ];
     }
 

@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../../../lib/api'
 import { ApiErrorAlert, Modal, useApiAction } from '../../components'
 import { useEventoUI } from '../EventoLayout'
-import QrCode from '../../../components/QrCode'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const dt = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR') : '—')
@@ -29,7 +28,6 @@ export default function ClienteFicha({ userId, onClose }) {
   const [tab, setTab] = useState('Dados')
   const [message, setMessage] = useState('')
   const [note, setNote] = useState('')
-  const [qrTicket, setQrTicket] = useState(null) // ingresso com QR aberto
   const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   // Esconde as abas do evento enquanto a ficha do cliente está aberta
@@ -173,7 +171,6 @@ export default function ClienteFicha({ userId, onClose }) {
                   </td>
                   <td className="text-end">
                     <span className="btn-list justify-content-end">
-                      <button className="btn btn-sm" onClick={() => setQrTicket(t)}>QR</button>
                       {t.printable && t.status !== 'used' && (
                         <a className="btn btn-sm btn-success" href={`/api/admin/tickets/${t.code}/receipt`} target="_blank" rel="noopener">
                           Baixar ingresso
@@ -265,19 +262,6 @@ export default function ClienteFicha({ userId, onClose }) {
             </table>
           </div>
         </div>
-      )}
-
-      {qrTicket && (
-        <Modal title={`Ingresso ${qrTicket.code}`} size="sm" onClose={() => setQrTicket(null)}
-          footer={<button className="btn" onClick={() => setQrTicket(null)}>Fechar</button>}>
-          <div className="text-center">
-            <div className="fw-bold">{qrTicket.participantName}</div>
-            <div className="text-secondary mb-3">{qrTicket.ticketTypeName}</div>
-            <div className="d-flex justify-content-center"><QrCode value={qrTicket.code} size={200} /></div>
-            <div className="text-secondary mt-2"><code>{qrTicket.code}</code></div>
-            <div className="text-secondary small mt-1">Use este QR para testar a leitura na portaria.</div>
-          </div>
-        </Modal>
       )}
 
       {showHistoryModal && (

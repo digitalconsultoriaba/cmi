@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../../lib/api'
+import PresencaPorDia from './checkin/PresencaPorDia'
 
 const TYPES = [
   { value: 'inscritos', label: 'Inscritos' },
@@ -40,6 +41,8 @@ export default function Relatorios() {
 
   return (
     <>
+      <PresencaPorDia />
+
       <div className="card mb-3">
         <div className="card-body">
           <div className="row g-2 align-items-end">
