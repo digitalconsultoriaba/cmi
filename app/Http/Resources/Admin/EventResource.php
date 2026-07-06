@@ -42,6 +42,7 @@ class EventResource extends JsonResource
             'allowUserCancel' => $this->allow_user_cancel,
             'allowRefundRequest' => $this->allow_refund_request,
             'allowCourtesy' => $this->allow_courtesy,
+            'allowCourtesyVoucher' => (bool) $this->allow_courtesy_voucher,
             'courtesyPaidThreshold' => $this->courtesy_paid_threshold,
             'courtesyGrantPerThreshold' => $this->courtesy_grant_per_threshold,
             'courtesyLimitPerAccount' => $this->courtesy_limit_per_account,

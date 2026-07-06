@@ -73,18 +73,19 @@ export default function Cortesias() {
         ))}
       </div>
 
-      <Card title="Regra do evento">
-        <p className="mb-0">
-          {event.allowCourtesy
-            ? <>A cada <strong>{event.courtesyPaidThreshold ?? '—'}</strong> ingressos pagos,{' '}
-              <strong>{event.courtesyGrantPerThreshold}</strong> cortesia(s); limite por conta:{' '}
-              <strong>{event.courtesyLimitPerAccount ?? 'sem limite'}</strong>.</>
-            : 'Cortesias desabilitadas — habilite na tela Evento.'}
-        </p>
-        <small className="form-hint">A regra é editada na tela Evento (seção Comportamento).</small>
-      </Card>
+      {event.allowCourtesy && (
+        <Card title="Cortesia automática (regra do evento)">
+          <p className="mb-0">
+            A cada <strong>{event.courtesyPaidThreshold ?? '—'}</strong> ingressos pagos,{' '}
+            <strong>{event.courtesyGrantPerThreshold}</strong> cortesia(s); limite por conta:{' '}
+            <strong>{event.courtesyLimitPerAccount ?? 'sem limite'}</strong>.
+          </p>
+          <small className="form-hint">A regra é editada na tela Evento (seção Comportamento).</small>
+        </Card>
+      )}
 
-      <Card title="Vouchers"
+      {event.allowCourtesyVoucher && (
+      <Card title="Cortesia por voucher (códigos)"
         actions={
           <span className="d-flex gap-2">
             <input type="number" className="form-control form-control-sm" style={{ width: 90 }}
@@ -126,6 +127,7 @@ export default function Cortesias() {
           </tbody>
         </table>
       </Card>
+      )}
 
       {reportCat && (
         <Modal title={`Cortesias — ${REPORT.find((r) => r.key === reportCat)?.label}`}

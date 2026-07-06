@@ -91,7 +91,11 @@ export default function CheckinEvento() {
 
   const counters = data?.counters
   const items = data?.items ?? []
-  const selectedDayFinished = days.find((d) => String(d.id) === String(selectedDay))?.status === 'finished'
+  const selDay = days.find((d) => String(d.id) === String(selectedDay))
+  const selectedDayFinished = selDay?.status === 'finished' || selDay?.status === 'blocked'
+  const lockMsg = selDay?.status === 'blocked'
+    ? 'Dia ainda não liberado. O registro de presença será liberado automaticamente 3 horas antes do horário de início do evento, permitindo o check-in dos participantes durante o período de recepção e entrada.'
+    : 'Dia finalizado — reabra para registrar presença.'
 
   return (
     <>
@@ -106,7 +110,7 @@ export default function CheckinEvento() {
             <div className="card-header"><h3 className="card-title">Validação de entrada</h3></div>
             <div className="card-body">
               {selectedDayFinished
-                ? <div className="alert alert-secondary mb-2">Dia finalizado — reabra para registrar presença.</div>
+                ? <div className="alert alert-secondary mb-2">{lockMsg}</div>
                 : <p className="text-secondary">Leia o QR (câmera) ou digite o código e valide a entrada no dia selecionado.</p>}
               {cameraError && <div className="alert alert-warning">{cameraError}</div>}
               <div id="qr-reader-evento" style={{ maxWidth: 320, margin: cameraOn ? '0 auto 1rem' : 0 }} />

@@ -43,6 +43,7 @@ class UpdateEventRequest extends FormRequest
             'allow_user_cancel' => ['sometimes', 'boolean'],
             'allow_refund_request' => ['sometimes', 'boolean'],
             'allow_courtesy' => ['sometimes', 'boolean'],
+            'allow_courtesy_voucher' => ['sometimes', 'boolean'],
             'courtesy_paid_threshold' => ['nullable', 'integer', 'min:1'],
             'courtesy_grant_per_threshold' => ['sometimes', 'integer', 'min:1'],
             'courtesy_limit_per_account' => ['nullable', 'integer', 'min:1'],

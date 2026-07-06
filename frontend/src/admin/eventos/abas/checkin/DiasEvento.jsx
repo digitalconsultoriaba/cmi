@@ -38,8 +38,10 @@ export default function DiasEvento({ days = [], selectedId, onSelect, onFinalize
                 <div className="text-secondary small mt-1">{d.checkinCount ?? 0} check-in(s)</div>
 
                 <div className="btn-list mt-2" onClick={(e) => e.stopPropagation()}>
-                  {selected && <span className="badge bg-primary text-white align-self-center">operando</span>}
-                  {onFinalize && d.status !== 'finished' && (
+                  {selected && (d.status === 'open' || d.status === 'in_progress') && (
+                    <span className="badge bg-primary text-white align-self-center">operando</span>
+                  )}
+                  {onFinalize && (d.status === 'open' || d.status === 'in_progress') && (
                     <button className="btn btn-sm btn-outline-dark" disabled={busy}
                       onClick={() => onFinalize(d)}>Finalizar dia</button>
                   )}

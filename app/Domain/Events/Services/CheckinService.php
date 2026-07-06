@@ -5,6 +5,7 @@ namespace App\Domain\Events\Services;
 use App\Domain\Events\Exceptions\DomainRuleViolation;
 use App\Domain\Events\Models\CheckinOrigin;
 use App\Domain\Events\Models\EventDay;
+use App\Domain\Events\Models\EventDayStatus;
 use App\Domain\Events\Models\EventStatus;
 use App\Domain\Events\Models\Ticket;
 use App\Domain\Events\Models\TicketDayCheckin;
@@ -42,11 +43,15 @@ class CheckinService
             if ($ticket->event->status?->slug === EventStatus::CANCELLED) {
                 throw new DomainRuleViolation('O evento foi cancelado.', 'event_cancelled');
             }
-            if ($day->isFinished()) {
-                throw new DomainRuleViolation('Dia finalizado — reabra para alterar.', 'day_finished');
+            $dayStatus = $day->status();
+            if ($dayStatus === EventDayStatus::FINISHED) {
+                throw new DomainRuleViolation('Dia encerrado — reabra para alterar.', 'day_finished');
             }
-            if ($day->isBlocked()) {
-                throw new DomainRuleViolation('Dia bloqueado para check-in.', 'day_blocked');
+            if ($dayStatus === EventDayStatus::BLOCKED) {
+                $msg = $day->blocked_at !== null
+                    ? 'Dia bloqueado para check-in.'
+                    : 'Dia ainda não liberado — abre próximo do horário do evento.';
+                throw new DomainRuleViolation($msg, 'day_blocked');
             }
 
             // Já tem presença NESTE dia? (único por ingresso+dia)

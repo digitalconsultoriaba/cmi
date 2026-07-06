@@ -13,7 +13,8 @@ const FLAGS = [
   ['allow_transfer', 'Transferência de ingresso'],
   ['allow_user_cancel', 'Cancelamento pelo usuário'],
   ['allow_refund_request', 'Solicitação de reembolso'],
-  ['allow_courtesy', 'Cortesia / gratuidade'],
+  ['allow_courtesy', 'Cortesia automática (X pagas → grátis)'],
+  ['allow_courtesy_voucher', 'Cortesia por voucher (códigos)'],
 ]
 
 const toInput = (iso) => (iso ? iso.slice(0, 16) : '')
@@ -54,7 +55,7 @@ export default function EventoModal({ event, onClose, onSaved }) {
     courtesy_paid_threshold: event?.courtesyPaidThreshold ?? '',
     courtesy_grant_per_threshold: event?.courtesyGrantPerThreshold ?? 1,
     courtesy_limit_per_account: event?.courtesyLimitPerAccount ?? '',
-    ...Object.fromEntries(FLAGS.map(([k]) => [k, event ? !!event[k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())] : k !== 'requires_shirt' && k !== 'allow_kit'])),
+    ...Object.fromEntries(FLAGS.map(([k]) => [k, event ? !!event[k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())] : !['requires_shirt', 'allow_kit', 'allow_courtesy_voucher'].includes(k)])),
   }))
 
   const set = (f) => (e) => setForm({ ...form, [f]: e.target.value })
@@ -66,58 +67,58 @@ export default function EventoModal({ event, onClose, onSaved }) {
     queryFn: () => apiGet(`/admin/events/${event.id}/days`),
     enabled: isEdit,
   })
+  const emptyDay = () => ({ date: '', startsAt: '', endsAt: '' })
+  const splitDate = (iso) => (iso ? toInput(iso).slice(0, 10) : '')
+  const splitTime = (iso) => (iso ? toInput(iso).slice(11, 16) : '')
+
   const [duration, setDuration] = useState(1)
-  const [day1Label, setDay1Label] = useState('')
-  const [extraDays, setExtraDays] = useState([
-    { date: '', startsAt: '', endsAt: '', label: '' },
-    { date: '', startsAt: '', endsAt: '', label: '' },
-  ])
+  const [dayList, setDayList] = useState(() => [{
+    date: splitDate(event?.startsAt), startsAt: splitTime(event?.startsAt), endsAt: splitTime(event?.endsAt),
+  }])
 
   // Sincroniza a UI com os dias já cadastrados (uma vez que chegam).
   useEffect(() => {
     if (!isEdit || existingDays.length === 0) return
     setDuration(existingDays.length)
-    setDay1Label(existingDays[0]?.label ?? '')
-    setExtraDays([1, 2].map((i) => {
-      const d = existingDays[i]
-      return d
-        ? { date: d.date ?? '', startsAt: d.startsAt ?? '', endsAt: d.endsAt ?? '', label: d.label ?? '' }
-        : { date: '', startsAt: '', endsAt: '', label: '' }
-    }))
+    setDayList(existingDays.map((d) => ({
+      date: d.date ?? '', startsAt: d.startsAt ?? '', endsAt: d.endsAt ?? '',
+    })))
   }, [existingDays, isEdit])
 
-  const setExtra = (idx, k) => (e) =>
-    setExtraDays((arr) => arr.map((d, i) => (i === idx ? { ...d, [k]: e.target.value } : d)))
-
-  const buildDays = () => {
-    const days = [{
-      date: (form.starts_at || '').slice(0, 10),
-      startsAt: form.starts_at ? form.starts_at.slice(11, 16) : null,
-      endsAt: form.ends_at ? form.ends_at.slice(11, 16) : null,
-      label: day1Label || null,
-    }]
-    for (let i = 2; i <= duration; i++) {
-      const d = extraDays[i - 2]
-      days.push({ date: d.date, startsAt: d.startsAt || null, endsAt: d.endsAt || null, label: d.label || null })
-    }
-    return days
+  const changeDuration = (n) => {
+    setDuration(n)
+    setDayList((list) => {
+      const next = [...list]
+      while (next.length < n) next.push(emptyDay())
+      return next.slice(0, n)
+    })
   }
+  const setDay = (idx, k) => (e) =>
+    setDayList((arr) => arr.map((d, i) => (i === idx ? { ...d, [k]: e.target.value } : d)))
+
+  const buildDays = () => dayList.slice(0, duration).map((d) => ({
+    date: d.date, startsAt: d.startsAt || null, endsAt: d.endsAt || null, label: null,
+  }))
 
   const salvar = () => run(async () => {
     const payload = snake({ ...form })
     for (const k of ['total_capacity', 'courtesy_paid_threshold', 'courtesy_limit_per_account', 'courtesy_grant_per_threshold']) {
       payload[k] = payload[k] === '' ? null : Number(payload[k])
     }
-    for (const k of ['ends_at', 'sales_start_at', 'sales_end_at']) {
+    for (const k of ['sales_start_at', 'sales_end_at']) {
       if (payload[k] === '') payload[k] = null
     }
+    // Data principal do evento derivada do Dia 1.
+    const day1 = dayList[0] ?? emptyDay()
+    payload.starts_at = day1.date ? `${day1.date}T${day1.startsAt || '00:00'}` : null
+    payload.ends_at = day1.date && day1.endsAt ? `${day1.date}T${day1.endsAt}` : null
+
     const saved = isEdit
       ? await apiPut(`/admin/events/${event.id}`, payload)
       : await apiPost('/admin/events', payload)
 
-    // Grava os dias (Dia 1 = data principal; 2/3 dos campos extras)
     const eventId = isEdit ? event.id : saved?.id
-    if (eventId && form.starts_at) {
+    if (eventId && day1.date) {
       await apiPut(`/admin/events/${eventId}/days`, { days: buildDays() })
     }
     return saved
@@ -162,45 +163,34 @@ export default function EventoModal({ event, onClose, onSaved }) {
                 <label className="form-label">Descrição</label>
                 <textarea className="form-control" rows={2} value={form.description} onChange={set('description')} />
               </div>
-              <div className="col-md-6">
-                <label className="form-label required">Data/hora (Dia 1)</label>
-                <input type="datetime-local" className="form-control" value={form.starts_at} onChange={set('starts_at')} />
-              </div>
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label className="form-label">Local</label>
                 <input className="form-control" value={form.location} onChange={set('location')} />
               </div>
 
               {/* ── Duração / dias do evento (spec 012) ── */}
               <div className="col-md-4">
-                <label className="form-label">Duração do evento</label>
-                <select className="form-select" value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+                <label className="form-label required">Duração do evento</label>
+                <select className="form-select" value={duration} onChange={(e) => changeDuration(Number(e.target.value))}>
                   <option value={1}>1 dia</option>
                   <option value={2}>2 dias</option>
                   <option value={3}>3 dias</option>
                 </select>
               </div>
-              <div className="col-md-8">
-                <label className="form-label">Rótulo do Dia 1 (opcional)</label>
-                <input className="form-control" placeholder="ex.: Abertura" value={day1Label}
-                  onChange={(e) => setDay1Label(e.target.value)} />
-              </div>
-              {duration >= 2 && [2, 3].slice(0, duration - 1).map((n) => {
-                const idx = n - 2
-                const d = extraDays[idx]
+
+              {Array.from({ length: duration }).map((_, idx) => {
+                const d = dayList[idx] ?? { date: '', startsAt: '', endsAt: '' }
                 return (
-                  <div className="col-12" key={n}>
+                  <div className="col-12" key={idx}>
                     <div className="card card-sm"><div className="card-body">
+                      <div className="fw-bold mb-2">Dia {idx + 1}</div>
                       <div className="row g-2 align-items-end">
-                        <div className="col-md-3"><label className="form-label required">Data do Dia {n}</label>
-                          <input type="date" className="form-control" value={d.date} onChange={setExtra(idx, 'date')} /></div>
-                        <div className="col-md-2"><label className="form-label">Início</label>
-                          <input type="time" className="form-control" value={d.startsAt} onChange={setExtra(idx, 'startsAt')} /></div>
-                        <div className="col-md-2"><label className="form-label">Término</label>
-                          <input type="time" className="form-control" value={d.endsAt} onChange={setExtra(idx, 'endsAt')} /></div>
-                        <div className="col-md-5"><label className="form-label">Rótulo</label>
-                          <input className="form-control" placeholder={`ex.: ${n === 2 ? 'Palestras' : 'Encerramento'}`}
-                            value={d.label} onChange={setExtra(idx, 'label')} /></div>
+                        <div className="col-md-5"><label className="form-label required">Data</label>
+                          <input type="date" className="form-control" value={d.date} onChange={setDay(idx, 'date')} /></div>
+                        <div className="col-md-3"><label className="form-label">Hora início</label>
+                          <input type="time" className="form-control" value={d.startsAt} onChange={setDay(idx, 'startsAt')} /></div>
+                        <div className="col-md-4"><label className="form-label">Hora final</label>
+                          <input type="time" className="form-control" value={d.endsAt} onChange={setDay(idx, 'endsAt')} /></div>
                       </div>
                     </div></div>
                   </div>

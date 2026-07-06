@@ -18,11 +18,12 @@ class DayCheckinTest extends MultidayTestCase
         $gate = $this->gate();
         $code = $this->paidTicketCode();
 
-        // Presença no Dia 1
+        // Presença no Dia 1 (opera-se no Dia 1 por padrão)
         $this->actingAs($gate)->postJson('/api/gate/checkin', ['code' => $code, 'day' => $d1->id])
             ->assertOk()->assertJsonPath('data.dayNumber', 1);
 
-        // Mesmo ingresso no Dia 2 → nova presença (independente)
+        // Viaja para o Dia 2 e registra a presença lá (independente)
+        $this->operateDay($d2);
         $this->actingAs($gate)->postJson('/api/gate/checkin', ['code' => $code, 'day' => $d2->id])
             ->assertOk()->assertJsonPath('data.dayNumber', 2);
 

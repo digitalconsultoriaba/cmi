@@ -6,6 +6,7 @@ use App\Domain\Events\Models\EventDay;
 use App\Domain\Events\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\Feature\Lifecycle\LifecycleTestCase;
 
 abstract class MultidayTestCase extends LifecycleTestCase
@@ -28,16 +29,33 @@ abstract class MultidayTestCase extends LifecycleTestCase
         return $u;
     }
 
-    /** Define 2 dias no evento atual e devolve os dias (Dia 1, Dia 2). */
+    /** Define 2 dias (08:00–18:00) no evento e devolve os dias; opera no Dia 1. */
     protected function twoDays(array $dates = ['2026-08-10', '2026-08-11']): array
     {
+        // Vendas sempre abertas (sem janela) para permitir compra no tempo congelado.
+        $this->event->update(['sales_start_at' => null, 'sales_end_at' => null]);
+        $this->lot->update(['starts_at' => null, 'ends_at' => null]);
+
         $admin = $this->admin();
         $this->actingAs($admin)->putJson("/api/admin/events/{$this->event->id}/days", [
-            'days' => array_map(fn ($d) => ['date' => $d], $dates),
+            'days' => array_map(fn ($d) => ['date' => $d, 'startsAt' => '08:00', 'endsAt' => '18:00'], $dates),
         ])->assertOk();
 
-        return EventDay::query()->where('event_id', $this->event->id)
+        $days = EventDay::query()->where('event_id', $this->event->id)
             ->orderBy('day_number')->get()->all();
+
+        // Regra: abre 3h antes do início, encerra na hora final. Dias consecutivos
+        // NÃO têm janela comum — opera-se um dia por vez (viaje com operateDay()).
+        $this->operateDay($days[0]);
+
+        return $days;
+    }
+
+    /** Congela o tempo dentro da janela operável do dia (data 10:00). */
+    protected function operateDay(EventDay $day): void
+    {
+        $date = Carbon::parse($day->event_date)->toDateString();
+        $this->travelTo(Carbon::parse($date.' 10:00:00', config('events.timezone')));
     }
 
     /** Um ingresso pago no evento atual → devolve o código. */

@@ -16,7 +16,7 @@ const TABS = [
   { to: 'inscritos', label: 'Inscritos' }, // Financeiro foi agrupado aqui
   { to: 'ingressos', label: 'Ingressos' },
   { to: 'camisas', label: 'Camisas', when: (e) => e.allowShirtChoice || e.requiresShirt },
-  { to: 'cortesias', label: 'Cortesias' },
+  { to: 'cortesias', label: 'Cortesias', when: (e) => e.allowCourtesy || e.allowCourtesyVoucher },
   { to: 'patrocinio', label: 'Patrocínio' },
   { to: 'orcamento', label: 'Orçamento' },
   { to: 'relatorios', label: 'Relatórios' },
