@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 AdminUserSeeder::class,
                 SampleEventSeeder::class,
-                SampleCheckinSeeder::class,
+                SeminarioCheckoutSeeder::class,   // categorias/campos/afiliações do checkout (014)
+                SeminarioDemoSeeder::class,        // inscrições demo (individuais + blocos) + financeiro
                 BudgetSeeder::class,
             ]);
         }
