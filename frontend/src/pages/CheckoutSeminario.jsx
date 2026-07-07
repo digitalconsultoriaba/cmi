@@ -79,7 +79,7 @@ export default function CheckoutSeminario() {
         <div className="ck-watermark"><IcCompass style={{ color: '#fff' }} /></div>
         <div className="ck-header-inner">
           <div className="ck-header-top">
-            <span className="ck-seal">{config.identityLogo ? <img src={config.identityLogo} alt="" /> : <IcCompass style={{ width: 40, height: 40, color: '#1F3F8B' }} />}</span>
+            <span className="ck-seal"><img src="/logo.png" alt="CMI · GLMEES" /></span>
             <div>
               <div className="ck-title">{config.event.name}</div>
               <div className="ck-subtitle">Complete sua inscrição adicionando um ou mais participantes ao carrinho.</div>
@@ -203,7 +203,7 @@ export default function CheckoutSeminario() {
                 <div className="ck-voucher-note">
                   <span className="ico"><IcGift width={18} height={18} /></span>
                   <div><div className="tt">Voucher de gratuidade</div>
-                    <div className="sub">O voucher deve ser aplicado dentro de cada participante.</div></div>
+                    <div className="sub">A gratuidade é aplicada individualmente por inscrição, conforme o participante selecionado.</div></div>
                 </div>
               </div>
             </div>
