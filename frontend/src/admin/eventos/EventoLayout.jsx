@@ -60,11 +60,6 @@ export default function EventoLayout() {
     run(() => apiPost(`/admin/events/${event.id}/cancel`, { reason }), { onSuccess: refresh })
   }
 
-  const toggleVisibilidade = () => run(
-    () => apiPost(`/admin/events/${event.id}/visibility`, { visible: !event.visibleOnSite }),
-    { onSuccess: refresh },
-  )
-
   return (
     <EventoUI.Provider value={{ hideChrome, setHideChrome }}>
       {!hideChrome && (
@@ -79,10 +74,6 @@ export default function EventoLayout() {
                 </span>
               </div>
               <div className="btn-list">
-                <button className={`btn btn-sm ${event.visibleOnSite ? 'btn-success' : 'btn-outline-secondary'}`}
-                  disabled={busy} onClick={toggleVisibilidade}>
-                  {event.visibleOnSite ? '● Mostrando no site' : '○ Oculto do site'}
-                </button>
                 <button className="btn btn-sm" onClick={() => setEditing(true)}>Editar</button>
                 <label className="btn btn-sm mb-0">
                   Adicionar banner

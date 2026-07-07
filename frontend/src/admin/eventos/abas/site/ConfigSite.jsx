@@ -19,8 +19,9 @@ function toLocal(iso) {
   return new Date(d - off).toISOString().slice(0, 16)
 }
 
-export default function ConfigSite({ site, eventId, reload }) {
+export default function ConfigSite({ site, event, eventId, reload, reloadEvent }) {
   const { run, busy, error, setError } = useApiAction()
+  const [visible, setVisible] = useState(event?.visibleOnSite ?? false)
   const [slug, setSlug] = useState(site.slug || '')
   const [countdown, setCountdown] = useState(toLocal(site.countdownAt))
   const [theme, setTheme] = useState(site.theme || {})
@@ -45,22 +46,36 @@ export default function ConfigSite({ site, eventId, reload }) {
 
   const publicar = () => run(() => apiPost(`/admin/events/${eventId}/site/${site.isPublished ? 'unpublish' : 'publish'}`), { onSuccess: reload })
 
+  const habilitar = () => run(
+    () => apiPost(`/admin/events/${eventId}/visibility`, { visible: !visible }),
+    { onSuccess: () => { setVisible(!visible); reloadEvent?.() } },
+  )
+
+  const live = site.isPublished && visible
+
   return (
     <div>
       <ApiErrorAlert error={error} onClose={() => setError(null)} />
 
-      <div className="alert d-flex align-items-center justify-content-between flex-wrap gap-2"
-        style={{ background: site.isPublished ? '#e6f4ea' : '#fff3cd' }}>
+      <div className="alert d-flex align-items-center justify-content-between flex-wrap gap-3"
+        style={{ background: live ? '#e6f4ea' : '#fff3cd' }}>
         <div>
-          <strong>{site.isPublished ? 'Site publicado' : 'Rascunho'}</strong>
+          <strong>{live ? 'Site no ar' : (site.isPublished ? 'Publicado, mas oculto' : 'Rascunho')}</strong>
           {' — '}
-          {site.isPublished
-            ? <>no ar em <a href={`/site/${site.slug}`} target="_blank" rel="noreferrer">/site/{site.slug}</a> (respeita a visibilidade do evento)</>
-            : 'a landing não aparece publicamente até publicar.'}
+          {live
+            ? <>disponível em <a href={`/site/${site.slug}`} target="_blank" rel="noreferrer">/site/{site.slug}</a></>
+            : !visible
+              ? 'o site está desabilitado; habilite para aparecer publicamente.'
+              : 'a landing não aparece até publicar.'}
         </div>
-        <button className={`btn btn-sm ${site.isPublished ? 'btn-outline-danger' : 'btn-success'}`} disabled={busy} onClick={publicar}>
-          {site.isPublished ? 'Despublicar' : 'Publicar site'}
-        </button>
+        <div className="btn-list">
+          <button className={`btn btn-sm ${visible ? 'btn-success' : 'btn-outline-secondary'}`} disabled={busy} onClick={habilitar}>
+            {visible ? '● Site habilitado' : '○ Habilitar Site'}
+          </button>
+          <button className={`btn btn-sm ${site.isPublished ? 'btn-outline-danger' : 'btn-primary'}`} disabled={busy} onClick={publicar}>
+            {site.isPublished ? 'Despublicar' : 'Publicar site'}
+          </button>
+        </div>
       </div>
 
       <div className="row g-4">

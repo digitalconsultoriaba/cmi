@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../../AdminLayout'
 import { apiGet } from '../../../lib/api'
 import { Card } from '../../components'
@@ -43,6 +43,7 @@ const PANELS = [
 
 export default function SiteLayout() {
   const { data: event } = useAdminEvent()
+  const queryClient = useQueryClient()
   const [active, setActive] = useState('config')
 
   const { data: site, isLoading, refetch } = useQuery({
@@ -79,7 +80,8 @@ export default function SiteLayout() {
       <div className="col-md-9">
         <Card title={label}>
           {active === 'config'
-            ? <ConfigSite site={site} eventId={event.id} reload={reload} />
+            ? <ConfigSite site={site} event={event} eventId={event.id} reload={reload}
+                reloadEvent={() => queryClient.invalidateQueries({ queryKey: ['admin', 'event'] })} />
             : <Panel eventId={event.id} section={section} languages={languages} reload={reload} />}
         </Card>
       </div>
