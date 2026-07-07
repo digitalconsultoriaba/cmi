@@ -36,6 +36,12 @@ export default function Suporte() {
     [orders, newCase.order_code],
   )
 
+  // Contato do atendimento (WhatsApp/e-mail) — vem do evento das inscrições.
+  const support = useMemo(() => {
+    const ev = orders.map((o) => o.event).find((e) => e?.supportWhatsapp || e?.supportEmail)
+    return ev ? { whatsapp: ev.supportWhatsapp, email: ev.supportEmail } : null
+  }, [orders])
+
   const create = async () => {
     setError(null)
     try {
@@ -66,6 +72,28 @@ export default function Suporte() {
   return (
     <>
       {error && <div className="alert alert-danger">{error.message}</div>}
+
+      {support && (support.whatsapp || support.email) && (
+        <div className="card mb-3" style={{ borderLeft: '4px solid #16A34A' }}>
+          <div className="card-body d-flex align-items-center flex-wrap gap-3">
+            <div>
+              <div className="fw-bold">Fale com o atendimento</div>
+              <div className="text-secondary small">Dúvidas sobre sua inscrição? Fale direto com a organização.</div>
+            </div>
+            <div className="ms-auto d-flex gap-2 flex-wrap">
+              {support.whatsapp && (
+                <a className="btn btn-success" target="_blank" rel="noreferrer"
+                  href={`https://wa.me/55${onlyDigits(support.whatsapp)}`}>
+                  WhatsApp {support.whatsapp}
+                </a>
+              )}
+              {support.email && (
+                <a className="btn btn-outline-primary" href={`mailto:${support.email}`}>{support.email}</a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {!selectedId && (
         <>

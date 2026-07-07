@@ -109,6 +109,8 @@ class SeminarioDemoSeeder extends Seeder
             'total_capacity' => 500,
             'status_id' => EventStatus::idFor(EventStatus::PUBLISHED),
             'visible_on_site' => true,
+            'support_whatsapp' => '(27) 99876-5432',
+            'support_email' => 'atendimento@seminariocmi.org.br',
         ]);
 
         $individual = $event->ticketTypes()->where('name', 'Individual')->first()
