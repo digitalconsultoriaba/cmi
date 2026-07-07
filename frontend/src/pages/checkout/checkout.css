@@ -66,6 +66,14 @@
 .ck-vinc-dot { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); flex: 0 0 auto; }
 .ck-vinc-opt.on .ck-vinc-dot { border-color: var(--blue); background: radial-gradient(circle, var(--blue) 0 5px, #fff 6px); }
 
+/* Autocomplete (afiliação/loja) */
+.ck-ac-wrap { position: relative; }
+.ck-ac { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 28px rgba(24,45,90,.14); max-height: 240px; overflow-y: auto; }
+.ck-ac-item { padding: 10px 13px; font-size: .92rem; cursor: pointer; border-bottom: 1px solid #F1F5FB; }
+.ck-ac-item:last-child { border-bottom: 0; }
+.ck-ac-item:hover, .ck-ac-item.on { background: var(--soft); color: var(--blue); }
+.ck-ac-empty { padding: 11px 13px; font-size: .88rem; color: var(--muted); }
+
 /* Sim/Não pills */
 .ck-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .ck-toggle button { border: 0; background: #fff; padding: 9px 22px; font-size: .9rem; font-weight: 600; color: var(--muted); cursor: pointer; }

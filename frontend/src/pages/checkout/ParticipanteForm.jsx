@@ -1,20 +1,59 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatMoney } from '../../lib/money'
 import { IcUserPlus, IcBuilding, IcGlobe } from './icons'
+
+/** Autocomplete de afiliação: digita nº/nome → opções filtradas abaixo do campo. */
+function AutocompleteAfiliacao({ field, value, onChange, affiliations }) {
+  const [q, setQ] = useState(value ?? '')
+  const [open, setOpen] = useState(false)
+  const [hi, setHi] = useState(0)
+  useEffect(() => { setQ(value ?? '') }, [value])
+
+  const query = q.trim().toLowerCase()
+  const matches = (query
+    ? affiliations.filter((a) => a.name.toLowerCase().includes(query))
+    : affiliations).slice(0, 30)
+
+  const pick = (name) => { onChange(name); setQ(name); setOpen(false) }
+
+  const onKey = (e) => {
+    if (!open) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => Math.min(h + 1, matches.length - 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => Math.max(h - 1, 0)) }
+    else if (e.key === 'Enter' && matches[hi]) { e.preventDefault(); pick(matches[hi].name) }
+    else if (e.key === 'Escape') setOpen(false)
+  }
+
+  return (
+    <div className="ck-field">
+      <label className="ck-label">{field.label}{field.required && ' *'}</label>
+      <div className="ck-ac-wrap">
+        <input className="ck-input" placeholder="Digite o número ou o nome da loja"
+          value={q} onChange={(e) => { setQ(e.target.value); onChange(e.target.value); setOpen(true); setHi(0) }}
+          onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)} onKeyDown={onKey} />
+        {open && (
+          <div className="ck-ac">
+            {matches.length === 0
+              ? <div className="ck-ac-empty">Nenhuma loja encontrada.</div>
+              : matches.map((a, i) => (
+                <div key={a.id} className={`ck-ac-item ${i === hi ? 'on' : ''}`}
+                  onMouseEnter={() => setHi(i)} onMouseDown={(e) => { e.preventDefault(); pick(a.name) }}>
+                  {a.name}
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 /** Campo dinâmico da categoria, no estilo do checkout. */
 function CampoDinamico({ field, value, onChange, affiliations }) {
   const set = (v) => onChange(field.key, v)
 
   if (field.type === 'affiliation') {
-    return (
-      <div className="ck-field">
-        <label className="ck-label">{field.label}{field.required && ' *'}</label>
-        <input className="ck-input" list={`aff-${field.key}`} placeholder="Busque sua loja — nome, número ou cidade"
-          value={value ?? ''} onChange={(e) => set(e.target.value)} />
-        <datalist id={`aff-${field.key}`}>{affiliations.map((a) => <option key={a.id} value={a.name} />)}</datalist>
-      </div>
-    )
+    return <AutocompleteAfiliacao field={field} value={value} onChange={set} affiliations={affiliations} />
   }
 
   if (field.type === 'conditional') {
