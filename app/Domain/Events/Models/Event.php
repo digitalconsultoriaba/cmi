@@ -70,6 +70,12 @@ class Event extends BaseModel
         return $this->hasMany(LandingBlock::class);
     }
 
+    /** Site do evento (spec 013) — 1:1, criado sob demanda pelo EventSiteService. */
+    public function eventSite(): HasOne
+    {
+        return $this->hasOne(EventSite::class);
+    }
+
     public function ticketTypes(): HasMany
     {
         return $this->hasMany(TicketType::class);

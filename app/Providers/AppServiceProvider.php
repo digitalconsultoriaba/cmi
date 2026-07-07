@@ -22,6 +22,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Domain\Events\Payments\FakePixGateway::class);
         $this->app->singleton(\App\Domain\Events\Payments\FakeCardGateway::class);
         $this->app->singleton(\App\Domain\Events\Payments\PaymentGateways::class);
+
+        // Provedor de tradução do Site (spec 013) atrás de contrato. Null por
+        // padrão (preenchimento manual); trocável por config sem reescrever.
+        $this->app->bind(
+            \App\Domain\Events\Services\Translation\TranslationProviderContract::class,
+            fn () => app(config('site.translation.provider')
+                ?: \App\Domain\Events\Services\Translation\NullTranslationProvider::class),
+        );
     }
 
     public function boot(): void
