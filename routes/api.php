@@ -49,6 +49,9 @@ Route::get('/health', HealthController::class);
 // ── Catálogo público (spec 004 — sem auth, binding por slug) ────────
 Route::get('/public/events/{event:slug}', [PublicEventController::class, 'show']);
 
+// ── Landing pública do Site (spec 013 — sem auth, por slug do site) ──
+Route::get('/public/sites/{slug}', [\App\Http\Controllers\Api\Public\PublicSiteController::class, 'show']);
+
 // ── Compra e área do inscrito (spec 004 — códigos públicos nas URLs) ─
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
@@ -310,6 +313,21 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::post('/budget/sponsorships/{sponsorship}/generate-receivable', [BudgetSponsorshipController::class, 'generateReceivable'])->withoutScopedBindings();
 
         Route::put('/budget/scenarios/{key}', [BudgetScenarioController::class, 'upsert']);
+
+        // ── Site do evento / CMS (spec 013) ──
+        // Seções/itens não são filhos diretos do evento → withoutScopedBindings.
+        Route::get('/site', [\App\Http\Controllers\Api\Admin\EventSiteController::class, 'show']);
+        Route::put('/site', [\App\Http\Controllers\Api\Admin\EventSiteController::class, 'update']);
+        Route::post('/site/publish', [\App\Http\Controllers\Api\Admin\EventSiteController::class, 'publish']);
+        Route::post('/site/unpublish', [\App\Http\Controllers\Api\Admin\EventSiteController::class, 'unpublish']);
+        Route::post('/site/media', [\App\Http\Controllers\Api\Admin\SiteMediaController::class, 'store']);
+        Route::patch('/site/sections/reorder', [\App\Http\Controllers\Api\Admin\SiteSectionController::class, 'reorder']);
+        Route::put('/site/sections/{section}', [\App\Http\Controllers\Api\Admin\SiteSectionController::class, 'update'])->withoutScopedBindings();
+        Route::get('/site/sections/{section}/items', [\App\Http\Controllers\Api\Admin\SiteItemController::class, 'index'])->withoutScopedBindings();
+        Route::post('/site/sections/{section}/items', [\App\Http\Controllers\Api\Admin\SiteItemController::class, 'store'])->withoutScopedBindings();
+        Route::patch('/site/sections/{section}/items/reorder', [\App\Http\Controllers\Api\Admin\SiteItemController::class, 'reorder'])->withoutScopedBindings();
+        Route::put('/site/sections/{section}/items/{item}', [\App\Http\Controllers\Api\Admin\SiteItemController::class, 'update'])->withoutScopedBindings();
+        Route::delete('/site/sections/{section}/items/{item}', [\App\Http\Controllers\Api\Admin\SiteItemController::class, 'destroy'])->withoutScopedBindings();
 
         // ── Dias do evento (spec 012) ──
         Route::get('/days', [EventDayController::class, 'index']);

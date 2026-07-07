@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; }
+  a { color: #CCA54D; text-decoration: none; }
+  a:hover { color: #E3C173; }
+  *::selection { background: rgba(204,165,77,.3); color: #fff; }
+  @keyframes navDrop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes testiFade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+<div style="min-height:100vh;background:linear-gradient(180deg,#071E2E 0%,#081127 45%,#0B1533 100%);font-family:'Archivo',system-ui,sans-serif;color:#EAECF0;">
+
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(7,20,34,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(204,165,77,.16);">
+    <div style="max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,44px);height:72px;display:flex;align-items:center;justify-content:space-between;gap:24px;">
+
+      <a href="#top" onClick="{{ closeMenu }}" style="display:flex;align-items:center;gap:13px;flex:0 1 auto;min-width:0;">
+        <img src="images/logo-principal.png" alt="Logo Congresso" width="42" height="38" style="flex:none;object-fit:contain;"></img>
+        <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;line-height:1.18;letter-spacing:.13em;text-transform:uppercase;color:#EAECF0;max-width:220px;">{{ eventName }}</span>
+      </a>
+
+      <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:clamp(18px,2.4vw,34px);">
+          <ul style="display:flex;align-items:center;gap:clamp(16px,2vw,30px);list-style:none;margin:0;padding:0;">
+            <sc-for list="{{ items }}" as="item" hint-placeholder-count="5">
+              <li>
+                <a href="{{ item.href }}" style="font-size:12.5px;font-weight:500;letter-spacing:.11em;text-transform:uppercase;color:#C6D2DF;white-space:nowrap;padding-bottom:4px;transition:color .22s ease,box-shadow .22s ease;" style-hover="color:#CCA54D;box-shadow:inset 0 -2px 0 #CCA54D;">{{ item.label }}</a>
+              </li>
+            </sc-for>
+          </ul>
+          <div data-component="language-switcher" style="position:relative;">
+            <button onClick="{{ toggleLang }}" aria-label="Selecionar idioma" style="display:flex;align-items:center;gap:7px;background:transparent;border:1px solid rgba(204,165,77,.3);border-radius:4px;padding:8px 11px;cursor:pointer;color:#C6D2DF;font-family:'Archivo',sans-serif;font-size:12px;font-weight:600;letter-spacing:.08em;transition:border-color .25s ease,color .25s ease;" style-hover="border-color:#CCA54D;color:#EAECF0;">
+              <span style="font-size:15px;line-height:1;">{{ currentLang.flag }}</span>
+              <span>{{ currentLang.code }}</span>
+              <span style="{{ langChevronStyle }}"><svg width="9" height="9" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="#CCA54D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+            </button>
+            <sc-if value="{{ langOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:fixed;inset:0;z-index:110;" onClick="{{ closeLang }}"></div>
+              <div style="position:absolute;top:calc(100% + 8px);right:0;z-index:120;min-width:168px;background:rgba(9,18,34,.98);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(204,165,77,.24);border-radius:8px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.5);animation:navDrop .18s ease;">
+                <sc-for list="{{ languages }}" as="lg" hint-placeholder-count="3">
+                  <button onClick="{{ lg.select }}" style="{{ lg.rowStyle }}">
+                    <span style="font-size:16px;line-height:1;">{{ lg.flag }}</span>
+                    <span style="flex:1;text-align:left;">{{ lg.label }}</span>
+                    <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.08em;color:#CCA54D;">{{ lg.code }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+          <a href="{{ ctaHref }}" style="display:inline-flex;align-items:center;background:#CCA54D;color:#0A1A2C;font-weight:600;font-size:12.5px;letter-spacing:.11em;text-transform:uppercase;padding:11px 22px;border-radius:4px;white-space:nowrap;transition:background .25s ease,transform .25s ease,box-shadow .25s ease;" style-hover="background:#E3C173;transform:translateY(-1px);box-shadow:0 8px 22px rgba(204,165,77,.32);">{{ ctaLabel }}</a>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ toggleMenu }}" aria-label="Abrir menu" style="display:flex;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;padding:0;background:transparent;border:1px solid rgba(204,165,77,.3);border-radius:6px;cursor:pointer;flex:none;">
+          <span style="display:block;width:20px;height:1.6px;background:#CCA54D;margin:0 auto;"></span>
+          <span style="display:block;width:20px;height:1.6px;background:#CCA54D;margin:0 auto;"></span>
+          <span style="display:block;width:20px;height:1.6px;background:#CCA54D;margin:0 auto;"></span>
+        </button>
+      </sc-if>
+
+    </div>
+
+    <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="background:rgba(7,17,34,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid rgba(204,165,77,.14);padding:12px clamp(20px,5vw,32px) 26px;animation:navDrop .22s ease;">
+        <ul style="list-style:none;margin:0 0 18px;padding:0;display:flex;flex-direction:column;">
+          <sc-for list="{{ items }}" as="item" hint-placeholder-count="5">
+            <li style="border-bottom:1px solid rgba(255,255,255,.06);">
+              <a href="{{ item.href }}" onClick="{{ closeMenu }}" style="display:block;padding:16px 2px;font-size:15px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#D7E0EA;">{{ item.label }}</a>
+            </li>
+          </sc-for>
+        </ul>
+        <a href="{{ ctaHref }}" onClick="{{ closeMenu }}" style="display:block;text-align:center;background:#CCA54D;color:#0A1A2C;font-weight:600;font-size:14px;letter-spacing:.1em;text-transform:uppercase;padding:15px;border-radius:5px;transition:background .25s ease,box-shadow .25s ease;" style-hover="background:#E3C173;box-shadow:0 8px 22px rgba(204,165,77,.32);">{{ ctaLabel }}</a>
+        <div data-component="language-switcher" style="display:flex;gap:8px;margin-top:16px;">
+          <sc-for list="{{ languages }}" as="lg" hint-placeholder-count="3">
+            <button onClick="{{ lg.select }}" style="{{ lg.mobileStyle }}">
+              <span style="font-size:16px;line-height:1;">{{ lg.flag }}</span>
+              <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.06em;">{{ lg.code }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </nav>
+
+  <div id="top"></div>
+
+  <main style="padding-top:72px;">
+
+    <section id="hero" style="position:relative;overflow:hidden;min-height:calc(100vh - 72px);display:flex;align-items:center;">
+      <div style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;">
+        <img src="images/logo-principal.png" alt="" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(60vw,660px);height:auto;opacity:.22;filter:saturate(1.15);"></img>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(66vw,720px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(204,165,77,.10),transparent 60%);mix-blend-mode:screen;"></div>
+      </div>
+
+      <div style="position:relative;z-index:1;width:100%;max-width:1280px;margin:0 auto;padding:clamp(48px,7vh,96px) clamp(20px,4vw,44px);display:grid;grid-template-columns:{{ heroCols }};gap:clamp(40px,6vw,80px);align-items:center;">
+
+        <div style="min-width:0;">
+          <h1 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(38px,6.4vw,84px);line-height:.98;letter-spacing:.015em;text-transform:uppercase;margin:0;color:#F1F3F7;">
+            <span style="display:block;">{{ titleLine1 }}</span>
+            <span style="display:block;">{{ titleLine2 }}</span>
+            <span style="display:block;">{{ titleLine3 }}</span>
+          </h1>
+          <p style="margin:clamp(16px,2vh,26px) 0 0;font-family:'Oswald',sans-serif;font-weight:500;font-size:clamp(14px,1.6vw,20px);letter-spacing:.24em;text-transform:uppercase;color:#CCA54D;">{{ subtitle }}</p>
+
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px 18px;margin:clamp(20px,3vh,32px) 0 0;font-size:14px;letter-spacing:.03em;color:#C6D2DF;">
+            <span style="display:inline-flex;align-items:center;gap:8px;">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none;"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#CCA54D" stroke-width="1.3"></rect><line x1="2" y1="6.5" x2="14" y2="6.5" stroke="#CCA54D" stroke-width="1.3"></line><line x1="5" y1="1.5" x2="5" y2="4" stroke="#CCA54D" stroke-width="1.3"></line><line x1="11" y1="1.5" x2="11" y2="4" stroke="#CCA54D" stroke-width="1.3"></line></svg>
+              {{ dateText }}
+            </span>
+            <span style="color:rgba(204,165,77,.5);">·</span>
+            <span style="display:inline-flex;align-items:center;gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex:none;"><circle cx="8" cy="8" r="5.5" stroke="#CCA54D" stroke-width="1.3"></circle><circle cx="8" cy="8" r="1.8" fill="#CCA54D"></circle></svg>
+              {{ locationText }}
+            </span>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:14px;margin:clamp(26px,4vh,40px) 0 0;">
+            <a href="{{ primaryHref }}" style="display:inline-flex;align-items:center;justify-content:center;background:#CCA54D;color:#0A1A2C;font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:15px 28px;border-radius:4px;box-shadow:0 10px 30px rgba(204,165,77,.22);transition:background .25s ease,transform .25s ease,box-shadow .25s ease;" style-hover="background:#E3C173;transform:translateY(-2px);box-shadow:0 16px 40px rgba(204,165,77,.38);">{{ primaryLabel }}</a>
+            <a href="{{ secondaryHref }}" style="display:inline-flex;align-items:center;justify-content:center;background:transparent;color:#EAECF0;font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:15px 28px;border-radius:4px;border:1px solid rgba(204,165,77,.55);transition:border-color .25s ease,background .25s ease,color .25s ease,transform .25s ease;" style-hover="border-color:#CCA54D;background:rgba(204,165,77,.12);color:#F5F1E6;transform:translateY(-2px);">{{ secondaryLabel }}</a>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:16px;margin:clamp(28px,4vh,42px) 0 0;">
+            <div style="width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;padding:5px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+              <img src="images/logo-cmi.png" alt="Confederação Maçônica Interamericana" style="width:100%;height:100%;object-fit:contain;"></img>
+            </div>
+            <div style="width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;padding:5px;box-shadow:0 4px 16px rgba(0,0,0,.3);">
+              <img src="images/logo-glmees.png" alt="Grande Loja Maçônica do Estado do Espírito Santo" style="width:100%;height:100%;object-fit:contain;"></img>
+            </div>
+          </div>
+        </div>
+
+        <div style="min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:clamp(14px,2.4vh,26px);">
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;letter-spacing:.32em;text-transform:uppercase;color:#CCA54D;">Faltam</span>
+          <sc-for list="{{ cdBlocks }}" as="b" hint-placeholder-count="3">
+            <div style="display:flex;align-items:flex-end;gap:16px;width:100%;padding-bottom:clamp(12px,2vh,20px);border-bottom:1px solid rgba(204,165,77,.16);">
+              <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(56px,8.5vw,108px);line-height:.86;color:#F1F3F7;font-variant-numeric:tabular-nums;">{{ b.value }}</span>
+              <span style="font-family:'Oswald',sans-serif;font-weight:500;font-size:clamp(13px,1.4vw,17px);letter-spacing:.24em;text-transform:uppercase;color:#8FA2B6;padding-bottom:clamp(8px,1.4vh,16px);">{{ b.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="numeros" ref="{{ statsRef }}" style="scroll-margin-top:80px;padding:clamp(48px,8vh,88px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:clamp(14px,1.6vw,22px);">
+        <sc-for list="{{ statCards }}" as="card" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:clamp(28px,3vw,40px) 20px;background:linear-gradient(180deg,rgba(70,96,137,.10),rgba(70,96,137,.03));border:1px solid rgba(204,165,77,.16);border-radius:8px;">
+            <div style="height:34px;display:flex;align-items:center;justify-content:center;">
+              <sc-if value="{{ card.isPeople }}" hint-placeholder-val="{{ false }}">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="11" r="5" stroke="#CCA54D" stroke-width="1.5"></circle><path d="M6.5 25.5c0-5 4.3-8 9.5-8s9.5 3 9.5 8" stroke="#CCA54D" stroke-width="1.5" stroke-linecap="round"></path></svg>
+              </sc-if>
+              <sc-if value="{{ card.isGlobe }}" hint-placeholder-val="{{ false }}">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="11" stroke="#CCA54D" stroke-width="1.5"></circle><ellipse cx="16" cy="16" rx="5" ry="11" stroke="#CCA54D" stroke-width="1.5"></ellipse><line x1="5" y1="16" x2="27" y2="16" stroke="#CCA54D" stroke-width="1.5"></line></svg>
+              </sc-if>
+              <sc-if value="{{ card.isMic }}" hint-placeholder-val="{{ false }}">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="12" y="5" width="8" height="15" rx="4" stroke="#CCA54D" stroke-width="1.5"></rect><path d="M8 15a8 8 0 0 0 16 0" stroke="#CCA54D" stroke-width="1.5"></path><line x1="16" y1="23" x2="16" y2="27" stroke="#CCA54D" stroke-width="1.5"></line><line x1="11" y1="27" x2="21" y2="27" stroke="#CCA54D" stroke-width="1.5" stroke-linecap="round"></line></svg>
+              </sc-if>
+              <sc-if value="{{ card.isTemple }}" hint-placeholder-val="{{ false }}">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M4.5 12 16 5.5 27.5 12" stroke="#CCA54D" stroke-width="1.5" stroke-linejoin="round"></path><line x1="7.5" y1="12.5" x2="7.5" y2="24" stroke="#CCA54D" stroke-width="1.5"></line><line x1="13" y1="12.5" x2="13" y2="24" stroke="#CCA54D" stroke-width="1.5"></line><line x1="19" y1="12.5" x2="19" y2="24" stroke="#CCA54D" stroke-width="1.5"></line><line x1="24.5" y1="12.5" x2="24.5" y2="24" stroke="#CCA54D" stroke-width="1.5"></line><line x1="5" y1="26" x2="27" y2="26" stroke="#CCA54D" stroke-width="1.5" stroke-linecap="round"></line></svg>
+              </sc-if>
+              <sc-if value="{{ card.isGeneric }}" hint-placeholder-val="{{ false }}">
+                <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="4" y="4" width="18" height="18" transform="rotate(45 13 13)" stroke="#CCA54D" stroke-width="1.5"></rect></svg>
+              </sc-if>
+            </div>
+            <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(40px,4.4vw,58px);line-height:1;color:#F1F3F7;font-variant-numeric:tabular-nums;">{{ card.display }}</span>
+            <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(13px,1.2vw,15px);letter-spacing:.14em;text-transform:uppercase;color:#CCA54D;">{{ card.title }}</span>
+            <span style="font-size:13px;letter-spacing:.02em;color:#8FA2B6;">{{ card.subtitle }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="o-congresso" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);">
+      <div style="max-width:1280px;margin:0 auto;display:grid;grid-template-columns:{{ twoCol }};gap:clamp(36px,5vw,72px);align-items:center;">
+
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;">
+            <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+            <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ aboutLabel }}</span>
+          </div>
+          <h2 style="font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(28px,3.6vw,46px);line-height:1.08;letter-spacing:.005em;margin:0;color:#F1F3F7;">{{ aboutTitle }}</h2>
+          <p style="margin:clamp(18px,2.4vh,28px) 0 0;font-size:clamp(15px,1.15vw,17px);line-height:1.7;color:#B9C6D4;max-width:52ch;">{{ aboutText }}</p>
+          <a href="{{ aboutHref }}" style="display:inline-flex;align-items:center;gap:10px;margin-top:clamp(24px,3.4vh,36px);background:transparent;color:#EAECF0;font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:14px 26px;border-radius:4px;border:1px solid rgba(204,165,77,.55);" style-hover="border-color:#CCA54D;background:rgba(204,165,77,.08);">{{ aboutBtn }}</a>
+        </div>
+
+        <div style="min-width:0;display:grid;grid-template-columns:{{ galleryCols }};gap:12px;">
+          <div style="overflow:hidden;border-radius:8px;height:100%;min-height:412px;border:1px solid rgba(204,165,77,.14);">
+            <image-slot id="{{ bigPhoto.id }}" fit="cover" placeholder="{{ bigPhoto.placeholder }}" style="width:100%;height:100%;display:block;transition:transform .55s ease;" style-hover="transform:scale(1.06);"></image-slot>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-content:start;">
+            <sc-for list="{{ restPhotos }}" as="photo" hint-placeholder-count="4">
+              <div style="overflow:hidden;border-radius:8px;height:200px;border:1px solid rgba(204,165,77,.14);">
+                <image-slot id="{{ photo.id }}" fit="cover" placeholder="{{ photo.placeholder }}" style="width:100%;height:100%;display:block;transition:transform .55s ease;" style-hover="transform:scale(1.06);"></image-slot>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <sc-for list="{{ sectionsBefore }}" as="sec" hint-placeholder-count="1">
+      <section id="{{ sec.id }}" style="scroll-margin-top:80px;min-height:74vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:80px 24px;border-bottom:1px solid rgba(255,255,255,.05);">
+        <span style="font-family:'Oswald',sans-serif;font-size:clamp(30px,5vw,52px);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#EAECF0;">{{ sec.title }}</span>
+        <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#CCA54D;opacity:.8;">// seção a construir · {{ sec.id }}</span>
+      </section>
+    </sc-for>
+
+    <section id="palestrantes" ref="{{ speakersRef }}" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(28px,4vh,44px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ speakersLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:{{ speakerCols }};gap:clamp(16px,1.8vw,26px);">
+          <sc-for list="{{ speakerVisible }}" as="sp" hint-placeholder-count="4">
+            <div style="{{ sp.animStyle }}">
+              <div onClick="{{ sp.open }}" role="button" tabindex="0" style="cursor:pointer;display:flex;flex-direction:column;background:#0C1B30;border:1px solid rgba(204,165,77,.14);border-radius:10px;overflow:hidden;transition:transform .32s ease,box-shadow .32s ease,border-color .32s ease;" style-hover="transform:translateY(-7px);border-color:rgba(204,165,77,.5);box-shadow:0 20px 44px rgba(0,0,0,.42);">
+                <div style="aspect-ratio:3/4;overflow:hidden;">
+                  <image-slot id="{{ sp.photoId }}" src="{{ sp.photoSrc }}" fit="cover" placeholder="{{ sp.photoPlaceholder }}" style="width:100%;height:100%;display:block;pointer-events:none;"></image-slot>
+                </div>
+                <div style="position:relative;padding:20px 18px 22px;border-top:2px solid #CCA54D;background:linear-gradient(180deg,rgba(25,19,118,.30),rgba(9,18,34,.6));">
+                  <div style="font-family:'Oswald',sans-serif;font-weight:600;font-size:18px;line-height:1.15;color:#F1F3F7;">{{ sp.name }}</div>
+                  <div style="margin-top:8px;font-size:12.5px;line-height:1.45;color:#CCA54D;letter-spacing:.02em;">{{ sp.role }}</div>
+                  <div style="margin-top:2px;font-size:12.5px;line-height:1.45;color:#8FA2B6;">{{ sp.org }}</div>
+                  <div style="display:inline-flex;align-items:center;gap:6px;margin-top:15px;font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#CCA54D;">Ver palestra <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hasSpeakerPages }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-top:clamp(30px,4vh,44px);">
+            <button onClick="{{ prevSpeaker }}" aria-label="Anterior" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(204,165,77,.4);border-radius:50%;cursor:pointer;" style-hover="border-color:#CCA54D;background:rgba(204,165,77,.08);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3 5 8l5 5" stroke="#CCA54D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <sc-for list="{{ speakerDots }}" as="dot" hint-placeholder-count="3">
+                <button onClick="{{ dot.go }}" aria-label="Página" style="{{ dot.style }}"></button>
+              </sc-for>
+            </div>
+            <button onClick="{{ nextSpeaker }}" aria-label="Próximo" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(204,165,77,.4);border-radius:50%;cursor:pointer;" style-hover="border-color:#CCA54D;background:rgba(204,165,77,.08);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="#CCA54D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <sc-if value="{{ speakerModalOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeSpeaker }}" style="position:fixed;inset:0;z-index:200;background:rgba(4,9,18,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFade .25s ease;">
+          <div onClick="{{ stopProp }}" style="position:relative;width:100%;max-width:760px;max-height:88vh;overflow:auto;background:#0C1B30;border:1px solid rgba(204,165,77,.3);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);">
+            <button onClick="{{ closeSpeaker }}" aria-label="Fechar" style="position:absolute;top:14px;right:14px;z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(204,165,77,.4);background:rgba(8,16,30,.75);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .25s ease;" style-hover="background:#CCA54D;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#CCA54D" stroke-width="1.7" stroke-linecap="round"></path></svg>
+            </button>
+            <div style="display:grid;grid-template-columns:{{ modalCols }};">
+              <div style="min-height:240px;aspect-ratio:{{ modalAspect }};overflow:hidden;background:#0A1524;">
+                <image-slot id="{{ modalSpeaker.photoId }}" src="{{ modalSpeaker.photoSrc }}" fit="cover" placeholder="{{ modalSpeaker.name }}" style="width:100%;height:100%;display:block;"></image-slot>
+              </div>
+              <div style="padding:clamp(26px,3vw,40px);">
+                <span style="display:inline-flex;align-items:center;gap:8px;font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#0A1A2C;background:#CCA54D;padding:5px 12px;border-radius:20px;">{{ modalSpeaker.dayTime }}</span>
+                <h3 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(24px,3vw,32px);line-height:1.1;margin:18px 0 0;color:#F5F1E6;">{{ modalSpeaker.name }}</h3>
+                <div style="margin-top:8px;font-size:14px;color:#CCA54D;letter-spacing:.02em;">{{ modalSpeaker.role }}</div>
+                <div style="margin-top:2px;font-size:13.5px;line-height:1.5;color:#8FA2B6;">{{ modalSpeaker.org }}</div>
+                <span style="display:block;width:44px;height:2px;background:#CCA54D;margin:22px 0 18px;"></span>
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#5F7590;">Palestra</span>
+                <p style="margin:10px 0 0;font-size:clamp(16px,1.4vw,19px);line-height:1.45;color:#EAECF0;font-weight:500;">{{ modalSpeaker.talk }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <section id="pilares" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(30px,4vh,48px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ pillarsLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(28px,4vw,56px);">
+          <sc-for list="{{ pillars }}" as="pillar" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;">
+              <div style="height:40px;display:flex;align-items:center;">
+                <sc-if value="{{ pillar.isConnect }}" hint-placeholder-val="{{ false }}">
+                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="13" cy="13" r="5" stroke="#CCA54D" stroke-width="1.5"></circle><circle cx="24" cy="16" r="4" stroke="#CCA54D" stroke-width="1.5"></circle><path d="M5 29c0-4.5 3.6-7 8-7 2 0 3.8.5 5.2 1.5" stroke="#CCA54D" stroke-width="1.5" stroke-linecap="round"></path><path d="M18.5 29c.4-3.4 2.8-5.5 5.5-5.5 3 0 5.6 2 6 5.5" stroke="#CCA54D" stroke-width="1.5" stroke-linecap="round"></path></svg>
+                </sc-if>
+                <sc-if value="{{ pillar.isLearn }}" hint-placeholder-val="{{ false }}">
+                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M18 9c-2.8-2-6.8-2.6-10-2.2v18c3.2-.4 7.2.2 10 2.2 2.8-2 6.8-2.6 10-2.2v-18c-3.2-.4-7.2.2-10 2.2z" stroke="#CCA54D" stroke-width="1.5" stroke-linejoin="round"></path><line x1="18" y1="9" x2="18" y2="29" stroke="#CCA54D" stroke-width="1.5"></line></svg>
+                </sc-if>
+                <sc-if value="{{ pillar.isTransform }}" hint-placeholder-val="{{ false }}">
+                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="12" stroke="#CCA54D" stroke-width="1.5"></circle><ellipse cx="18" cy="18" rx="5.5" ry="12" stroke="#CCA54D" stroke-width="1.5"></ellipse><line x1="6" y1="18" x2="30" y2="18" stroke="#CCA54D" stroke-width="1.5"></line></svg>
+                </sc-if>
+                <sc-if value="{{ pillar.isGeneric }}" hint-placeholder-val="{{ false }}">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="5" y="5" width="18" height="18" transform="rotate(45 14 14)" stroke="#CCA54D" stroke-width="1.5"></rect></svg>
+                </sc-if>
+              </div>
+              <h3 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(22px,2.2vw,30px);letter-spacing:.06em;text-transform:uppercase;margin:20px 0 0;color:#F1F3F7;">{{ pillar.title }}</h3>
+              <span style="display:block;width:38px;height:2px;background:#CCA54D;margin:16px 0 20px;"></span>
+              <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;">
+                <sc-for list="{{ pillar.items }}" as="topic" hint-placeholder-count="3">
+                  <li style="display:flex;align-items:flex-start;gap:11px;font-size:15px;line-height:1.5;color:#B9C6D4;">
+                    <span style="flex:none;width:6px;height:6px;margin-top:7px;transform:rotate(45deg);background:#CCA54D;"></span>
+                    {{ topic }}
+                  </li>
+                </sc-for>
+              </ul>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section id="programacao" ref="{{ progRef }}" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(28px,4vh,44px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ progLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:{{ progCols }};gap:clamp(24px,3vw,48px);">
+          <sc-for list="{{ progDays }}" as="day" hint-placeholder-count="2">
+            <div style="min-width:0;">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:clamp(22px,3vh,32px);">
+                <span style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(16px,1.7vw,20px);letter-spacing:.16em;text-transform:uppercase;color:#F1F3F7;background:#191376;padding:9px 20px;border-radius:4px;">{{ day.label }}</span>
+                <span style="font-size:13px;letter-spacing:.06em;color:#8FA2B6;">{{ day.date }}</span>
+              </div>
+
+              <div style="display:flex;flex-direction:column;">
+                <sc-for list="{{ day.items }}" as="item" hint-placeholder-count="6">
+                  <div style="{{ item.animStyle }}display:flex;gap:12px;">
+                    <div style="flex:none;width:52px;text-align:right;padding-top:6px;font-family:'Oswald',sans-serif;font-weight:600;font-size:12.5px;line-height:1.35;letter-spacing:.02em;color:#EAECF0;">
+                      <div>{{ item.t1 }}</div>
+                      <div style="color:#8496AB;">{{ item.t2 }}</div>
+                    </div>
+                    <div style="flex:none;width:44px;position:relative;display:flex;justify-content:center;">
+                      <div style="{{ item.lineStyle }}"></div>
+                      <div style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(204,165,77,.42);background:#0A1526;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;margin-top:2px;">
+                        <sc-if value="{{ item.iconOpen }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="#CCA54D" stroke-width="1.4"></circle><path d="M6 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></path></svg></sc-if>
+                        <sc-if value="{{ item.iconMic }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="9" y="3.5" width="6" height="11" rx="3" stroke="#CCA54D" stroke-width="1.4"></rect><path d="M6.5 11.5a5.5 5.5 0 0 0 11 0" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></path><line x1="12" y1="17" x2="12" y2="20.5" stroke="#CCA54D" stroke-width="1.4"></line><line x1="8.5" y1="20.5" x2="15.5" y2="20.5" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></line></svg></sc-if>
+                        <sc-if value="{{ item.iconDebate }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="10" rx="2" stroke="#CCA54D" stroke-width="1.4"></rect><path d="M9 16v3.5L13 16" stroke="#CCA54D" stroke-width="1.4" stroke-linejoin="round"></path><circle cx="9" cy="11" r=".9" fill="#CCA54D"></circle><circle cx="12" cy="11" r=".9" fill="#CCA54D"></circle><circle cx="15" cy="11" r=".9" fill="#CCA54D"></circle></svg></sc-if>
+                        <sc-if value="{{ item.iconCoffee }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M5 9h11v4.5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" stroke="#CCA54D" stroke-width="1.4" stroke-linejoin="round"></path><path d="M16 10.5h2a2 2 0 0 1 0 4h-2" stroke="#CCA54D" stroke-width="1.4"></path><line x1="8" y1="3.5" x2="8" y2="6" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></line><line x1="12" y1="3.5" x2="12" y2="6" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></line></svg></sc-if>
+                        <sc-if value="{{ item.iconLunch }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="#CCA54D" stroke-width="1.4"></circle><circle cx="12" cy="12" r="3" stroke="#CCA54D" stroke-width="1.2"></circle></svg></sc-if>
+                        <sc-if value="{{ item.iconWorkshop }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="12" rx="1.5" stroke="#CCA54D" stroke-width="1.4"></rect><line x1="9" y1="20" x2="15" y2="20" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></line><line x1="12" y1="17" x2="12" y2="20" stroke="#CCA54D" stroke-width="1.4"></line></svg></sc-if>
+                        <sc-if value="{{ item.iconResults }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="1.5" stroke="#CCA54D" stroke-width="1.4"></rect><line x1="8.5" y1="8" x2="15.5" y2="8" stroke="#CCA54D" stroke-width="1.3"></line><line x1="8.5" y1="12" x2="15.5" y2="12" stroke="#CCA54D" stroke-width="1.3"></line><line x1="8.5" y1="16" x2="13" y2="16" stroke="#CCA54D" stroke-width="1.3"></line></svg></sc-if>
+                      </div>
+                    </div>
+                    <div style="flex:1;min-width:0;padding-top:3px;padding-bottom:24px;">
+                      <sc-if value="{{ item.isSimple }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(15px,1.3vw,17px);letter-spacing:.03em;color:{{ item.accent }};">{{ item.title }}</span>
+                      </sc-if>
+                      <sc-if value="{{ item.isTalk }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-weight:700;font-size:15px;line-height:1.32;color:#F1F3F7;">{{ item.title }}</div>
+                        <div style="margin-top:6px;font-size:13px;color:#CCA54D;">{{ item.speaker }}</div>
+                        <div style="margin-top:1px;font-size:12.5px;line-height:1.45;color:#8FA2B6;">{{ item.org }}</div>
+                      </sc-if>
+                      <sc-if value="{{ item.isWorkshop }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(15px,1.3vw,17px);letter-spacing:.03em;color:#F1F3F7;">{{ item.title }}</div>
+                        <div style="margin-top:12px;background:rgba(70,96,137,.12);border:1px solid rgba(204,165,77,.14);border-radius:8px;padding:16px 16px 18px;">
+                          <div style="font-size:12.5px;font-weight:700;line-height:1.4;color:#CCA54D;text-transform:uppercase;letter-spacing:.03em;">{{ item.subtitle }}</div>
+                          <ul style="list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;">
+                            <sc-for list="{{ item.activities }}" as="act" hint-placeholder-count="4">
+                              <li style="display:flex;gap:9px;font-size:12.5px;line-height:1.5;color:#B9C6D4;">
+                                <span style="flex:none;width:5px;height:5px;margin-top:6px;transform:rotate(45deg);background:#CCA54D;"></span>
+                                <span><strong style="color:#E7EDF3;font-weight:700;">{{ act.label }}</strong> {{ act.text }}</span>
+                              </li>
+                            </sc-for>
+                          </ul>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ item.isResults }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(15px,1.3vw,17px);letter-spacing:.03em;color:#F1F3F7;">{{ item.title }}</div>
+                        <p style="margin:7px 0 0;font-size:13px;line-height:1.55;color:#8FA2B6;">{{ item.desc }}</p>
+                      </sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin-top:clamp(34px,5vh,52px);">
+          <a href="{{ progHref }}" style="display:inline-flex;align-items:center;background:#CCA54D;color:#0A1A2C;font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:15px 34px;border-radius:4px;box-shadow:0 10px 30px rgba(204,165,77,.22);transition:background .25s ease,transform .25s ease,box-shadow .25s ease;" style-hover="background:#E3C173;transform:translateY(-2px);box-shadow:0 14px 36px rgba(204,165,77,.34);">{{ progBtn }}</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="local" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(28px,4vh,44px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ localLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:{{ twoCol }};gap:clamp(36px,5vw,72px);align-items:center;">
+
+          <div style="min-width:0;">
+            <h2 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(28px,3.6vw,46px);line-height:1.08;letter-spacing:.02em;margin:0;color:#F1F3F7;">{{ placeName }}</h2>
+            <p style="margin:clamp(18px,2.4vh,28px) 0 0;font-size:clamp(15px,1.15vw,17px);line-height:1.7;color:#B9C6D4;max-width:50ch;">{{ localText }}</p>
+            <a href="{{ localHref }}" style="display:inline-flex;align-items:center;margin-top:clamp(24px,3.4vh,36px);background:#CCA54D;color:#0A1A2C;font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:14px 28px;border-radius:4px;" style-hover="background:#E3C173;">{{ localBtn }}</a>
+          </div>
+
+          <div style="min-width:0;background:#0C1B30;border:1px solid rgba(204,165,77,.16);border-radius:12px;overflow:hidden;">
+            <div style="aspect-ratio:16/9;overflow:hidden;">
+              <image-slot id="venue-photo" src="images/hotel.jpg" fit="cover" placeholder="Foto do centro de convenções" style="width:100%;height:100%;display:block;"></image-slot>
+            </div>
+
+            <div style="display:flex;align-items:flex-start;gap:13px;padding:22px clamp(18px,2vw,26px);border-bottom:1px solid rgba(255,255,255,.06);">
+              <span style="flex:none;margin-top:2px;">
+                <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#CCA54D" stroke-width="1.3"></circle><circle cx="8" cy="8" r="2" fill="#CCA54D"></circle></svg>
+              </span>
+              <div style="min-width:0;">
+                <div style="font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:#F1F3F7;">{{ venueName }}</div>
+                <div style="margin-top:5px;font-size:14px;line-height:1.5;color:#8FA2B6;">{{ venueAddress }}</div>
+                <a href="{{ mapHref }}" style="display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#CCA54D;" style-hover="color:#E3C173;">
+                  {{ mapBtn }}
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 11 11 3M5 3h6v6" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="informacoes" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(30px,4vh,48px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ infoLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(16px,1.8vw,24px);">
+          <sc-for list="{{ infoCategories }}" as="cat" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(70,96,137,.10),rgba(70,96,137,.03));border:1px solid rgba(204,165,77,.16);border-radius:12px;padding:clamp(26px,2.6vw,34px);transition:transform .32s ease,box-shadow .32s ease,border-color .32s ease;" style-hover="transform:translateY(-6px);border-color:rgba(204,165,77,.45);box-shadow:0 20px 44px rgba(0,0,0,.4);">
+              <div style="width:52px;height:52px;border-radius:50%;border:1px solid rgba(204,165,77,.35);display:flex;align-items:center;justify-content:center;">
+                <sc-if value="{{ cat.iconBed }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="11" width="19" height="6" rx="1.2" stroke="#CCA54D" stroke-width="1.4"></rect><rect x="5" y="8" width="6" height="3" rx="1" stroke="#CCA54D" stroke-width="1.3"></rect><line x1="2.5" y1="17" x2="2.5" y2="20" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></line><line x1="21.5" y1="17" x2="21.5" y2="20" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round"></line></svg></sc-if>
+                <sc-if value="{{ cat.iconTransport }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="2.5" y="7" width="19" height="8" rx="1.5" stroke="#CCA54D" stroke-width="1.4"></rect><line x1="14" y1="7" x2="14" y2="15" stroke="#CCA54D" stroke-width="1.3"></line><circle cx="7" cy="17" r="1.9" stroke="#CCA54D" stroke-width="1.4"></circle><circle cx="17" cy="17" r="1.9" stroke="#CCA54D" stroke-width="1.4"></circle></svg></sc-if>
+                <sc-if value="{{ cat.iconTourism }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 19l6-9 4 5 3-4 5 8z" stroke="#CCA54D" stroke-width="1.4" stroke-linejoin="round"></path><circle cx="17.5" cy="7" r="1.6" stroke="#CCA54D" stroke-width="1.3"></circle></svg></sc-if>
+                <sc-if value="{{ cat.iconFood }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7.5" stroke="#CCA54D" stroke-width="1.4"></circle><circle cx="12" cy="12" r="2.8" stroke="#CCA54D" stroke-width="1.3"></circle></svg></sc-if>
+                <sc-if value="{{ cat.iconMoney }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="#CCA54D" stroke-width="1.4"></circle><circle cx="12" cy="12" r="3.6" stroke="#CCA54D" stroke-width="1.3"></circle></svg></sc-if>
+                <sc-if value="{{ cat.iconGeneric }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" transform="rotate(45 12 12)" stroke="#CCA54D" stroke-width="1.4"></rect></svg></sc-if>
+              </div>
+
+              <h3 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(19px,1.8vw,24px);letter-spacing:.05em;text-transform:uppercase;margin:20px 0 0;color:#F1F3F7;">{{ cat.title }}</h3>
+              <span style="display:block;width:38px;height:2px;background:#CCA54D;margin:14px 0 16px;"></span>
+              <p style="margin:0;font-size:14px;line-height:1.6;color:#B9C6D4;">{{ cat.text }}</p>
+
+              <ul style="list-style:none;margin:20px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;flex:1;">
+                <sc-for list="{{ cat.items }}" as="it" hint-placeholder-count="3">
+                  <li style="border-top:1px solid rgba(255,255,255,.07);padding-top:14px;">
+                    <button onClick="{{ it.open }}" style="width:100%;background:transparent;border:none;padding:0;cursor:pointer;text-align:left;display:flex;align-items:baseline;justify-content:space-between;gap:10px;" style-hover="opacity:.85;">
+                      <span style="font-weight:600;font-size:14px;color:#EAECF0;">{{ it.name }}</span>
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style="flex:none;transform:translateY(2px);"><path d="M3 7h8M8 4l3 3-3 3" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    </button>
+                    <div style="margin-top:3px;font-size:12.5px;line-height:1.5;color:#8FA2B6;">{{ it.desc }}</div>
+                  </li>
+                </sc-for>
+              </ul>
+
+              <button onClick="{{ cat.openModal }}" style="align-self:flex-start;background:transparent;border:none;padding:0;cursor:pointer;display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#CCA54D;" style-hover="color:#E3C173;">
+                {{ cat.linkLabel }}
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M8 4l3 3-3 3" stroke="#CCA54D" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ infoModalOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeInfo }}" style="position:fixed;inset:0;z-index:200;background:rgba(4,9,18,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFade .25s ease;">
+          <div onClick="{{ stopProp }}" style="position:relative;width:100%;max-width:560px;max-height:88vh;overflow:auto;background:#0C1B30;border:1px solid rgba(204,165,77,.3);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);padding:clamp(28px,3.4vw,40px);">
+            <button onClick="{{ closeInfo }}" aria-label="Fechar" style="position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(204,165,77,.4);background:rgba(8,16,30,.75);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .25s ease;" style-hover="background:#CCA54D;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#CCA54D" stroke-width="1.7" stroke-linecap="round"></path></svg>
+            </button>
+            <sc-if value="{{ infoModal.hasSubtitle }}" hint-placeholder-val="{{ false }}">
+              <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#CCA54D;">{{ infoModal.subtitle }}</span>
+            </sc-if>
+            <h3 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(22px,2.6vw,30px);line-height:1.12;margin:8px 0 0;color:#F5F1E6;padding-right:36px;">{{ infoModal.title }}</h3>
+            <span style="display:block;width:44px;height:2px;background:#CCA54D;margin:18px 0;"></span>
+            <p style="margin:0;font-size:15px;line-height:1.65;color:#B9C6D4;">{{ infoModal.text }}</p>
+
+            <sc-if value="{{ infoModal.hasContact }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:12px;margin-top:22px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08);">
+                <sc-if value="{{ infoModal.hasAddress }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#DCE4EC;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex:none;margin-top:2px;"><path d="M8 14s5-4.5 5-8A5 5 0 0 0 3 6c0 3.5 5 8 5 8z" stroke="#CCA54D" stroke-width="1.3" stroke-linejoin="round"></path><circle cx="8" cy="6" r="1.7" fill="#CCA54D"></circle></svg>
+                    {{ infoModal.address }}
+                  </div>
+                </sc-if>
+                <sc-if value="{{ infoModal.hasPhone }}" hint-placeholder-val="{{ false }}">
+                  <a href="tel:{{ infoModal.phoneHref }}" style="display:flex;align-items:center;gap:10px;font-size:14px;color:#DCE4EC;" style-hover="color:#CCA54D;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex:none;"><path d="M4 3h2l1 3-1.5 1a8 8 0 0 0 3.5 3.5L11 12l3 1v2a1 1 0 0 1-1 1A11 11 0 0 1 3 5a1 1 0 0 1 1-1z" stroke="#CCA54D" stroke-width="1.3" stroke-linejoin="round"></path></svg>
+                    {{ infoModal.phone }}
+                  </a>
+                </sc-if>
+                <sc-if value="{{ infoModal.hasSite }}" hint-placeholder-val="{{ false }}">
+                  <a href="{{ infoModal.site }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;align-self:flex-start;margin-top:4px;background:#CCA54D;color:#0A1A2C;font-weight:600;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;padding:11px 20px;border-radius:5px;" style-hover="background:#E3C173;">
+                    Visitar site
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 11 11 3M5 3h6v6" stroke="#0A1A2C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  </a>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ infoModal.isCategory }}" hint-placeholder-val="{{ false }}">
+              <ul style="list-style:none;margin:22px 0 0;padding:20px 0 0;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:14px;">
+                <sc-for list="{{ infoModal.items }}" as="mit" hint-placeholder-count="3">
+                  <li>
+                    <div style="font-weight:600;font-size:14.5px;color:#EAECF0;">{{ mit.name }}</div>
+                    <div style="margin-top:3px;font-size:13px;line-height:1.55;color:#8FA2B6;">{{ mit.desc }}</div>
+                  </li>
+                </sc-for>
+              </ul>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <section id="patrocinio" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(30px,4vh,48px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ sponsorsLabel }}</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:clamp(34px,5vh,52px);">
+          <sc-for list="{{ sponsorGroups }}" as="group" hint-placeholder-count="2">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:0 0 clamp(20px,3vh,28px);">
+                <span style="flex:1;max-width:90px;height:1px;background:rgba(204,165,77,.22);"></span>
+                <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#8FA2B6;">{{ group.title }}</span>
+                <span style="flex:1;max-width:90px;height:1px;background:rgba(204,165,77,.22);"></span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:clamp(12px,1.4vw,18px);">
+                <sc-for list="{{ group.logos }}" as="logo" hint-placeholder-count="4">
+                  <a href="{{ logo.href }}" style="height:clamp(80px,9vw,104px);display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.025);border:1px solid rgba(204,165,77,.10);border-radius:8px;padding:14px 18px;transition:border-color .3s ease,background .3s ease;" style-hover="border-color:rgba(204,165,77,.4);background:rgba(255,255,255,.04);">
+                    <image-slot id="{{ logo.id }}" src="{{ logo.src }}" fit="contain" placeholder="{{ logo.name }}" style="width:100%;height:100%;display:block;filter:grayscale(1) opacity(.55);transition:filter .4s ease;" style-hover="filter:grayscale(0) opacity(1);"></image-slot>
+                  </a>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section id="depoimentos" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:1280px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(30px,4vh,48px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ testiLabel }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:{{ testiCols }};gap:clamp(16px,1.8vw,26px);">
+          <sc-for list="{{ testiVisible }}" as="t" hint-placeholder-count="3">
+            <div style="{{ t.animStyle }}position:relative;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(70,96,137,.10),rgba(70,96,137,.03));border:1px solid rgba(204,165,77,.14);border-radius:12px;padding:clamp(26px,3vw,36px) clamp(24px,2.6vw,32px);">
+              <span style="font-family:Georgia,'Times New Roman',serif;font-size:66px;line-height:.5;color:#CCA54D;opacity:.9;height:34px;">&ldquo;</span>
+              <p style="margin:14px 0 0;font-size:clamp(15px,1.1vw,17px);line-height:1.65;color:#DCE4EC;flex:1;">{{ t.text }}</p>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:24px;padding-top:20px;border-top:1px solid rgba(255,255,255,.07);">
+                <sc-if value="{{ t.hasPhoto }}" hint-placeholder-val="{{ false }}">
+                  <image-slot id="{{ t.photoId }}" shape="circle" fit="cover" placeholder="Foto" style="width:46px;height:46px;flex:none;display:block;"></image-slot>
+                </sc-if>
+                <div style="min-width:0;">
+                  <div style="font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;letter-spacing:.03em;color:#F1F3F7;">{{ t.name }}</div>
+                  <div style="margin-top:3px;font-size:13px;color:#CCA54D;letter-spacing:.02em;">{{ t.role }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hasTestiPages }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-top:clamp(30px,4vh,44px);">
+            <button onClick="{{ prevTesti }}" aria-label="Anterior" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(204,165,77,.4);border-radius:50%;cursor:pointer;" style-hover="border-color:#CCA54D;background:rgba(204,165,77,.08);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3 5 8l5 5" stroke="#CCA54D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <sc-for list="{{ testiDots }}" as="dot" hint-placeholder-count="2">
+                <button onClick="{{ dot.go }}" aria-label="Ir para página" style="{{ dot.style }}"></button>
+              </sc-for>
+            </div>
+            <button onClick="{{ nextTesti }}" aria-label="Próximo" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(204,165,77,.4);border-radius:50%;cursor:pointer;" style-hover="border-color:#CCA54D;background:rgba(204,165,77,.08);">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3l5 5-5 5" stroke="#CCA54D" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+
+    <section id="faq" style="scroll-margin-top:80px;padding:clamp(56px,9vh,104px) clamp(20px,4vw,44px);border-top:1px solid rgba(255,255,255,.05);">
+      <div style="max-width:880px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:clamp(28px,4vh,44px);">
+          <span style="width:22px;height:1.5px;background:#CCA54D;"></span>
+          <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#CCA54D;">{{ faqLabel }}</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;">
+          <sc-for list="{{ faqItems }}" as="item" hint-placeholder-count="5">
+            <div style="border-bottom:1px solid rgba(255,255,255,.09);">
+              <button onClick="{{ item.toggle }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 2px;background:transparent;border:none;cursor:pointer;text-align:left;">
+                <span style="font-family:'Oswald',sans-serif;font-weight:500;font-size:clamp(16px,1.5vw,19px);letter-spacing:.01em;color:#EAECF0;">{{ item.q }}</span>
+                <span style="{{ item.iconStyle }}">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="#CCA54D" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </span>
+              </button>
+              <div style="{{ item.answerStyle }}">
+                <p style="margin:0;padding:0 2px 24px;font-size:15px;line-height:1.65;color:#9FB0C3;max-width:66ch;">{{ item.a }}</p>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section id="inscricao" style="position:relative;overflow:hidden;scroll-margin-top:72px;padding:clamp(60px,11vh,120px) clamp(20px,4vw,44px);background:linear-gradient(180deg,#0A1230 0%,#0B0E28 100%);border-top:1px solid rgba(204,165,77,.22);">
+      <div style="position:absolute;inset:0;pointer-events:none;z-index:0;">
+        <div style="position:absolute;top:-28%;left:-8%;width:min(42vw,520px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(204,165,77,.16),transparent 68%);"></div>
+        <div style="position:absolute;bottom:-34%;right:-6%;width:min(44vw,560px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(70,96,137,.24),transparent 66%);"></div>
+        <div style="position:absolute;top:-16%;left:4%;width:min(30vw,360px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(204,165,77,.12);"></div>
+        <div style="position:absolute;bottom:-20%;right:8%;width:min(28vw,340px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(204,165,77,.12);"></div>
+      </div>
+
+      <div style="position:relative;z-index:1;max-width:820px;margin:0 auto;text-align:center;">
+        <span style="display:inline-block;font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:#CCA54D;margin-bottom:22px;">{{ ctaKicker }}</span>
+        <h2 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(30px,4.6vw,58px);line-height:1.18;letter-spacing:.02em;text-transform:uppercase;white-space:pre-line;margin:0;color:#F5F1E6;">{{ ctaTitle }}</h2>
+        <p style="margin:22px 0 0;font-family:'Oswald',sans-serif;font-weight:500;font-size:clamp(15px,1.6vw,20px);letter-spacing:.06em;color:#C6D2DF;">{{ ctaSubtitle }}</p>
+        <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;font-size:14px;letter-spacing:.03em;color:#9FB0C3;">
+          <span>{{ ctaDate }}</span>
+          <span style="color:rgba(204,165,77,.5);">·</span>
+          <span>{{ ctaLocation }}</span>
+        </div>
+        <a href="{{ ctaBtnHref }}" style="display:inline-flex;align-items:center;justify-content:center;margin-top:clamp(28px,4vh,40px);background:#CCA54D;color:#0A1A2C;font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(14px,1.5vw,17px);letter-spacing:.12em;text-transform:uppercase;padding:18px 42px;border-radius:5px;box-shadow:0 14px 40px rgba(204,165,77,.28);transition:background .25s ease,transform .25s ease,box-shadow .25s ease;" style-hover="background:#E3C173;transform:translateY(-2px);box-shadow:0 18px 48px rgba(204,165,77,.4);">{{ ctaBtnLabel }}</a>
+      </div>
+    </section>
+  </main>
+
+  <footer style="background:#060D1B;border-top:1px solid rgba(204,165,77,.16);padding:clamp(48px,7vh,80px) clamp(20px,4vw,44px) 0;">
+    <div style="max-width:1280px;margin:0 auto;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:clamp(32px,4vw,56px);padding-bottom:clamp(40px,6vh,64px);">
+
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="images/logo-principal.png" alt="Logo Congresso" width="44" height="40" style="flex:none;object-fit:contain;"></img>
+            <span style="font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;line-height:1.2;letter-spacing:.12em;text-transform:uppercase;color:#EAECF0;max-width:210px;">{{ eventName }}</span>
+          </div>
+          <p style="margin:18px 0 0;font-size:13.5px;line-height:1.6;color:#8095A9;max-width:34ch;">{{ footerTagline }}</p>
+          <div style="display:flex;gap:10px;margin-top:22px;">
+            <sc-for list="{{ socials }}" as="s" hint-placeholder-count="4">
+              <a href="{{ s.href }}" target="_blank" rel="noopener" aria-label="{{ s.name }}" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(204,165,77,.3);display:flex;align-items:center;justify-content:center;color:#CCA54D;transition:background .25s ease,color .25s ease,border-color .25s ease;" style-hover="background:rgba(204,165,77,.16);color:#E3C173;border-color:#CCA54D;">
+                <sc-if value="{{ s.isInstagram }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="1.6"></rect><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"></circle><circle cx="17" cy="7" r="1.2" fill="currentColor"></circle></svg></sc-if>
+                <sc-if value="{{ s.isFacebook }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13.5 21v-7h2.3l.45-3H13.5V9.05c0-.87.3-1.46 1.55-1.46H16.4V4.9C16.05 4.85 15.15 4.8 14.15 4.8c-2.1 0-3.55 1.3-3.55 3.68V11H8.3v3h2.3v7z" fill="currentColor"></path></svg></sc-if>
+                <sc-if value="{{ s.isYoutube }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="3.2" stroke="currentColor" stroke-width="1.6"></rect><path d="M10.8 9.4l4.2 2.6-4.2 2.6z" fill="currentColor"></path></svg></sc-if>
+                <sc-if value="{{ s.isLinkedin }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"></rect><circle cx="7.2" cy="8" r="1.3" fill="currentColor"></circle><path d="M6.2 10.8h2v6.4h-2z" fill="currentColor"></path><path d="M10 10.8h1.9v.9c.5-.8 1.4-1.1 2.3-1.1 1.7 0 2.6 1 2.6 3.1v3.5h-2v-3.1c0-.9-.35-1.4-1.15-1.4-.8 0-1.25.5-1.25 1.4v3.1h-2z" fill="currentColor"></path></svg></sc-if>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="min-width:0;">
+          <h4 style="font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#CCA54D;margin:0 0 18px;">Navegação</h4>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;">
+            <sc-for list="{{ navLinks }}" as="link" hint-placeholder-count="6">
+              <li><a href="{{ link.href }}" style="font-size:14px;color:#A6B4C4;" style-hover="color:#CCA54D;">{{ link.label }}</a></li>
+            </sc-for>
+          </ul>
+        </div>
+
+        <div style="min-width:0;">
+          <h4 style="font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#CCA54D;margin:0 0 18px;">Informações</h4>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;">
+            <sc-for list="{{ infoLinks }}" as="link" hint-placeholder-count="4">
+              <li><a href="{{ link.href }}" style="font-size:14px;color:#A6B4C4;" style-hover="color:#CCA54D;">{{ link.label }}</a></li>
+            </sc-for>
+          </ul>
+        </div>
+
+        <div style="min-width:0;">
+          <h4 style="font-family:'Oswald',sans-serif;font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#CCA54D;margin:0 0 18px;">Contato</h4>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px;">
+            <li style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5F7590;">E-mail</span>
+              <a href="mailto:{{ contactEmail }}" style="font-size:14px;color:#DCE4EC;" style-hover="color:#CCA54D;">{{ contactEmail }}</a>
+            </li>
+            <li style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5F7590;">Telefone</span>
+              <a href="tel:{{ contactPhoneHref }}" style="font-size:14px;color:#DCE4EC;" style-hover="color:#CCA54D;">{{ contactPhone }}</a>
+            </li>
+            <li style="display:flex;flex-direction:column;gap:3px;">
+              <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#5F7590;">WhatsApp</span>
+              <a href="{{ whatsappHref }}" style="font-size:14px;color:#DCE4EC;" style-hover="color:#CCA54D;">{{ contactWhatsapp }}</a>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:22px 0 30px;border-top:1px solid rgba(255,255,255,.07);">
+        <span style="font-size:12.5px;color:#6B7F95;">{{ copyright }}</span>
+        <div style="display:flex;gap:20px;">
+          <button onClick="{{ openPrivacy }}" style="background:transparent;border:none;padding:0;cursor:pointer;font-family:'Archivo',sans-serif;font-size:12.5px;color:#6B7F95;transition:color .2s ease;" style-hover="color:#CCA54D;">Política de Privacidade</button>
+          <button onClick="{{ openTerms }}" style="background:transparent;border:none;padding:0;cursor:pointer;font-family:'Archivo',sans-serif;font-size:12.5px;color:#6B7F95;transition:color .2s ease;" style-hover="color:#CCA54D;">Termos de Uso</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <sc-if value="{{ legalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeLegal }}" style="position:fixed;inset:0;z-index:200;background:rgba(4,9,18,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:modalFade .25s ease;">
+      <div onClick="{{ stopProp }}" style="position:relative;width:100%;max-width:680px;max-height:86vh;overflow:auto;background:#0C1B30;border:1px solid rgba(204,165,77,.3);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);padding:clamp(28px,3.4vw,44px);">
+        <button onClick="{{ closeLegal }}" aria-label="Fechar" style="position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(204,165,77,.4);background:rgba(8,16,30,.75);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .25s ease;" style-hover="background:#CCA54D;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="#CCA54D" stroke-width="1.7" stroke-linecap="round"></path></svg>
+        </button>
+        <h3 style="font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(22px,2.6vw,30px);line-height:1.15;margin:0;color:#F5F1E6;padding-right:36px;">{{ legalModal.title }}</h3>
+        <span style="display:block;width:44px;height:2px;background:#CCA54D;margin:18px 0;"></span>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <sc-for list="{{ legalModal.paragraphs }}" as="para" hint-placeholder-count="6">
+            <p style="margin:0;font-size:14.5px;line-height:1.7;color:#B9C6D4;">{{ para }}</p>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:820},&quot;eventName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Congresso Internacional da Maçonaria 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navbar&quot;},&quot;ctaLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Inscreva-se&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navbar&quot;},&quot;ctaHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#inscricao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navbar&quot;},&quot;titleLine1&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Congresso&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;titleLine2&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Internacional&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;titleLine3&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;da Maçonaria 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;subtitle&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Ação Transformadora Contemporânea&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;dateText&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;16 e 19 de setembro de 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;locationText&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Vitória · Espírito Santo · Brasil&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;primaryLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Garanta sua inscrição&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;primaryHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#inscricao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;secondaryLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Programação&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;secondaryHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#programacao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;eventDateISO&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2026-09-18T14:00:00-03:00&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;aboutLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sobre o Congresso&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Sobre&quot;},&quot;aboutTitle&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Conectando a Maçonaria para os desafios contemporâneos&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Sobre&quot;},&quot;aboutText&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;O Congresso Internacional da Maçonaria 2026 reúne líderes, pesquisadores, estudiosos e representantes das 30 Potências Maçônicas do Brasil e do mundo para discutir os caminhos da transformação social, inovação institucional e construção de legados para o futuro.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Sobre&quot;},&quot;aboutBtn&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Saiba mais&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Sobre&quot;},&quot;aboutHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#programacao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Sobre&quot;},&quot;speakersLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Palestrantes Internacionais&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Palestrantes&quot;},&quot;speakersBtn&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Ver todos os palestrantes&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Palestrantes&quot;},&quot;speakersHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#inscricao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Palestrantes&quot;},&quot;pillarsLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Experiência do Congresso&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Pilares&quot;},&quot;progLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Programação&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Programação&quot;},&quot;progBtn&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Inscreva-se&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Programação&quot;},&quot;progHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#inscricao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Programação&quot;},&quot;localLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Local do Evento&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;placeName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Vitória · Espírito Santo · Brasil&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;localText&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Cidade estratégica do litoral brasileiro, referência em desenvolvimento e inovação, Vitória recebe o congresso com estrutura de padrão internacional e fácil acesso para delegações de todo o país e do exterior.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;localBtn&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Como chegar&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;localHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#inscricao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;venueName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Centro de Convenções de Vitória&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;venueAddress&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Av. Amilcar Buaiz, 331 · Enseada do Suá, Vitória – ES&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;mapBtn&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Ver no mapa&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;mapHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://www.google.com/maps/search/?api=1&amp;query=Centro+de+Convenções+de+Vitória&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Local&quot;},&quot;sponsorsLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Patrocinadores&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Patrocínio&quot;},&quot;testiLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Depoimentos&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Depoimentos&quot;},&quot;faqLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Perguntas Frequentes&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;FAQ&quot;},&quot;infoLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Informações para o Participante&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Informações&quot;},&quot;ctaKicker&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Inscrições Abertas&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;ctaTitle&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Faça parte deste\nmomento histórico&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;ctaSubtitle&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Congresso Internacional da Maçonaria 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;ctaDate&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;16 e 19 de setembro de 2026&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;ctaLocation&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Vitória · Espírito Santo · Brasil&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;ctaBtnLabel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Inscreva-se&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;ctaBtnHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#inscricao&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;portraitLeftName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Sereníssimo Valdir Massucatti&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;portraitLeftRole&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Grão-Mestre&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;portraitRightName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Eminente Jorge Henrique Valle dos Santos&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;portraitRightRole&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Grão-Mestre Adjunto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;CTA Final&quot;},&quot;footerTagline&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Ação transformadora contemporânea. Unindo solidez institucional e visão de futuro.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;contactEmail&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;glmees@glmees.org.br&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;contactPhone&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;+55 (27) 2124-1000&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;contactWhatsapp&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;+55 (27) 99225-1239&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;whatsappHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://wa.me/5527990000000&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;instagramHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://www.instagram.com/glmeesoficial&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;facebookHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://www.facebook.com/glmees&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;youtubeHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;https://www.youtube.com/@grandelojamaconicadoestado3822&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;linkedinHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;copyright&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;© 2026 Congresso Internacional da Maçonaria. Todos os direitos reservados.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;privacyHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;},&quot;termsHref&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;#&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rodapé&quot;}}">
+class Component extends DCLogic {
+  state = { isMobile: false, menuOpen: false, now: Date.now(), statsProgress: 0, vw: 1280, speakersVisible: false, progVisible: false, testiPage: 0, speakerPage: 0, openSpeaker: null, openFaq: {}, openInfo: null, lang: 'PT', langOpen: false, openLegal: null };
+
+  _legal = {
+    privacy: {
+      title: 'Política de Privacidade',
+      paragraphs: [
+        'A sua privacidade é importante para nós. Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e protegemos as informações pessoais fornecidas por você ao utilizar este site e ao se inscrever no evento.',
+        'Coleta de dados: coletamos informações que você nos fornece voluntariamente, como nome, e-mail, telefone e dados de inscrição, além de informações de navegação obtidas automaticamente por meio de cookies e tecnologias semelhantes.',
+        'Uso das informações: os dados coletados são utilizados para processar sua inscrição, enviar comunicações sobre o evento, melhorar a sua experiência no site e cumprir obrigações legais. Não vendemos nem compartilhamos seus dados com terceiros para fins de marketing sem o seu consentimento.',
+        'Compartilhamento: seus dados podem ser compartilhados com prestadores de serviço que atuam em nosso nome (como plataformas de pagamento e hospedagem), sempre sob obrigações de confidencialidade e segurança.',
+        'Cookies: utilizamos cookies para lembrar preferências e analisar o tráfego do site. Você pode gerenciar ou desativar os cookies nas configurações do seu navegador.',
+        'Seus direitos: em conformidade com a Lei Geral de Proteção de Dados (LGPD), você pode solicitar a qualquer momento o acesso, a correção, a exclusão ou a portabilidade dos seus dados, bem como revogar o consentimento, entrando em contato pelos canais informados neste site.',
+        'Alterações: esta política pode ser atualizada periodicamente. Recomendamos que você a revise regularmente. O uso contínuo do site após alterações implica concordância com os termos vigentes.',
+      ],
+    },
+    terms: {
+      title: 'Termos de Uso',
+      paragraphs: [
+        'Ao acessar e utilizar este site, você concorda com os presentes Termos de Uso. Caso não concorde com qualquer condição aqui descrita, solicitamos que não utilize o site.',
+        'Uso do site: você se compromete a utilizar este site de forma lícita, não praticando atos que possam danificar, sobrecarregar ou comprometer o seu funcionamento, nem violar direitos de terceiros.',
+        'Propriedade intelectual: todo o conteúdo deste site — incluindo textos, imagens, logotipos, marcas e demais materiais — é protegido por direitos de propriedade intelectual e não pode ser reproduzido, distribuído ou modificado sem autorização prévia e por escrito.',
+        'Inscrições: as inscrições no evento estão sujeitas à disponibilidade e às condições específicas informadas no momento da compra, incluindo regras de pagamento, cancelamento e transferência.',
+        'Limitação de responsabilidade: envidamos os melhores esforços para manter as informações do site atualizadas e o serviço disponível, mas não garantimos que estará livre de erros ou interrupções. Não nos responsabilizamos por danos decorrentes do uso ou da impossibilidade de uso do site.',
+        'Links externos: este site pode conter links para páginas de terceiros. Não nos responsabilizamos pelo conteúdo ou pelas práticas de privacidade desses sites.',
+        'Foro e legislação: estes termos são regidos pela legislação brasileira. Fica eleito o foro da comarca de Vitória – ES para dirimir quaisquer controvérsias, com renúncia a qualquer outro, por mais privilegiado que seja.',
+      ],
+    },
+  };
+
+  _languages = [
+    { code: 'PT', flag: '🇧🇷', label: 'Português' },
+    { code: 'EN', flag: '🇺🇸', label: 'English' },
+    { code: 'ES', flag: '🇪🇸', label: 'Español' },
+  ];
+
+  _statsRef = React.createRef();
+  _speakersRef = React.createRef();
+
+  _progRef = React.createRef();
+
+  _progDays = [
+    { label: 'Dia 18', date: '18 de setembro', items: [
+      { type: 'open', t1: '14h00', t2: '14h30', title: 'Abertura' },
+      { type: 'talk', t1: '14h30', t2: '15h00', title: 'Do Símbolo à Ação: A Transformação Necessária da Maçonaria', speaker: 'Valdir Massucatti', org: 'Grão-Mestre da Grande Loja Maçônica do Estado do Espírito Santo' },
+      { type: 'talk', t1: '15h00', t2: '15h30', title: 'Mindset Estratégico Maçônico: Liderança, Inovação e Fraternidade Inteligente', speaker: 'Rubens Ricardo Franz', org: 'Secretário Executivo da CMI' },
+      { type: 'debate', t1: '15h30', t2: '15h45', title: 'Debate' },
+      { type: 'coffee', t1: '15h45', t2: '16h00', title: 'Coffee' },
+      { type: 'talk', t1: '16h00', t2: '16h30', title: 'O Ser que Evolui, a Ordem que Avança: Mindset, Inteligência e Fraternidade', speaker: 'Cassiano Teixeira de Moraes', org: 'Grão-Mestre da Grande Loja do Distrito Federal' },
+      { type: 'talk', t1: '16h30', t2: '17h00', title: 'Do Aprendizado ao Impacto: A Formação do Ser na Era do Conhecimento', speaker: 'Rodrigo dos Anjos', org: 'Grão-Mestre da Grande Loja Maçônica de Minas Gerais' },
+      { type: 'debate', t1: '17h00', t2: '17h15', title: 'Debate' },
+      { type: 'talk', t1: '17h15', t2: '17h45', title: 'A Inteligência Fraterna: Organização, Coesão e Conexões Contemporânea', speaker: 'Lictor Reyna', org: 'Secretário Executivo Adjunto da CMI' },
+      { type: 'talk', t1: '17h45', t2: '18h15', title: 'Sustentabilidade Estratégica na Maçonaria: Um Caminho de Evolução e Alta Performance', speaker: 'Avelino Lombardi Júnior', org: 'Grão-Mestre do Grande Oriente de Santa Catarina' },
+      { type: 'debate', t1: '18h15', t2: '18h30', title: 'Debate' },
+    ] },
+    { label: 'Dia 19', date: '19 de setembro', items: [
+      { type: 'open', t1: '08h45', t2: '09h00', title: 'Reabertura' },
+      { type: 'talk', t1: '09h00', t2: '09h30', title: 'A Arte de Engajar — mass collaboration: Talentos Maçônicos a Serviço da Fraternidade e da Comunidade', speaker: 'Paulo Albuquerque', org: 'Grão-Mestre da Grande Loja de Santa Catarina' },
+      { type: 'talk', t1: '09h30', t2: '10h00', title: 'Unindo Vozes: Stakeholders como Parceiros na Construção do Futuro', speaker: 'Rodrigo Piassi', org: 'Grão-Mestre do Grande Oriente de Minas Gerais' },
+      { type: 'debate', t1: '10h00', t2: '10h15', title: 'Debate' },
+      { type: 'coffee', t1: '10h15', t2: '10h30', title: 'Coffee' },
+      { type: 'talk', t1: '10h30', t2: '11h00', title: 'Geração que Inspira: Lideranças Jovens em Ação', speaker: 'Robert Hook', org: 'Grão-Mestre da Grande Loja Maçônica do Rio Grande do Norte' },
+      { type: 'talk', t1: '11h00', t2: '11h30', title: 'Juntos Fazemos Mais: Redes Colaborativas e o Sentido do Pertencimento', speaker: 'Bento Adriano Monteiro Duailibi', org: 'Grão-Mestre do Grande Oriente do Mato Grosso do Sul' },
+      { type: 'debate', t1: '11h30', t2: '11h45', title: 'Debate' },
+      { type: 'lunch', t1: '11h45', t2: '14h00', title: 'Intervalo para almoço' },
+      { type: 'workshop', t1: '14h00', t2: '15h30', title: 'Workshop Interativo', subtitle: 'Evolução Maçônica em Ação: Mentalidade, Fraternidade e Impacto Coletivo', activities: [
+        { label: 'Atividade 1 —', text: 'Transformação e Mindset Estratégico: Do Símbolo à Ação, a mentalidade que move a evolução maçônica.' },
+        { label: 'Atividade 2 —', text: 'Conhecimento, Formação e Alta Performance: Do Aprendizado ao Impacto, formação contínua na era do conhecimento.' },
+        { label: 'Atividade 3 —', text: 'Redes e Colaboração: A Arte de Engajar, redes colaborativas, pertencimento e mass collaboration.' },
+        { label: 'Atividade 4 —', text: 'Juventude, Liderança e Futuro: Geração que Inspira, lideranças jovens e a construção do amanhã.' },
+      ] },
+      { type: 'results', t1: '15h30', t2: '17h00', title: 'Apresentação dos resultados: “Carta de Vitória”', desc: 'Com um chamado motivador à ação, congregando as informações advindas do conteúdo do evento.' },
+      { type: 'coquetel', t1: '17h00', t2: '', title: 'Coquetel de Encerramento' },
+    ] },
+  ];
+
+  _info = [
+    { icon: 'bed', title: 'Hospedagem', text: 'Hotéis parceiros com tarifas especiais e dicas de onde ficar perto do evento.', linkLabel: 'Ver hotéis', modalText: 'Reservamos condições especiais em hotéis parceiros próximos ao Centro de Convenções de Vitória. Informe o código do congresso na reserva para garantir a tarifa promocional. Abaixo, algumas opções recomendadas — clique em cada hotel para ver contato e detalhes.', items: [
+      { name: 'Comfort Suites Vitória', desc: 'A poucos minutos do Centro de Convenções.', info: 'Hotel parceiro oficial, a poucos minutos do local do evento. Tarifa especial para inscritos, café da manhã incluso e traslado nos horários do congresso.', address: 'Av. Amilcar Buaiz, 331 — Enseada do Suá, Vitória – ES', phone: '+55 (27) 3434-0000', site: 'https://www.comfortsuites.com' },
+      { name: 'Golden Tulip Porto Vitória', desc: 'Orla de Camburi, com vista para o mar.', info: 'Hotel na orla de Camburi, com quartos vista-mar e estrutura completa de lazer. Tarifa negociada para participantes do congresso.', address: 'Av. Saturnino de Brito, 1327 — Praia do Canto, Vitória – ES', phone: '+55 (27) 3434-1000', site: 'https://www.goldentulip.com' },
+      { name: 'Bristol Class Hotel', desc: 'Ótimo custo-benefício na região central.', info: 'Opção econômica bem localizada na região central, com fácil acesso ao transporte público e aos traslados oficiais.', address: 'Av. Nossa Senhora da Penha, 2144 — Santa Luíza, Vitória – ES', phone: '+55 (27) 3434-2000', site: '' },
+    ] },
+    { icon: 'transport', title: 'Transporte', text: 'Como chegar e circular pela cidade: aeroporto, traslados e aplicativos.', linkLabel: 'Saiba mais', modalText: 'Vitória tem fácil acesso por via aérea e rodoviária. O congresso oferece traslados oficiais entre os hotéis parceiros e o Centro de Convenções nos horários das atividades. Confira as opções abaixo.', items: [
+      { name: 'Aeroporto de Vitória (VIX)', desc: 'A cerca de 10 km do local do evento.', info: 'Aeroporto Eurico de Aguiar Salles, a aproximadamente 10 km do Centro de Convenções. Táxis e aplicativos disponíveis no desembarque; tempo médio de deslocamento de 20 minutos.', address: 'Av. Fernando Ferrari, 3800 — Goiabeiras, Vitória – ES', phone: '', site: '' },
+      { name: 'Traslados oficiais', desc: 'Vans do congresso saindo dos hotéis parceiros.', info: 'Vans gratuitas para inscritos, saindo dos hotéis parceiros nos horários de abertura e encerramento de cada dia. Consulte a organização para a escala completa.', address: '', phone: '+55 (27) 99000-0000', site: '' },
+      { name: 'Aplicativos de transporte', desc: 'Uber e 99 disponíveis em toda a cidade.', info: 'Uber e 99 operam em toda a cidade. A corrida do aeroporto ao centro custa, em média, entre R$ 35 e R$ 50.', address: '', phone: '', site: '' },
+    ] },
+    { icon: 'tourism', title: 'Turismo na Cidade', text: 'O que fazer em Vitória e região nos intervalos e após o evento.', linkLabel: 'Explorar', modalText: 'Aproveite os intervalos e os dias ao redor do congresso para conhecer Vitória e a Grande Vitória. Selecionamos alguns dos passeios imperdíveis da região.', items: [
+      { name: 'Convento da Penha', desc: 'Cartão-postal do Espírito Santo.', info: 'Santuário histórico fundado em 1558, no alto de um penhasco em Vila Velha, com vista panorâmica da baía. Um dos principais pontos turísticos e religiosos do estado.', address: 'Vila Velha – ES', phone: '', site: '' },
+      { name: 'Praia de Camburi', desc: 'Orla urbana para caminhar e relaxar.', info: 'A principal praia urbana de Vitória, com orla revitalizada, ciclovia, quiosques e ótima infraestrutura para caminhadas e esportes.', address: 'Camburi, Vitória – ES', phone: '', site: '' },
+      { name: 'Centro Histórico', desc: 'Arquitetura, cultura e gastronomia local.', info: 'Ruas e prédios históricos, igrejas coloniais, museus e a tradicional culinária capixaba — incluindo a famosa moqueca — em um roteiro a pé.', address: 'Centro, Vitória – ES', phone: '', site: '' },
+    ] },
+  ];
+
+  _faq = [
+    { q: 'Como faço minha inscrição?', a: 'A inscrição é feita online, pelo botão “Inscreva-se”. Basta preencher o formulário com seus dados e concluir o pagamento — a confirmação chega por e-mail.' },
+    { q: 'O evento tem tradução simultânea?', a: 'Sim. As conferências internacionais contam com tradução simultânea para português e espanhol, disponível no local do evento.' },
+    { q: 'Onde posso me hospedar?', a: 'Indicamos hotéis parceiros próximos ao Centro de Convenções de Vitória, com tarifas especiais para participantes do congresso. Consulte a seção de hospedagem para detalhes.' },
+    { q: 'Há estacionamento no local?', a: 'Sim, o Centro de Convenções de Vitória dispõe de estacionamento próprio para os participantes durante todos os dias do evento.' },
+    { q: 'Posso transferir minha inscrição?', a: 'Sim. A transferência de titularidade da inscrição pode ser solicitada até 7 dias antes do evento, mediante contato com a organização.' },
+  ];
+
+  _testimonials = [
+    { text: 'Uma oportunidade única para fortalecer a Maçonaria do século XXI e construir pontes entre nações e gerações.', name: 'Carlos A. S.', role: 'Grão-Mestre', photo: false },
+    { text: 'O Congresso Internacional da Maçonaria é um marco de união, conhecimento e transformação.', name: 'Maria L. R.', role: 'Pesquisadora', photo: false },
+    { text: 'Inspirador, transformador e necessário. A Maçonaria unida por um propósito maior.', name: 'James W.', role: 'Delegado', photo: false },
+    { text: 'Encontros como este renovam o compromisso da Ordem com a sociedade e o futuro.', name: 'Renata M.', role: 'Delegada Internacional', photo: false },
+  ];
+
+  _speakers = [
+    { name: 'Valdir Massucatti', role: 'Grão-Mestre', org: 'Grande Loja Maçônica do Estado do Espírito Santo', talk: 'Do Símbolo à Ação: A Transformação Necessária da Maçonaria', day: 'Dia 18', time: '14h30', photo: 'speakers/valdir-massucatti.jpg' },
+    { name: 'Rubens Ricardo Franz', role: 'Secretário Executivo', org: 'CMI — Confederação da Maçonaria Interamericana', talk: 'Mindset Estratégico Maçônico: Liderança, Inovação e Fraternidade Inteligente', day: 'Dia 18', time: '15h00', photo: 'speakers/rubens-ricardo.jpg' },
+    { name: 'Cassiano Teixeira de Moraes', role: 'Grão-Mestre', org: 'Grande Loja do Distrito Federal', talk: 'O Ser que Evolui, a Ordem que Avança: Mindset, Inteligência e Fraternidade', day: 'Dia 18', time: '16h00', photo: 'speakers/cassiano.jpg' },
+    { name: 'Rodrigo dos Anjos', role: 'Grão-Mestre', org: 'Grande Loja Maçônica de Minas Gerais', talk: 'Do Aprendizado ao Impacto: A Formação do Ser na Era do Conhecimento', day: 'Dia 18', time: '16h30', photo: 'speakers/rodrigo-dos-anjos.jpg' },
+    { name: 'Lictor Reyna', role: 'Secretário Executivo Adjunto', org: 'CMI — Confederação da Maçonaria Interamericana', talk: 'A Inteligência Fraterna: Organização, Coesão e Conexões Contemporânea', day: 'Dia 18', time: '17h15' },
+    { name: 'Avelino Lombardi Júnior', role: 'Grão-Mestre', org: 'Grande Oriente de Santa Catarina', talk: 'Sustentabilidade Estratégica na Maçonaria: Um Caminho de Evolução e Alta Performance', day: 'Dia 18', time: '17h45' },
+    { name: 'Paulo Albuquerque', role: 'Grão-Mestre', org: 'Grande Loja de Santa Catarina', talk: 'A Arte de Engajar — mass collaboration: Talentos Maçônicos a Serviço da Fraternidade e da Comunidade', day: 'Dia 19', time: '09h00' },
+    { name: 'Rodrigo Piassi', role: 'Grão-Mestre', org: 'Grande Oriente de Minas Gerais', talk: 'Unindo Vozes: Stakeholders como Parceiros na Construção do Futuro', day: 'Dia 19', time: '09h30' },
+    { name: 'Robert Hook', role: 'Grão-Mestre', org: 'Grande Loja Maçônica do Rio Grande do Norte', talk: 'Geração que Inspira: Lideranças Jovens em Ação', day: 'Dia 19', time: '10h30' },
+    { name: 'Bento Adriano Monteiro Duailibi', role: 'Grão-Mestre', org: 'Grande Oriente do Mato Grosso do Sul', talk: 'Juntos Fazemos Mais: Redes Colaborativas e o Sentido do Pertencimento', day: 'Dia 19', time: '11h00' },
+  ];
+
+  _stats = [
+    { icon: 'people', value: 250, title: 'Participantes', subtitle: 'Líderes e representantes' },
+    { icon: 'globe', value: 30, title: 'Potências', subtitle: 'Nacionais e Internacionais' },
+    { icon: 'mic', value: 20, title: 'Palestras', subtitle: 'Conferências e painéis' },
+    { icon: 'temple', value: 500, title: 'Lojas Maçônicas', subtitle: 'Representadas' },
+  ];
+
+  _animateStats() {
+    if (this._statsDone) return;
+    this._statsDone = true;
+    const start = performance.now();
+    const dur = 1700;
+    const step = (t) => {
+      const p = Math.min(1, (t - start) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      this.setState({ statsProgress: e });
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  componentDidMount() {
+    if (this._statsRef && 'IntersectionObserver' in window) {
+      this._io = new IntersectionObserver((entries) => {
+        entries.forEach((en) => { if (en.isIntersecting) this._animateStats(); });
+      }, { threshold: 0.3 });
+      // attach after mount when ref is populated
+      setTimeout(() => { if (this._statsRef.current) this._io.observe(this._statsRef.current); }, 0);
+    } else {
+      this._animateStats();
+    }
+    this._onResize = () => {
+      const w = window.innerWidth;
+      const m = w < 1040;
+      const patch = {};
+      if (m !== this.state.isMobile) { patch.isMobile = m; if (!m) patch.menuOpen = false; }
+      if (w !== this.state.vw) patch.vw = w;
+      if (Object.keys(patch).length) this.setState(patch);
+    };
+    this._onResize();
+    window.addEventListener('resize', this._onResize);
+    this._tick = setInterval(() => this.setState({ now: Date.now() }), 1000);
+
+    if (this._speakersRef && 'IntersectionObserver' in window) {
+      this._sio = new IntersectionObserver((entries) => {
+        entries.forEach((en) => { if (en.isIntersecting) { this.setState({ speakersVisible: true }); this._sio.disconnect(); } });
+      }, { threshold: 0.15 });
+      setTimeout(() => { if (this._speakersRef.current) this._sio.observe(this._speakersRef.current); }, 0);
+    } else {
+      this.setState({ speakersVisible: true });
+    }
+    if (this._progRef && 'IntersectionObserver' in window) {
+      this._pio = new IntersectionObserver((entries) => {
+        entries.forEach((en) => { if (en.isIntersecting) { this.setState({ progVisible: true }); this._pio.disconnect(); } });
+      }, { threshold: 0.12 });
+      setTimeout(() => { if (this._progRef.current) this._pio.observe(this._progRef.current); }, 0);
+    } else {
+      this.setState({ progVisible: true });
+    }
+  }
+  componentWillUnmount() {
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+    if (this._tick) clearInterval(this._tick);
+    if (this._io) this._io.disconnect();
+    if (this._sio) this._sio.disconnect();
+    if (this._pio) this._pio.disconnect();
+  }
+
+  renderVals() {
+    const items = [
+      { label: 'O Congresso', href: '#o-congresso' },
+      { label: 'Programação', href: '#programacao' },
+      { label: 'Palestrantes', href: '#palestrantes' },
+      { label: 'Local', href: '#local' },
+    ];
+    const galleryPhotos = [
+      { id: 'about-1', placeholder: 'Foto principal' },
+      { id: 'about-2', placeholder: 'Foto' },
+      { id: 'about-3', placeholder: 'Foto' },
+      { id: 'about-4', placeholder: 'Foto' },
+      { id: 'about-5', placeholder: 'Foto' },
+    ];
+    const sectionsBefore = [];
+    const sectionsAfter = [
+      { id: 'inscricao', title: 'Inscreva-se' },
+    ];
+    const sponsorGroups = [
+      { title: 'Patrocinadores', logos: [
+        { id: 'sp-glmees', name: 'GLMEES', href: '#patrocinio', src: 'sponsors/glmees.png' },
+        { id: 'sp-ludi', name: 'LUDI', href: '#patrocinio', src: 'sponsors/ludi.png' },
+        { id: 'sp-sculpto', name: 'Sculpto', href: '#patrocinio', src: 'sponsors/sculpto.png' },
+        { id: 'sp-zoom', name: 'Zoom', href: '#patrocinio', src: 'sponsors/zoom.png' },
+      ] },
+    ];
+    const progVis = this.state.progVisible;
+    const progCols = this.state.vw < 760 ? '1fr' : '1fr 1fr';
+    const lineBase = 'position:absolute;left:50%;transform:translateX(-50%);border-left:1px dashed rgba(204,165,77,.32);z-index:0;';
+    const blueTypes = ['coffee', 'lunch', 'coquetel'];
+    const progDays = this._progDays.map((d) => {
+      let gi = 0;
+      const n = d.items.length;
+      return {
+        label: d.label,
+        date: d.date,
+        items: d.items.map((it, i) => {
+          const idx = gi++;
+          const dl = idx * 60;
+          let lineStyle;
+          if (n === 1) lineStyle = 'display:none;';
+          else if (i === 0) lineStyle = lineBase + 'top:22px;bottom:0;';
+          else if (i === n - 1) lineStyle = lineBase + 'top:0;height:22px;';
+          else lineStyle = lineBase + 'top:0;bottom:0;';
+          return {
+            t1: it.t1,
+            t2: it.t2,
+            title: it.title,
+            speaker: it.speaker,
+            org: it.org,
+            subtitle: it.subtitle,
+            desc: it.desc,
+            activities: it.activities,
+            accent: blueTypes.includes(it.type) ? '#7FA0C8' : '#CCA54D',
+            isTalk: it.type === 'talk',
+            isWorkshop: it.type === 'workshop',
+            isResults: it.type === 'results',
+            isSimple: ['open', 'debate', 'coffee', 'lunch', 'coquetel'].includes(it.type),
+            iconOpen: it.type === 'open',
+            iconMic: it.type === 'talk',
+            iconDebate: it.type === 'debate',
+            iconCoffee: it.type === 'coffee' || it.type === 'coquetel',
+            iconLunch: it.type === 'lunch',
+            iconWorkshop: it.type === 'workshop',
+            iconResults: it.type === 'results',
+            lineStyle,
+            animStyle: 'opacity:' + (progVis ? 1 : 0) + ';transform:translateY(' + (progVis ? '0' : '14px') + ');transition:opacity .5s ease ' + dl + 'ms, transform .5s ease ' + dl + 'ms;',
+          };
+        }),
+      };
+    });
+    const pillars = [
+      { icon: 'connect', title: 'Conectar', items: ['Encontros Institucionais', 'Debates Temáticos', 'Integração entre Potências'] },
+      { icon: 'learn', title: 'Aprender', items: ['Conferências Magnas', 'Painéis Temáticos', 'Workshops'] },
+      { icon: 'transform', title: 'Transformar', items: ['Projetos de Impacto Social', 'Educação e Sustentabilidade', 'Liderança e Legado'] },
+    ].map((p) => ({
+      ...p,
+      isConnect: p.icon === 'connect',
+      isLearn: p.icon === 'learn',
+      isTransform: p.icon === 'transform',
+      isGeneric: !['connect', 'learn', 'transform'].includes(p.icon),
+    }));
+    const w = this.state.vw;
+    const spPerPage = w < 600 ? 1 : (w < 1040 ? 2 : 4);
+    const spPages = Math.max(1, Math.ceil(this._speakers.length / spPerPage));
+    const spPage = Math.min(Math.max(0, this.state.speakerPage), spPages - 1);
+    const speakerCols = 'repeat(' + spPerPage + ',1fr)';
+    const speakerVisible = this._speakers.slice(spPage * spPerPage, spPage * spPerPage + spPerPage).map((s, i) => {
+      const gIndex = spPage * spPerPage + i;
+      const obj = {
+        name: s.name,
+        role: s.role,
+        org: s.org,
+        talk: s.talk,
+        dayTime: s.day + ' · ' + s.time,
+        photoId: 'speaker-' + gIndex,
+        photoSrc: s.photo || ('speakers/speaker-' + gIndex + '.png'),
+        photoPlaceholder: 'Foto do palestrante',
+        animStyle: 'animation:testiFade .5s ease ' + (i * 60) + 'ms both;',
+      };
+      obj.open = () => this.setState({ openSpeaker: obj });
+      return obj;
+    });
+    const speakerDots = Array.from({ length: spPages }, (_, i) => ({
+      go: () => this.setState({ speakerPage: i }),
+      style: 'width:' + (i === spPage ? '26px' : '9px') + ';height:9px;padding:0;border:none;border-radius:20px;cursor:pointer;transition:width .3s ease,background .3s ease;background:' + (i === spPage ? '#CCA54D' : 'rgba(204,165,77,.32)') + ';',
+    }));
+    const modalSpeaker = this.state.openSpeaker || {};
+
+    const infoCategories = this._info.map((c) => ({
+      title: c.title,
+      text: c.text,
+      linkLabel: c.linkLabel,
+      openModal: () => this.setState({ openInfo: { title: c.title, subtitle: 'Informações', text: c.modalText || c.text, isCategory: true, items: c.items } }),
+      items: c.items.map((it) => ({
+        name: it.name,
+        desc: it.desc,
+        open: () => this.setState({ openInfo: { title: it.name, subtitle: c.title, text: it.info || it.desc, address: it.address, phone: it.phone, site: it.site } }),
+      })),
+      iconBed: c.icon === 'bed',
+      iconTransport: c.icon === 'transport',
+      iconTourism: c.icon === 'tourism',
+      iconFood: c.icon === 'food',
+      iconMoney: c.icon === 'money',
+      iconGeneric: !['bed', 'transport', 'tourism', 'food', 'money'].includes(c.icon),
+    }));
+    const curLang = this.state.lang;
+    const languages = this._languages.map((l) => ({
+      code: l.code,
+      flag: l.flag,
+      label: l.label,
+      select: () => this.setState({ lang: l.code, langOpen: false }),
+      rowStyle: 'width:100%;display:flex;align-items:center;gap:10px;background:' + (l.code === curLang ? 'rgba(204,165,77,.14)' : 'transparent') + ';border:none;border-radius:6px;padding:10px 11px;cursor:pointer;font-family:\'Archivo\',sans-serif;font-size:13px;color:' + (l.code === curLang ? '#F1F3F7' : '#C6D2DF') + ';transition:background .2s ease;',
+      mobileStyle: 'flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:' + (l.code === curLang ? 'rgba(204,165,77,.16)' : 'transparent') + ';border:1px solid ' + (l.code === curLang ? '#CCA54D' : 'rgba(204,165,77,.28)') + ';border-radius:6px;padding:11px 6px;cursor:pointer;color:' + (l.code === curLang ? '#F1F3F7' : '#C6D2DF') + ';',
+    }));
+    const currentLang = this._languages.find((l) => l.code === curLang) || this._languages[0];
+
+    const oi = this.state.openInfo || {};
+    const infoModal = {
+      title: oi.title,
+      subtitle: oi.subtitle,
+      text: oi.text,
+      address: oi.address,
+      phone: oi.phone,
+      phoneHref: (oi.phone || '').replace(/[^0-9+]/g, ''),
+      site: oi.site,
+      items: oi.items || [],
+      hasSubtitle: !!oi.subtitle,
+      hasAddress: !!oi.address,
+      hasPhone: !!oi.phone,
+      hasSite: !!oi.site,
+      hasContact: !!(oi.address || oi.phone || oi.site),
+      isCategory: !!oi.isCategory,
+    };
+
+    const faqItems = this._faq.map((f, i) => {
+      const open = !!this.state.openFaq[i];
+      return {
+        q: f.q,
+        a: f.a,
+        toggle: () => this.setState((s) => ({ openFaq: Object.assign({}, s.openFaq, { [i]: !s.openFaq[i] }) })),
+        answerStyle: 'overflow:hidden;transition:max-height .4s ease,opacity .3s ease;max-height:' + (open ? '340px' : '0') + ';opacity:' + (open ? '1' : '0') + ';',
+        iconStyle: 'flex:none;width:30px;height:30px;border-radius:50%;border:1px solid rgba(204,165,77,.4);display:flex;align-items:center;justify-content:center;transition:transform .35s ease,background .3s ease;transform:rotate(' + (open ? '180deg' : '0deg') + ');background:' + (open ? 'rgba(204,165,77,.14)' : 'transparent') + ';',
+      };
+    });
+
+    const tPerPage = w < 640 ? 1 : (w < 1040 ? 2 : 3);
+    const tPages = Math.max(1, Math.ceil(this._testimonials.length / tPerPage));
+    const tPage = Math.min(Math.max(0, this.state.testiPage), tPages - 1);
+    const tVisible = this._testimonials.slice(tPage * tPerPage, tPage * tPerPage + tPerPage).map((t, i) => ({
+      text: t.text,
+      name: t.name,
+      role: t.role,
+      hasPhoto: !!t.photo,
+      photoId: 'testi-' + (tPage * tPerPage + i),
+      animStyle: 'animation:testiFade .5s ease ' + (i * 70) + 'ms both;',
+    }));
+    const tDots = Array.from({ length: tPages }, (_, i) => ({
+      go: () => this.setState({ testiPage: i }),
+      style: 'width:' + (i === tPage ? '26px' : '9px') + ';height:9px;padding:0;border:none;border-radius:20px;cursor:pointer;transition:width .3s ease,background .3s ease;background:' + (i === tPage ? '#CCA54D' : 'rgba(204,165,77,.32)') + ';',
+    }));
+    const eventDateISO = this.props.eventDateISO ?? '2026-09-18T14:00:00-03:00';
+    const target = Date.parse(eventDateISO);
+    const diff = Math.max(0, target - this.state.now);
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor(diff / 3600000) % 24;
+    const mins = Math.floor(diff / 60000) % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    const cdBlocks = [
+      { value: String(days), label: 'Dias' },
+      { value: pad(hours), label: 'Horas' },
+      { value: pad(mins), label: 'Minutos' },
+    ];
+    const seals = [
+      { label: 'Selo 1' },
+      { label: 'Selo 2' },
+    ];
+
+    return {
+      eventName: this.props.eventName ?? 'Congresso Internacional da Maçonaria 2026',
+      ctaLabel: this.props.ctaLabel ?? 'Inscreva-se',
+      ctaHref: this.props.ctaHref ?? '#inscricao',
+      titleLine1: this.props.titleLine1 ?? 'Congresso',
+      titleLine2: this.props.titleLine2 ?? 'Internacional',
+      titleLine3: this.props.titleLine3 ?? 'da Maçonaria 2026',
+      subtitle: this.props.subtitle ?? 'Ação Transformadora Contemporânea',
+      dateText: this.props.dateText ?? '16 e 19 de setembro de 2026',
+      locationText: this.props.locationText ?? 'Vitória · Espírito Santo · Brasil',
+      primaryLabel: this.props.primaryLabel ?? 'Garanta sua inscrição',
+      primaryHref: this.props.primaryHref ?? '#inscricao',
+      secondaryLabel: this.props.secondaryLabel ?? 'Programação',
+      secondaryHref: this.props.secondaryHref ?? '#programacao',
+      cdBlocks,
+      seals,
+      statsRef: this._statsRef,
+      statCards: this._stats.map((c) => ({
+        ...c,
+        display: String(Math.round(c.value * this.state.statsProgress)),
+        isPeople: c.icon === 'people',
+        isGlobe: c.icon === 'globe',
+        isMic: c.icon === 'mic',
+        isTemple: c.icon === 'temple',
+        isGeneric: !['people', 'globe', 'mic', 'temple'].includes(c.icon),
+      })),
+      heroCols: this.state.isMobile ? '1fr' : '1.12fr 0.88fr',
+      twoCol: this.state.isMobile ? '1fr' : '1fr 1.05fr',
+      galleryCols: this.state.isMobile ? '1fr' : '0.85fr 1.15fr',
+      aboutLabel: this.props.aboutLabel ?? 'Sobre o Congresso',
+      aboutTitle: this.props.aboutTitle ?? 'Conectando a Maçonaria para os desafios contemporâneos',
+      aboutText: this.props.aboutText ?? 'O Congresso Internacional da Maçonaria 2026 reúne líderes, pesquisadores, estudiosos e representantes das 30 Potências Maçônicas do Brasil e do mundo para discutir os caminhos da transformação social, inovação institucional e construção de legados para o futuro.',
+      aboutBtn: this.props.aboutBtn ?? 'Saiba mais',
+      aboutHref: this.props.aboutHref ?? '#programacao',
+      bigPhoto: galleryPhotos[0],
+      restPhotos: galleryPhotos.slice(1),
+      speakersLabel: this.props.speakersLabel ?? 'Palestrantes Internacionais',
+      speakersBtn: this.props.speakersBtn ?? 'Ver todos os palestrantes',
+      speakersHref: this.props.speakersHref ?? '#inscricao',
+      speakerVisible,
+      speakerCols,
+      speakerDots,
+      hasSpeakerPages: spPages > 1,
+      prevSpeaker: () => this.setState({ speakerPage: (spPage - 1 + spPages) % spPages }),
+      nextSpeaker: () => this.setState({ speakerPage: (spPage + 1) % spPages }),
+      speakerModalOpen: !!this.state.openSpeaker,
+      modalSpeaker,
+      modalCols: this.state.vw < 620 ? '1fr' : '300px 1fr',
+      modalAspect: this.state.vw < 620 ? '16/9' : '3/4',
+      closeSpeaker: () => this.setState({ openSpeaker: null }),
+      stopProp: (e) => { e.stopPropagation(); },
+      speakersRef: this._speakersRef,
+      pillarsLabel: this.props.pillarsLabel ?? 'Experiência do Congresso',
+      pillars,
+      progLabel: this.props.progLabel ?? 'Programação',
+      progBtn: this.props.progBtn ?? 'Inscreva-se',
+      progHref: this.props.progHref ?? '#inscricao',
+      progDays,
+      progCols,
+      progRef: this._progRef,
+      localLabel: this.props.localLabel ?? 'Local do Evento',
+      placeName: this.props.placeName ?? 'Vitória · Espírito Santo · Brasil',
+      localText: this.props.localText ?? 'Cidade estratégica do litoral brasileiro, referência em desenvolvimento e inovação, Vitória recebe o congresso com estrutura de padrão internacional e fácil acesso para delegações de todo o país e do exterior.',
+      localBtn: this.props.localBtn ?? 'Como chegar',
+      localHref: this.props.localHref ?? '#inscricao',
+      venueName: this.props.venueName ?? 'Centro de Convenções de Vitória',
+      venueAddress: this.props.venueAddress ?? 'Av. Amilcar Buaiz, 331 · Enseada do Suá, Vitória – ES',
+      mapBtn: this.props.mapBtn ?? 'Ver no mapa',
+      mapHref: this.props.mapHref ?? 'https://www.google.com/maps/search/?api=1&query=Centro+de+Convenções+de+Vitória',
+      sponsorsLabel: this.props.sponsorsLabel ?? 'Patrocinadores',
+      sponsorGroups,
+      ctaKicker: this.props.ctaKicker ?? 'Inscrições Abertas',
+      ctaTitle: this.props.ctaTitle ?? 'Faça parte deste\nmomento histórico',
+      ctaSubtitle: this.props.ctaSubtitle ?? 'Congresso Internacional da Maçonaria 2026',
+      ctaDate: this.props.ctaDate ?? '16 e 19 de setembro de 2026',
+      ctaLocation: this.props.ctaLocation ?? 'Vitória · Espírito Santo · Brasil',
+      ctaBtnLabel: this.props.ctaBtnLabel ?? 'Inscreva-se',
+      ctaBtnHref: this.props.ctaBtnHref ?? '#inscricao',
+      ctaCols: this.state.isMobile ? '1fr' : 'minmax(150px,190px) minmax(0,1fr) minmax(150px,190px)',
+      portraitLeft: { id: 'cta-portrait-left', name: this.props.portraitLeftName ?? 'Sereníssimo Valdir Massucatti', role: this.props.portraitLeftRole ?? 'Grão-Mestre' },
+      portraitRight: { id: 'cta-portrait-right', name: this.props.portraitRightName ?? 'Eminente Jorge Henrique Valle dos Santos', role: this.props.portraitRightRole ?? 'Grão-Mestre Adjunto' },
+      footerTagline: this.props.footerTagline ?? 'Ação transformadora contemporânea. Unindo solidez institucional e visão de futuro.',
+      navLinks: [...items, { label: 'Contato', href: '#inscricao' }],
+      infoLinks: [
+        { label: 'Hospedagem', href: '#informacoes' },
+        { label: 'Transporte', href: '#informacoes' },
+        { label: 'Turismo', href: '#informacoes' },
+        { label: 'Perguntas Frequentes', href: '#faq' },
+      ],
+      socials: [
+        { name: 'Instagram', href: this.props.instagramHref ?? '#', isInstagram: true },
+        { name: 'Facebook', href: this.props.facebookHref ?? '#', isFacebook: true },
+        { name: 'YouTube', href: this.props.youtubeHref ?? '#', isYoutube: true },
+        { name: 'LinkedIn', href: this.props.linkedinHref ?? '#', isLinkedin: true },
+      ],
+      contactEmail: this.props.contactEmail ?? 'contato@congressomaconaria2026.org',
+      contactPhone: this.props.contactPhone ?? '+55 (27) 99000-0000',
+      contactPhoneHref: (this.props.contactPhone ?? '+55 27 99000 0000').replace(/[^0-9+]/g, ''),
+      contactWhatsapp: this.props.contactWhatsapp ?? '+55 (27) 99000-0000',
+      whatsappHref: this.props.whatsappHref ?? 'https://wa.me/5527990000000',
+      copyright: this.props.copyright ?? ('© ' + new Date().getFullYear() + ' Congresso Internacional da Maçonaria. Todos os direitos reservados.'),
+      openPrivacy: () => this.setState({ openLegal: 'privacy' }),
+      openTerms: () => this.setState({ openLegal: 'terms' }),
+      closeLegal: () => this.setState({ openLegal: null }),
+      legalOpen: !!this.state.openLegal,
+      legalModal: this._legal[this.state.openLegal] || { title: '', paragraphs: [] },
+      testiLabel: this.props.testiLabel ?? 'Depoimentos',
+      faqLabel: this.props.faqLabel ?? 'Perguntas Frequentes',
+      faqItems,
+      infoLabel: this.props.infoLabel ?? 'Informações para o Participante',
+      infoCategories,
+      infoModal,
+      infoModalOpen: !!this.state.openInfo,
+      closeInfo: () => this.setState({ openInfo: null }),
+      languages,
+      currentLang,
+      langOpen: this.state.langOpen,
+      toggleLang: () => this.setState((s) => ({ langOpen: !s.langOpen })),
+      closeLang: () => this.setState({ langOpen: false }),
+      langChevronStyle: 'display:inline-flex;transition:transform .25s ease;transform:rotate(' + (this.state.langOpen ? '180deg' : '0deg') + ');',
+      testiCols: 'repeat(' + tPerPage + ',1fr)',
+      testiVisible: tVisible,
+      testiDots: tDots,
+      hasTestiPages: tPages > 1,
+      prevTesti: () => this.setState((s) => ({ testiPage: (tPage - 1 + tPages) % tPages })),
+      nextTesti: () => this.setState((s) => ({ testiPage: (tPage + 1) % tPages })),
+      items,
+      sectionsBefore,
+      sectionsAfter,
+      isMobile: this.state.isMobile,
+      isDesktop: !this.state.isMobile,
+      menuOpen: this.state.menuOpen,
+      closeMenu: () => this.setState({ menuOpen: false }),
+      toggleMenu: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
+    };
+  }
+}
+</script>
+</body>
+</html>

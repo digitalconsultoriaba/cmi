@@ -19,6 +19,7 @@ const TABS = [
   { to: 'cortesias', label: 'Cortesias', when: (e) => e.allowCourtesy || e.allowCourtesyVoucher },
   { to: 'patrocinio', label: 'Patrocínio' },
   { to: 'orcamento', label: 'Orçamento' },
+  { to: 'site', label: 'Site' },
   { to: 'relatorios', label: 'Relatórios' },
   { to: 'checkin', label: 'Check-in' },
   { to: 'trilha', label: 'Logs' },
