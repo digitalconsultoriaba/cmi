@@ -27,6 +27,7 @@ class GuestOrderRequest extends FormRequest
             'items.*.participant_name' => ['required', 'string', 'max:255'],
             'items.*.participant_email' => ['nullable', 'email', 'max:255'],
             'items.*.participant_document' => ['nullable', 'string', 'max:30'],
+            'items.*.whatsapp' => ['nullable', 'string', 'max:30'],
             'items.*.category_key' => ['nullable', 'string', 'max:40'],
             'items.*.fields' => ['nullable', 'array'],
             'items.*.voucher_code' => ['nullable', 'string', 'max:30'],

@@ -156,7 +156,7 @@ class TicketPurchaseService
                     'participant_document' => $item['participant_document'] ?? null,
                     'participant_user_id' => $participantUserId,
                     'participant_category_key' => $item['category_key'] ?? null,
-                    'participant_fields' => $item['fields'] ?? null,
+                    'participant_fields' => $this->snapshotFields($item),
                     'companion_name' => $item['companion_name'] ?? null,
                     'companion_shirt_model_id' => $item['companion_shirt_model_id'] ?? null,
                     'companion_shirt_size_id' => $item['companion_shirt_size_id'] ?? null,
@@ -184,6 +184,17 @@ class TicketPurchaseService
 
             return $order->load('tickets.status', 'tickets.ticketType', 'event');
         });
+    }
+
+    /** Snapshot dos campos da categoria + WhatsApp por participante (spec 014). */
+    private function snapshotFields(array $item): ?array
+    {
+        $fields = (array) ($item['fields'] ?? []);
+        if (! blank($item['whatsapp'] ?? null)) {
+            $fields['whatsapp'] = trim((string) $item['whatsapp']);
+        }
+
+        return $fields === [] ? null : $fields;
     }
 
     /** Recontagens sob o lock: capacidade, tipo, lote e estoque de camisa. */

@@ -4,6 +4,11 @@ import { useQuery } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../lib/api'
 import { formatMoney, parseMoney } from '../lib/money'
 import ParticipanteForm from './checkout/ParticipanteForm'
+import './checkout/checkout.css'
+import { IcUsers, IcMail, IcPhone, IcShield, IcTicket, IcGift, IcChevron, IcCompass, IcCheck } from './checkout/icons'
+
+const STEPS = [['participantes', 'Participantes'], ['revisao', 'Revisão'], ['pagamento', 'Pagamento']]
+const initials = (name) => (name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('')
 
 export default function CheckoutSeminario() {
   const { slug } = useParams()
@@ -16,20 +21,23 @@ export default function CheckoutSeminario() {
   const [adding, setAdding] = useState(true)
   const [editIdx, setEditIdx] = useState(null)
   const [buyer, setBuyer] = useState({ name: '', email: '' })
-  const [step, setStep] = useState('cart') // cart | review | done | payment
+  const [step, setStep] = useState('cart') // cart | review | payment | done
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  if (isLoading || !config) return <div className="container py-5">Carregando…</div>
+  if (isLoading || !config) return <div className="ck"><div className="ck-wrap" style={{ paddingTop: 40 }}>Carregando…</div></div>
 
   const typeOf = (id) => config.ticketTypes.find((t) => t.id === id)
-  const priceOf = (row) => (row.voucherCode ? 0 : parseMoney(typeOf(row.ticketTypeId)?.effectivePrice ?? '0'))
+  const rawPrice = (row) => parseMoney(typeOf(row.ticketTypeId)?.effectivePrice ?? '0')
+  const priceOf = (row) => (row.voucherCode ? 0 : rawPrice(row))
   const catLabel = (key) => config.categories.find((c) => c.key === key)?.label ?? ''
 
-  const subtotal = cart.reduce((s, r) => s + parseMoney(typeOf(r.ticketTypeId)?.effectivePrice ?? '0'), 0)
-  const discounts = cart.reduce((s, r) => s + (r.voucherCode ? parseMoney(typeOf(r.ticketTypeId)?.effectivePrice ?? '0') : 0), 0)
+  const subtotal = cart.reduce((s, r) => s + rawPrice(r), 0)
+  const discounts = cart.reduce((s, r) => s + (r.voucherCode ? rawPrice(r) : 0), 0)
   const total = subtotal - discounts
+
+  const stepIndex = step === 'cart' ? 0 : step === 'review' ? 1 : 2
 
   const addToCart = (data) => {
     if (editIdx != null) { setCart((c) => c.map((r, i) => (i === editIdx ? { ...r, ...data } : r))); setEditIdx(null) }
@@ -42,9 +50,7 @@ export default function CheckoutSeminario() {
     const code = window.prompt('Código do voucher de gratuidade:')
     if (!code) return
     const row = cart[i]
-    const res = await apiPost('/public/vouchers/validate', {
-      event_slug: slug, code: code.trim(), ticket_type_id: row.ticketTypeId,
-    })
+    const res = await apiPost('/public/vouchers/validate', { event_slug: slug, code: code.trim(), ticket_type_id: row.ticketTypeId })
     if (res.valid) setCart((c) => c.map((r, j) => (j === i ? { ...r, voucherCode: code.trim() } : r)))
     alert(res.message)
   }
@@ -56,139 +62,188 @@ export default function CheckoutSeminario() {
         event_slug: slug,
         buyer: { name: buyer.name, email: buyer.email },
         items: cart.map((r) => ({
-          ticket_type_id: r.ticketTypeId,
-          participant_name: r.participantName,
-          participant_email: r.participantEmail,
-          category_key: r.categoryKey,
-          fields: r.fields,
-          voucher_code: r.voucherCode || null,
+          ticket_type_id: r.ticketTypeId, participant_name: r.participantName, participant_email: r.participantEmail,
+          whatsapp: r.whatsapp || null, category_key: r.categoryKey, fields: r.fields, voucher_code: r.voucherCode || null,
         })),
       })
       setResult(res)
       setStep(res.payment.required ? 'payment' : 'done')
     } catch (e) {
       setError(e.response?.data?.message || 'Não foi possível finalizar. Verifique os dados.')
-    } finally {
-      setBusy(false)
-    }
+    } finally { setBusy(false) }
   }
 
   return (
-    <div className="container py-4" style={{ maxWidth: 960 }}>
-      <h1 className="h3">{config.event.name}</h1>
-      <p className="text-secondary">{config.supportText}</p>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {step === 'cart' && (
-        <div className="row g-4">
-          <div className="col-lg-7">
-            <h2 className="h5">Participantes inscritos</h2>
-            {cart.map((r, i) => (
-              <div className="card mb-2" key={i}><div className="card-body py-2">
-                <div className="d-flex justify-content-between align-items-start gap-2">
-                  <div>
-                    <strong>{r.participantName}</strong> <span className="text-secondary small">· {catLabel(r.categoryKey)}</span>
-                    <div className="small text-secondary">{r.fields?.loja || r.fields?.potencia || ''} {r.participantEmail ? `· ${r.participantEmail}` : ''}</div>
-                    <div>{r.voucherCode ? <span className="badge bg-green-lt">Voucher aplicado — R$ 0,00</span> : <>R$ {formatMoney(priceOf(r))}</>}</div>
-                  </div>
-                  <span className="btn-list">
-                    <button className="btn btn-sm" onClick={() => { setEditIdx(i); setAdding(true) }}>Editar</button>
-                    {r.voucherCode
-                      ? <button className="btn btn-sm btn-outline-secondary" onClick={() => setCart((c) => c.map((x, j) => j === i ? { ...x, voucherCode: null } : x))}>Remover voucher</button>
-                      : <button className="btn btn-sm btn-outline-success" onClick={() => applyVoucher(i)}>Aplicar voucher</button>}
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => remove(i)}>Remover</button>
-                  </span>
+    <div className="ck">
+      <header className="ck-header">
+        <div className="ck-watermark"><IcCompass style={{ color: '#fff' }} /></div>
+        <div className="ck-header-inner">
+          <div className="ck-header-top">
+            <span className="ck-seal">{config.identityLogo ? <img src={config.identityLogo} alt="" /> : <IcCompass style={{ width: 40, height: 40, color: '#1F3F8B' }} />}</span>
+            <div>
+              <div className="ck-title">{config.event.name}</div>
+              <div className="ck-subtitle">Complete sua inscrição adicionando um ou mais participantes ao carrinho.</div>
+            </div>
+          </div>
+          <div className="ck-steps">
+            {STEPS.map(([key, label], i) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center' }}>
+                <div className={`ck-step ${i === stepIndex ? 'active' : ''} ${i < stepIndex ? 'done' : ''}`}>
+                  <span className="ck-step-num">{i < stepIndex ? <IcCheck width={15} height={15} /> : i + 1}</span>
+                  <span className="ck-step-label">{label}</span>
                 </div>
-              </div></div>
+                {i < STEPS.length - 1 && <span className="ck-step-line" />}
+              </div>
             ))}
+          </div>
+        </div>
+      </header>
 
-            {adding
-              ? <ParticipanteForm config={config} initial={editIdx != null ? cart[editIdx] : null}
+      <div className="ck-wrap">
+        {error && <div className="ck-card" style={{ borderColor: '#F2D2D2', background: '#FEF2F2', color: '#B91C1C', marginTop: 20 }}>{error}</div>}
+
+        {(step === 'cart' || step === 'review') && (
+          <div className="ck-grid">
+            <div>
+              {step === 'cart' && adding && (
+                <ParticipanteForm config={config} initial={editIdx != null ? cart[editIdx] : null}
                   onSubmit={addToCart} onCancel={() => { setAdding(false); setEditIdx(null) }} />
-              : <button className="btn btn-outline-primary" onClick={() => setAdding(true)}>+ Adicionar outro irmão</button>}
-          </div>
+              )}
 
-          <div className="col-lg-5">
-            <div className="card"><div className="card-body">
-              <h2 className="h5">Resumo da inscrição</h2>
-              <div className="d-flex justify-content-between"><span>Inscrições</span><span>{cart.length}</span></div>
-              <div className="d-flex justify-content-between"><span>Subtotal</span><span>R$ {formatMoney(subtotal)}</span></div>
-              <div className="d-flex justify-content-between"><span>Descontos (voucher)</span><span>− R$ {formatMoney(discounts)}</span></div>
-              <hr />
-              <div className="d-flex justify-content-between fw-bold fs-4"><span>Total</span><span>R$ {formatMoney(total)}</span></div>
-              <button className="btn btn-primary w-100 mt-3" disabled={cart.length === 0} onClick={() => setStep('review')}>
-                Revisar inscrição
-              </button>
-            </div></div>
-          </div>
-        </div>
-      )}
+              <div className="ck-card">
+                <div className="ck-card-head">
+                  <span className="ico"><IcUsers /></span>
+                  <span className="ck-card-title">{cart.length ? 'Participantes inscritos' : 'Participantes adicionados'}</span>
+                </div>
+                {cart.length === 0 ? (
+                  <div className="ck-empty">
+                    <div className="ck-empty-ico"><IcUsers width={26} height={26} /></div>
+                    <div style={{ fontWeight: 600 }}>Nenhum participante adicionado ainda</div>
+                    <div style={{ fontSize: '.88rem' }}>Adicione acima os irmãos que deseja inscrever.</div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="ck-card-sub">Confira os participantes adicionados ao carrinho.</p>
+                    {cart.map((r, i) => (
+                      <div className="ck-part" key={i}>
+                        <div className="ck-avatar">{initials(r.participantName)}</div>
+                        <div className="ck-part-body">
+                          <div className="ck-part-name">{r.participantName}
+                            <span className="ck-badge">{catLabel(r.categoryKey)}</span>
+                            {r.voucherCode && <span className="ck-badge ck-badge-green">Gratuito por voucher</span>}
+                          </div>
+                          <div className="ck-part-meta">
+                            {r.fields?.cargo && r.fields.cargo.trim() && <span>Cargo: {r.fields.cargo}</span>}
+                            {(r.fields?.loja || r.fields?.potencia) && <span>{r.fields.loja || r.fields.potencia}</span>}
+                            {r.participantEmail && <span><IcMail width={15} height={15} /> {r.participantEmail}</span>}
+                            {r.whatsapp && <span><IcPhone width={15} height={15} /> {r.whatsapp}</span>}
+                          </div>
+                          <div className="ck-part-actions">
+                            {step === 'cart' && <button className="ck-btn ck-btn-ghost ck-btn-sm" onClick={() => { setEditIdx(i); setAdding(true) }}>Editar</button>}
+                            {step === 'cart' && (r.voucherCode
+                              ? <button className="ck-btn ck-btn-light ck-btn-sm" onClick={() => setCart((c) => c.map((x, j) => j === i ? { ...x, voucherCode: null } : x))}>Remover voucher</button>
+                              : <button className="ck-btn ck-btn-primary ck-btn-sm" onClick={() => applyVoucher(i)}><IcGift width={16} height={16} /> Aplicar voucher</button>)}
+                            <button className="ck-btn ck-btn-danger ck-btn-sm" onClick={() => remove(i)}>Remover</button>
+                          </div>
+                        </div>
+                        <div className="ck-part-right">
+                          <div className={`ck-part-price ${r.voucherCode ? 'free' : ''}`}>{formatMoney(priceOf(r))}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {step === 'cart' && !adding && (
+                      <div className="ck-add" onClick={() => { setEditIdx(null); setAdding(true) }}>
+                        <span className="ck-add-plus">+</span>
+                        <span><span className="ck-add-tt d-block">Adicionar outro irmão</span><span className="ck-add-sub">Inclua mais participantes na sua inscrição</span></span>
+                        <span className="ck-add-chev"><IcChevron /></span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
 
-      {step === 'review' && (
-        <div className="row g-4">
-          <div className="col-lg-7">
-            <h2 className="h5">Confira os participantes</h2>
-            {cart.map((r, i) => (
-              <div className="card mb-2" key={i}><div className="card-body py-2 d-flex justify-content-between align-items-center">
-                <div><strong>{r.participantName}</strong> <span className="text-secondary small">· {catLabel(r.categoryKey)}</span>
-                  <div>{r.voucherCode ? <span className="badge bg-green-lt">Gratuito por voucher</span> : `R$ ${formatMoney(priceOf(r))}`}</div></div>
-                <button className="btn btn-sm btn-outline-danger" onClick={() => remove(i)}>Excluir</button>
-              </div></div>
-            ))}
-            <button className="btn btn-link px-0" onClick={() => setStep('cart')}>← Voltar ao carrinho</button>
-          </div>
-          <div className="col-lg-5">
-            <div className="card"><div className="card-body">
-              <h2 className="h5">Dados do comprador</h2>
-              <input className="form-control mb-2" placeholder="Nome" value={buyer.name} onChange={(e) => setBuyer({ ...buyer, name: e.target.value })} />
-              <input type="email" className="form-control mb-2" placeholder="E-mail" value={buyer.email} onChange={(e) => setBuyer({ ...buyer, email: e.target.value })} />
-              <div className="d-flex justify-content-between fw-bold fs-4 mt-2"><span>Total</span><span>R$ {formatMoney(total)}</span></div>
-              <button className="btn btn-primary w-100 mt-3" disabled={busy || !buyer.name || !buyer.email} onClick={finalize}>
-                {total > 0 ? 'Finalizar e pagar' : 'Confirmar inscrição gratuita'}
-              </button>
-            </div></div>
-          </div>
-        </div>
-      )}
+              <div className="ck-card">
+                <div className="ck-secure">
+                  <span className="ico"><IcShield /></span>
+                  <div><div className="tt">Inscrição segura</div>
+                    <div className="sub">Seus dados estão protegidos e sua inscrição só é confirmada após a finalização.</div></div>
+                </div>
+              </div>
+            </div>
 
-      {step === 'payment' && result && <PagamentoStep slug={slug} order={result.order} onPaid={() => setStep('done')} />}
+            {/* Resumo lateral */}
+            <div className="ck-summary">
+              <div className="ck-card">
+                <div className="ck-card-head"><span className="ico"><IcTicket /></span><span className="ck-card-title">Resumo da inscrição</span></div>
+                <p className="ck-card-sub">Veja o resumo da sua inscrição.</p>
+                <div className="ck-sum-row"><span className="muted">Inscrições</span><span>{cart.length} {cart.length === 1 ? 'inscrito' : 'inscritos'}</span></div>
+                <div className="ck-sum-row"><span className="muted">Subtotal</span><span>{formatMoney(subtotal)}</span></div>
+                <div className="ck-sum-row"><span className="muted">Descontos por voucher</span><span className="ck-sum-green">− {formatMoney(discounts)}</span></div>
+                <div className="ck-sum-total"><span className="lbl">Total a pagar</span><span className="val">{formatMoney(total)}</span></div>
 
-      {step === 'done' && (
-        <div className="card"><div className="card-body text-center py-5">
-          <h2 className="h4">Inscrição confirmada! 🎉</h2>
-          <p className="text-secondary">Enviamos os ingressos e o acesso por e-mail. Cada participante recebe o seu; o comprador acessa todos.</p>
-          <p>Pedido: <strong>{result?.order?.code}</strong></p>
-        </div></div>
-      )}
+                {step === 'cart' ? (
+                  <button className="ck-btn ck-btn-primary ck-btn-block" style={{ marginTop: 16 }} disabled={cart.length === 0} onClick={() => setStep('review')}>
+                    {cart.length === 0 ? 'Adicione um participante' : 'Revisar inscrição'}
+                  </button>
+                ) : (
+                  <div style={{ marginTop: 14 }}>
+                    <label className="ck-label">Nome do comprador</label>
+                    <input className="ck-input" style={{ marginBottom: 10 }} value={buyer.name} onChange={(e) => setBuyer({ ...buyer, name: e.target.value })} placeholder="Seu nome" />
+                    <label className="ck-label">E-mail do comprador</label>
+                    <input type="email" className="ck-input" value={buyer.email} onChange={(e) => setBuyer({ ...buyer, email: e.target.value })} placeholder="voce@email.com" />
+                    <button className="ck-btn ck-btn-primary ck-btn-block" style={{ marginTop: 14 }} disabled={busy || !buyer.name || !buyer.email} onClick={finalize}>
+                      {total > 0 ? 'Finalizar e pagar' : 'Confirmar inscrição gratuita'}
+                    </button>
+                    <button className="ck-btn ck-btn-light ck-btn-block" style={{ marginTop: 8 }} onClick={() => setStep('cart')}>Voltar ao carrinho</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="ck-card">
+                <div className="ck-voucher-note">
+                  <span className="ico"><IcGift width={18} height={18} /></span>
+                  <div><div className="tt">Voucher de gratuidade</div>
+                    <div className="sub">O voucher deve ser aplicado dentro de cada participante.</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 'payment' && result && <PagamentoStep slug={slug} order={result.order} onPaid={() => setStep('done')} />}
+
+        {step === 'done' && (
+          <div className="ck-card ck-center" style={{ marginTop: 26, padding: '48px 24px' }}>
+            <div className="ck-empty-ico" style={{ background: '#E7F7EE', color: '#16A34A', width: 68, height: 68 }}><IcCheck width={32} height={32} /></div>
+            <h2 style={{ fontWeight: 800 }}>Inscrição confirmada!</h2>
+            <p className="ck-card-sub">Enviamos os ingressos e o acesso por e-mail. Cada participante recebe o seu; o comprador acessa todos.</p>
+            <p>Pedido: <strong>{result?.order?.code}</strong></p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-/** Etapa de pagamento (cartão) — token do gateway (dev: tok_ok_4242). */
 function PagamentoStep({ slug, order, onPaid }) {
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-
   const pay = async () => {
     setError(null); setBusy(true)
     try {
       await apiPost(`/public/orders/${order.code}/checkout/card`, { token: token || 'tok_ok_4242', installments: 1 })
       onPaid()
-    } catch (e) {
-      setError(e.response?.data?.message || 'Pagamento não aprovado.')
-    } finally { setBusy(false) }
+    } catch (e) { setError(e.response?.data?.message || 'Pagamento não aprovado.') } finally { setBusy(false) }
   }
-
   return (
-    <div className="card" style={{ maxWidth: 480 }}><div className="card-body">
-      <h2 className="h5">Pagamento</h2>
-      <p className="text-secondary">Pedido {order.code} — total R$ {order.totalAmount}</p>
-      {error && <div className="alert alert-danger">{error}</div>}
-      <label className="form-label">Token do cartão</label>
-      <input className="form-control mb-2" placeholder="tok_..." value={token} onChange={(e) => setToken(e.target.value)} />
-      <button className="btn btn-primary w-100" disabled={busy} onClick={pay}>Pagar agora</button>
-    </div></div>
+    <div className="ck-card ck-center" style={{ marginTop: 26 }}>
+      <div className="ck-card-head" style={{ justifyContent: 'center' }}><span className="ico"><IcTicket /></span><span className="ck-card-title">Pagamento</span></div>
+      <p className="ck-card-sub">Pedido {order.code} — total {formatMoney(order.totalAmount)}</p>
+      {error && <div style={{ color: '#B91C1C', marginBottom: 10 }}>{error}</div>}
+      <label className="ck-label" style={{ textAlign: 'left' }}>Token do cartão</label>
+      <input className="ck-input" style={{ marginBottom: 12 }} placeholder="tok_..." value={token} onChange={(e) => setToken(e.target.value)} />
+      <button className="ck-btn ck-btn-primary ck-btn-block" disabled={busy} onClick={pay}>Pagar agora</button>
+    </div>
   )
 }

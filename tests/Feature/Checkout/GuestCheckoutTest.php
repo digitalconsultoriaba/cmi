@@ -13,7 +13,7 @@ class GuestCheckoutTest extends CheckoutTestCase
         $this->seminarEvent();
 
         $resp = $this->postJson('/api/public/orders', $this->guestPayload([
-            $this->item(['participant_name' => 'Irmão 1', 'participant_email' => 'i1@ex.com']),
+            $this->item(['participant_name' => 'Irmão 1', 'participant_email' => 'i1@ex.com', 'whatsapp' => '(27) 99999-0001']),
             $this->item(['participant_name' => 'Irmão 2', 'participant_email' => 'i2@ex.com']),
         ]))->assertCreated();
 
@@ -25,6 +25,7 @@ class GuestCheckoutTest extends CheckoutTestCase
         $this->assertCount(2, $tickets);
         $this->assertSame('glmees', $tickets[0]['participantCategoryKey']);
         $this->assertSame('Loja A', $tickets[0]['participantFields']['loja']);
+        $this->assertSame('(27) 99999-0001', $tickets[0]['participantFields']['whatsapp']);
 
         // Contas de comprador e participantes criadas.
         $this->assertDatabaseHas('users', ['email' => 'comprador@ex.com']);

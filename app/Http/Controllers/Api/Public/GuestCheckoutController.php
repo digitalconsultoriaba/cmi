@@ -60,8 +60,11 @@ class GuestCheckoutController extends Controller
         $affiliations = $event->affiliations()->where('is_active', true)->get()
             ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])->values();
 
+        $logoPath = $event->eventSite?->identity['logoPath'] ?? $event->banner_path;
+
         return ApiResponse::data([
             'event' => ['slug' => $event->slug, 'name' => $event->name, 'salesState' => $event->salesOpen() ? 'open' : 'closed'],
+            'identityLogo' => $logoPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($logoPath) : null,
             'ticketTypes' => $types,
             'categories' => $categories,
             'affiliations' => $affiliations,

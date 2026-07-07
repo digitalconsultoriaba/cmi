@@ -1,17 +1,18 @@
 import { useState } from 'react'
+import { formatMoney } from '../../lib/money'
+import { IcUserPlus, IcBuilding, IcGlobe } from './icons'
 
-/** Campo dinâmico conforme o tipo definido na categoria. */
+/** Campo dinâmico da categoria, no estilo do checkout. */
 function CampoDinamico({ field, value, onChange, affiliations }) {
   const set = (v) => onChange(field.key, v)
 
   if (field.type === 'affiliation') {
     return (
-      <div className="mb-2">
-        <label className="form-label">{field.label}{field.required && ' *'}</label>
-        <input className="form-control" list={`aff-${field.key}`} value={value ?? ''} onChange={(e) => set(e.target.value)} />
-        <datalist id={`aff-${field.key}`}>
-          {affiliations.map((a) => <option key={a.id} value={a.name} />)}
-        </datalist>
+      <div className="ck-field">
+        <label className="ck-label">{field.label}{field.required && ' *'}</label>
+        <input className="ck-input" list={`aff-${field.key}`} placeholder="Busque sua loja — nome, número ou cidade"
+          value={value ?? ''} onChange={(e) => set(e.target.value)} />
+        <datalist id={`aff-${field.key}`}>{affiliations.map((a) => <option key={a.id} value={a.name} />)}</datalist>
       </div>
     )
   }
@@ -19,83 +20,105 @@ function CampoDinamico({ field, value, onChange, affiliations }) {
   if (field.type === 'conditional') {
     const has = value != null && value !== ''
     return (
-      <div className="mb-2">
-        <label className="form-label d-block">{field.config?.question || field.label}</label>
-        <div className="btn-group btn-group-sm mb-1">
-          <button type="button" className={`btn ${has ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => set(value || ' ')}>Sim</button>
-          <button type="button" className={`btn ${!has ? 'btn-primary' : 'btn-outline-secondary'}`} onClick={() => set('')}>Não</button>
+      <div className="ck-field">
+        <label className="ck-label">{field.config?.question || field.label}</label>
+        <div className="ck-toggle">
+          <button type="button" className={has ? 'on' : ''} onClick={() => set(value && value.trim() ? value : ' ')}>Sim</button>
+          <button type="button" className={!has ? 'on' : ''} onClick={() => set('')}>Não</button>
         </div>
         {has && (
-          <input className="form-control" placeholder={field.label} value={value.trim() === '' ? '' : value}
-            onChange={(e) => set(e.target.value || ' ')} />
+          <input className="ck-input mt-2" style={{ marginTop: 10 }} placeholder={field.label}
+            value={value.trim() === '' ? '' : value} onChange={(e) => set(e.target.value || ' ')} />
         )}
       </div>
     )
   }
 
   return (
-    <div className="mb-2">
-      <label className="form-label">{field.label}{field.required && ' *'}</label>
-      <input className="form-control" value={value ?? ''} onChange={(e) => set(e.target.value)} />
+    <div className="ck-field">
+      <label className="ck-label">{field.label}{field.required && ' *'}</label>
+      <input className="ck-input" placeholder={field.label} value={value ?? ''} onChange={(e) => set(e.target.value)} />
     </div>
   )
 }
 
-/** Formulário de um participante: categoria → tipo → campos. */
+function vincMeta(category) {
+  const hasAff = (category.fields ?? []).some((f) => f.type === 'affiliation')
+  return { Icon: hasAff ? IcBuilding : IcGlobe, sub: hasAff ? 'Loja cadastrada' : 'Potência externa' }
+}
+
+/** Card "Adicionar participante" (referência tela1). */
 export default function ParticipanteForm({ config, initial, onSubmit, onCancel }) {
   const { categories, ticketTypes, affiliations } = config
   const [categoryKey, setCategoryKey] = useState(initial?.categoryKey ?? categories[0]?.key ?? '')
   const [ticketTypeId, setTicketTypeId] = useState(initial?.ticketTypeId ?? ticketTypes.find((t) => t.purchasable)?.id ?? ticketTypes[0]?.id)
   const [name, setName] = useState(initial?.participantName ?? '')
   const [email, setEmail] = useState(initial?.participantEmail ?? '')
+  const [whatsapp, setWhatsapp] = useState(initial?.whatsapp ?? '')
   const [fields, setFields] = useState(initial?.fields ?? {})
 
   const category = categories.find((c) => c.key === categoryKey)
   const setField = (k, v) => setFields((f) => ({ ...f, [k]: v }))
+  const clear = () => { setName(''); setEmail(''); setWhatsapp(''); setFields({}) }
 
   const submit = () => {
     if (!name.trim()) return alert('Informe o nome do participante.')
     for (const f of category?.fields ?? []) {
       if (f.required && !String(fields[f.key] ?? '').trim()) return alert(`Preencha "${f.label}".`)
     }
-    onSubmit({ categoryKey, ticketTypeId, participantName: name.trim(), participantEmail: email.trim() || null, fields })
+    onSubmit({ categoryKey, ticketTypeId, participantName: name.trim(), participantEmail: email.trim() || null, whatsapp: whatsapp.trim() || null, fields })
+    clear()
   }
 
   return (
-    <div className="border rounded p-3 mb-3" style={{ background: '#fbfcfe' }}>
-      <div className="mb-2">
-        <label className="form-label">Quem será inscrito?</label>
-        <div className="btn-group btn-group-sm d-block">
-          {categories.map((c) => (
-            <button key={c.key} type="button" className={`btn ${c.key === categoryKey ? 'btn-primary' : 'btn-outline-secondary'}`}
-              onClick={() => { setCategoryKey(c.key); setFields({}) }}>{c.label}</button>
-          ))}
-        </div>
+    <div className="ck-card">
+      <div className="ck-card-head">
+        <span className="ico"><IcUserPlus /></span>
+        <span className="ck-card-title">{initial ? 'Editar participante' : 'Adicionar participante'}</span>
+      </div>
+      <p className="ck-card-sub">Escolha o tipo de vínculo e informe os dados necessários para gerar a inscrição.</p>
+
+      <label className="ck-label">Tipo de vínculo</label>
+      <div className="ck-vinc">
+        {categories.map((c) => {
+          const { Icon, sub } = vincMeta(c)
+          const on = c.key === categoryKey
+          return (
+            <div key={c.key} className={`ck-vinc-opt ${on ? 'on' : ''}`} onClick={() => { setCategoryKey(c.key); setFields({}) }}>
+              <span className="ck-vinc-ico"><Icon /></span>
+              <span><span className="ck-vinc-tt d-block">{c.label}</span><span className="ck-vinc-sub">{sub}</span></span>
+              <span className="ck-vinc-dot" />
+            </div>
+          )
+        })}
       </div>
 
       {ticketTypes.length > 1 && (
-        <div className="mb-2">
-          <label className="form-label">Tipo de ingresso</label>
-          <select className="form-select" value={ticketTypeId} onChange={(e) => setTicketTypeId(Number(e.target.value))}>
-            {ticketTypes.filter((t) => t.purchasable).map((t) => <option key={t.id} value={t.id}>{t.name} — R$ {t.effectivePrice}</option>)}
+        <div className="ck-field">
+          <label className="ck-label">Tipo de ingresso</label>
+          <select className="ck-select" value={ticketTypeId} onChange={(e) => setTicketTypeId(Number(e.target.value))}>
+            {ticketTypes.filter((t) => t.purchasable).map((t) => <option key={t.id} value={t.id}>{t.name} — {formatMoney(t.effectivePrice)}</option>)}
           </select>
         </div>
       )}
 
-      <div className="row">
-        <div className="col-md-6 mb-2"><label className="form-label">Nome do irmão *</label>
-          <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="col-md-6 mb-2"><label className="form-label">E-mail</label>
-          <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+      <div className="ck-row">
+        <div className="ck-field"><label className="ck-label">Nome do irmão *</label>
+          <input className="ck-input" placeholder="Digite o nome completo" value={name} onChange={(e) => setName(e.target.value)} /></div>
+        <div className="ck-field"><label className="ck-label">E-mail</label>
+          <input type="email" className="ck-input" placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
       </div>
+
+      <div className="ck-field"><label className="ck-label">WhatsApp</label>
+        <input className="ck-input" placeholder="(00) 00000-0000" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} /></div>
 
       {(category?.fields ?? []).map((f) => (
         <CampoDinamico key={f.key} field={f} value={fields[f.key]} onChange={setField} affiliations={affiliations} />
       ))}
 
-      <div className="btn-list mt-2">
-        <button className="btn btn-primary" onClick={submit}>Adicionar ao carrinho</button>
-        {onCancel && <button className="btn" onClick={onCancel}>Cancelar</button>}
+      <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+        <button className="ck-btn ck-btn-primary" onClick={submit}><IcUserPlus width={18} height={18} /> {initial ? 'Salvar' : 'Adicionar participante'}</button>
+        <button className="ck-btn ck-btn-light" onClick={onCancel || clear}>Limpar dados</button>
       </div>
     </div>
   )
