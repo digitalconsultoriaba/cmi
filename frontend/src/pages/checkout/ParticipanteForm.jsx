@@ -63,6 +63,8 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
 
   const submit = () => {
     if (!name.trim()) return alert('Informe o nome do participante.')
+    if (!whatsapp.trim()) return alert('Informe o WhatsApp do participante.')
+    if (!email.trim()) return alert('Informe o e-mail do participante.')
     for (const f of category?.fields ?? []) {
       if (f.required && !String(fields[f.key] ?? '').trim()) return alert(`Preencha "${f.label}".`)
     }
@@ -102,15 +104,14 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
         </div>
       )}
 
-      <div className="ck-row">
-        <div className="ck-field"><label className="ck-label">Nome do irmão *</label>
-          <input className="ck-input" placeholder="Digite o nome completo" value={name} onChange={(e) => setName(e.target.value)} /></div>
-        <div className="ck-field"><label className="ck-label">E-mail</label>
-          <input type="email" className="ck-input" placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-      </div>
+      <div className="ck-field"><label className="ck-label">Nome do Irmão *</label>
+        <input className="ck-input" placeholder="Digite o nome completo" value={name} onChange={(e) => setName(e.target.value)} /></div>
 
-      <div className="ck-field"><label className="ck-label">WhatsApp</label>
+      <div className="ck-field"><label className="ck-label">WhatsApp *</label>
         <input className="ck-input" placeholder="(00) 00000-0000" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} /></div>
+
+      <div className="ck-field"><label className="ck-label">E-mail *</label>
+        <input type="email" className="ck-input" placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
 
       {(category?.fields ?? []).map((f) => (
         <CampoDinamico key={f.key} field={f} value={fields[f.key]} onChange={setField} affiliations={affiliations} />
