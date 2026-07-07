@@ -118,7 +118,8 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
 
       <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
         <button className="ck-btn ck-btn-primary" onClick={submit}><IcUserPlus width={18} height={18} /> {initial ? 'Salvar' : 'Adicionar participante'}</button>
-        <button className="ck-btn ck-btn-light" onClick={onCancel || clear}>Limpar dados</button>
+        <button className="ck-btn ck-btn-light" onClick={clear}>Limpar dados</button>
+        {initial && onCancel && <button className="ck-btn ck-btn-ghost" onClick={onCancel}>Cancelar</button>}
       </div>
     </div>
   )

@@ -115,13 +115,14 @@ export default function CheckoutSeminario() {
                   <span className="ico"><IcUsers /></span>
                   <span className="ck-card-title">{cart.length ? 'Participantes inscritos' : 'Participantes adicionados'}</span>
                 </div>
-                {cart.length === 0 ? (
+                {cart.length === 0 && (
                   <div className="ck-empty">
                     <div className="ck-empty-ico"><IcUsers width={26} height={26} /></div>
                     <div style={{ fontWeight: 600 }}>Nenhum participante adicionado ainda</div>
-                    <div style={{ fontSize: '.88rem' }}>Adicione acima os irmãos que deseja inscrever.</div>
+                    <div style={{ fontSize: '.88rem' }}>{adding ? 'Preencha o formulário acima e adicione ao carrinho.' : 'Clique abaixo para inscrever os irmãos.'}</div>
                   </div>
-                ) : (
+                )}
+                {cart.length > 0 && (
                   <>
                     <p className="ck-card-sub">Confira os participantes adicionados ao carrinho.</p>
                     {cart.map((r, i) => (
@@ -151,14 +152,15 @@ export default function CheckoutSeminario() {
                         </div>
                       </div>
                     ))}
-                    {step === 'cart' && !adding && (
-                      <div className="ck-add" onClick={() => { setEditIdx(null); setAdding(true) }}>
-                        <span className="ck-add-plus">+</span>
-                        <span><span className="ck-add-tt d-block">Adicionar outro irmão</span><span className="ck-add-sub">Inclua mais participantes na sua inscrição</span></span>
-                        <span className="ck-add-chev"><IcChevron /></span>
-                      </div>
-                    )}
                   </>
+                )}
+                {step === 'cart' && !adding && (
+                  <div className="ck-add" onClick={() => { setEditIdx(null); setAdding(true) }}>
+                    <span className="ck-add-plus">+</span>
+                    <span><span className="ck-add-tt d-block">{cart.length ? 'Adicionar outro irmão' : 'Adicionar participante'}</span>
+                      <span className="ck-add-sub">Inclua {cart.length ? 'mais participantes' : 'os participantes'} na sua inscrição</span></span>
+                    <span className="ck-add-chev"><IcChevron /></span>
+                  </div>
                 )}
               </div>
 
