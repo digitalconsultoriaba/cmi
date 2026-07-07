@@ -92,6 +92,7 @@ class SeminarioDemoSeeder extends Seeder
         }
 
         $this->createSponsorships($event);
+        $this->createExpenses($event);
 
         $this->command?->info('Demo criada: 30 individuais + 5 blocos (20) = 50 inscrições pagas; contas a receber geradas.');
     }
@@ -247,6 +248,35 @@ class SeminarioDemoSeeder extends Seeder
                 $sp->installments()->where('number', 1)->first(),
                 ['paid_at' => now(), 'method' => 'transfer']
             );
+        }
+    }
+
+    /** Despesas do evento como contas a pagar (fluxo de caixa distribuído). */
+    private function createExpenses(Event $event): void
+    {
+        $fe = \App\Domain\Events\Models\FinancialEntry::class;
+        $fe::where('event_id', $event->id)->where('origin', 'event_expense')->forceDelete();
+
+        // [descrição, valor, id da categoria de despesa]
+        $items = [
+            ['Locação Hotel', '23000.00', 9], ['Sonorização/Infraestrutura', '26000.00', 17],
+            ['Gráfica/Crachá', '1000.00', 14], ['Logística', '5000.00', 20],
+            ['Mimos para palestrantes', '4000.00', 15], ['Coffe break', '3000.00', 8],
+            ['Coquetel', '61800.00', 8], ['Fotógrafo/Filmagem', '3000.00', 18],
+            ['Chopp', '3200.00', 8], ['Vinho', '3200.00', 8], ['Wisky', '2000.00', 8],
+        ];
+
+        foreach ($items as $i => [$desc, $amount, $cat]) {
+            $fe::create([
+                'direction' => 'payable',
+                'description' => $desc,
+                'amount' => $amount,
+                'settled_amount' => '0.00',
+                'category_id' => $cat,
+                'event_id' => $event->id,
+                'origin' => 'event_expense',
+                'due_date' => now()->addDays(3 + $i * 4)->toDateString(),
+            ]);
         }
     }
 
