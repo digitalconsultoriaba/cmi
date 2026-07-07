@@ -4,12 +4,7 @@ import { ApiErrorAlert, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut } from '../../lib/api'
 
 const FLAGS = [
-  ['allow_pix', 'Aceita Pix'],
-  ['allow_boleto', 'Aceita boleto'],
-  ['allow_card', 'Aceita cartão'],
   ['allow_shirt_choice', 'Escolha de camisa'],
-  ['requires_shirt', 'Camisa obrigatória'],
-  ['allow_kit', 'Retirada de kit'],
   ['allow_transfer', 'Transferência de ingresso'],
   ['allow_user_cancel', 'Cancelamento pelo usuário'],
   ['allow_refund_request', 'Solicitação de reembolso'],
@@ -163,7 +158,7 @@ export default function EventoModal({ event, onClose, onSaved }) {
                 <label className="form-label">Descrição</label>
                 <textarea className="form-control" rows={2} value={form.description} onChange={set('description')} />
               </div>
-              <div className="col-md-4">
+              <div className="col-md-8">
                 <label className="form-label">Local</label>
                 <input className="form-control" value={form.location} onChange={set('location')} />
               </div>
