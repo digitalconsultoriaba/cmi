@@ -36,8 +36,11 @@ import Inscritos from './admin/eventos/abas/Inscritos'
 import CheckinEvento from './admin/eventos/abas/CheckinEvento'
 import Relatorios from './admin/eventos/abas/Relatorios'
 import Orcamento from './admin/eventos/abas/Orcamento'
+import Inscricoes from './admin/eventos/abas/Inscricoes'
 import SiteLayout from './admin/eventos/abas/SiteLayout'
 import SitePublico from './pages/SitePublico'
+import CheckoutSeminario from './pages/CheckoutSeminario'
+import MagicLink from './pages/MagicLink'
 import Usuarios from './admin/eventos/Usuarios'
 // Módulo financeiro central (spec 010)
 import FinancasLayout from './admin/financas/FinancasLayout'
@@ -93,6 +96,8 @@ export default function App() {
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           <Route path="/evento/:slug" element={<EventoPublico />} />
           <Route path="/site/:slug" element={<SitePublico />} />
+          <Route path="/checkout/:slug" element={<CheckoutSeminario />} />
+          <Route path="/acesso" element={<MagicLink />} />
           <Route
             path="/checkout"
             element={
@@ -160,6 +165,7 @@ export default function App() {
               <Route path="cortesias" element={<Cortesias />} />
               <Route path="patrocinio" element={<Patrocinios />} />
               <Route path="orcamento" element={<Orcamento />} />
+              <Route path="inscricoes" element={<Inscricoes />} />
               <Route path="site" element={<SiteLayout />} />
               <Route path="relatorios" element={<Relatorios />} />
               <Route path="checkin" element={<CheckinEvento />} />

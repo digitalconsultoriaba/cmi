@@ -57,6 +57,74 @@ class CourtesyResolver
             ->first();
     }
 
+    // ── Voucher por participante no checkout do seminário (spec 014) ──────
+
+    /**
+     * Localiza um voucher resgatável (available OU distributed) sob lock,
+     * validando pertencimento ao evento, não-uso e elegibilidade ao tipo.
+     * Lança DomainRuleViolation se inválido (spec 014, research R4).
+     */
+    public function findRedeemable(Event $event, string $code, ?int $ticketTypeId = null): CourtesyVoucher
+    {
+        $voucher = CourtesyVoucher::query()
+            ->where('event_id', $event->id)
+            ->where('code', trim($code))
+            ->lockForUpdate()
+            ->first();
+
+        if ($voucher === null
+            || ! in_array($voucher->status, [CourtesyVoucher::AVAILABLE, CourtesyVoucher::DISTRIBUTED], true)) {
+            throw new DomainRuleViolation(
+                'Voucher inválido, expirado ou já utilizado. Verifique o código informado.',
+                'invalid_voucher'
+            );
+        }
+
+        // Elegibilidade ao tipo: voucher vinculado a um tipo só serve àquele tipo.
+        if ($voucher->ticket_type_id !== null && $ticketTypeId !== null
+            && $voucher->ticket_type_id !== $ticketTypeId) {
+            throw new DomainRuleViolation(
+                'Este voucher não é válido para o tipo de ingresso selecionado.',
+                'invalid_voucher'
+            );
+        }
+
+        return $voucher;
+    }
+
+    /** Validação read-only (sem lock/resgate) para a UI aplicar por inscrição. */
+    public function isRedeemable(Event $event, string $code, ?int $ticketTypeId = null): bool
+    {
+        $voucher = CourtesyVoucher::query()
+            ->where('event_id', $event->id)
+            ->where('code', trim($code))
+            ->first();
+
+        if ($voucher === null
+            || ! in_array($voucher->status, [CourtesyVoucher::AVAILABLE, CourtesyVoucher::DISTRIBUTED], true)) {
+            return false;
+        }
+
+        return ! ($voucher->ticket_type_id !== null && $ticketTypeId !== null
+            && $voucher->ticket_type_id !== $ticketTypeId);
+    }
+
+    /** Marca o voucher como resgatado, ligado ao ingresso criado no pedido. */
+    public function markRedeemed(CourtesyVoucher $voucher, Ticket $ticket, User $buyer): void
+    {
+        $voucher->forceFill([
+            'redeemed_at' => now(),
+            'redeemed_ticket_id' => $ticket->id,
+        ]);
+        $voucher->transitionTo(CourtesyVoucher::REDEEMED);
+
+        activity('courtesy.redeemed')
+            ->performedOn($ticket)
+            ->causedBy($buyer)
+            ->withProperties(['reference' => $ticket->code, 'voucher' => $voucher->code])
+            ->log('Voucher '.$voucher->code.' resgatado → ingresso '.$ticket->code);
+    }
+
     /**
      * Resgate de voucher: pedido PRÓPRIO de total zero (nasce pago) — a
      * expiração de um pedido pago nunca desfaz o resgate (research, Decisão 2).

@@ -76,6 +76,18 @@ class Event extends BaseModel
         return $this->hasOne(EventSite::class);
     }
 
+    /** Categorias de participante do checkout (spec 014). */
+    public function participantCategories(): HasMany
+    {
+        return $this->hasMany(ParticipantCategory::class)->orderBy('sort')->orderBy('id');
+    }
+
+    /** Lista de afiliações ("lojas") do checkout (spec 014). */
+    public function affiliations(): HasMany
+    {
+        return $this->hasMany(Affiliation::class)->orderBy('sort')->orderBy('id');
+    }
+
     public function ticketTypes(): HasMany
     {
         return $this->hasMany(TicketType::class);

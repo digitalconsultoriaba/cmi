@@ -18,6 +18,8 @@ class TicketResource extends JsonResource
             'ticketTypeName' => $this->ticketType?->name,
             'isCourtesy' => (bool) $this->is_courtesy,
             'unitPrice' => $this->unit_price,
+            'participantCategoryKey' => $this->participant_category_key,
+            'participantFields' => $this->participant_fields,
             'shirt' => $this->shirt_size_id ? [
                 'model' => $this->shirtModel?->label,
                 'size' => $this->shirtSize?->label,

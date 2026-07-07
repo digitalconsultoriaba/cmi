@@ -23,6 +23,7 @@ class Ticket extends BaseModel
         'used_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'refunded_at' => 'datetime',
+        'participant_fields' => 'array', // snapshot dos campos da categoria (spec 014)
     ];
 
     public function order(): BelongsTo

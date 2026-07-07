@@ -92,6 +92,9 @@ class RegisterPayment
                     'order' => $confirmedOrder->code, 'error' => $e->getMessage(),
                 ]);
             }
+
+            // Entrega por participante + acesso do comprador guest (spec 014).
+            app(OrderConfirmedNotifier::class)->notify($confirmedOrder);
         }
 
         return $payment;
