@@ -42,6 +42,10 @@ class SeminarioDemoSeeder extends Seeder
 
     private const CARGOS = ['Venerável Mestre', '1º Vigilante', '2º Vigilante', 'Orador', 'Secretário', 'Tesoureiro', null, null];
 
+    /** Lotes vigentes para distribuir os ingressos (round-robin). */
+    private array $lots = [];
+    private int $lotIdx = 0;
+
     public function run(): void
     {
         $event = Event::query()->where('slug', 'seminario-internacional-2026')->first();
@@ -52,7 +56,7 @@ class SeminarioDemoSeeder extends Seeder
         }
 
         $this->clearOrders($event);
-        [$individual, $lot1] = $this->configure($event);
+        $individual = $this->configure($event);
         $this->setupDays($event);
 
         $glmeesLojas = $event->affiliations()->inRandomOrder()->limit(15)->pluck('name')->all();
@@ -62,12 +66,12 @@ class SeminarioDemoSeeder extends Seeder
 
         // 30 inscrições individuais (1 participante por pedido).
         foreach (range(1, 15) as $i) {
-            $this->order($event, $individual, $lot1, [
+            $this->order($event, $individual, [
                 $this->participant('glmees', ['loja' => $glmeesLojas[($i - 1) % count($glmeesLojas)]]),
             ]);
         }
         foreach (range(1, 15) as $i) {
-            $this->order($event, $individual, $lot1, [$this->participant('outra_potencia')]);
+            $this->order($event, $individual, [$this->participant('outra_potencia')]);
         }
 
         // 5 pedidos em bloco, 4 irmãos cada (categorias variadas).
@@ -79,14 +83,19 @@ class SeminarioDemoSeeder extends Seeder
                     ? $this->participant('glmees', ['loja' => $glmeesLojas[array_rand($glmeesLojas)]])
                     : $this->participant('outra_potencia');
             }
-            $this->order($event, $individual, $lot1, $group);
+            $this->order($event, $individual, $group);
+        }
+
+        // Atualiza o cache de vendidos por lote (a aba Ingressos lê esse contador).
+        foreach ($this->lots as $lot) {
+            $lot->recountSold();
         }
 
         $this->command?->info('Demo criada: 30 individuais + 5 blocos (20) = 50 inscrições pagas; contas a receber geradas.');
     }
 
-    /** Ajusta tipos (só Individual + Cortesia) e lotes (250/300/350). Devolve [individual, lote1]. */
-    private function configure(Event $event): array
+    /** Ajusta tipos (só Individual + Cortesia) e lotes (250/300/350). Devolve o tipo Individual. */
+    private function configure(Event $event): TicketType
     {
         $tz = config('events.timezone');
         $event->update([
@@ -111,22 +120,26 @@ class SeminarioDemoSeeder extends Seeder
         // Só Individual e Cortesia visíveis: desativa os demais (ex.: Casal).
         $event->ticketTypes()->whereNotIn('name', ['Individual', 'Cortesia'])->update(['is_active' => false]);
 
-        // Lotes: 1º vigente (250), 2º e 3º futuros (300 / 350).
+        // Lotes: valores 250/300/350. Todos abertos para poder distribuir os
+        // ingressos vendidos entre eles (janelas amplas nesta demo).
         $event->ticketLots()->forceDelete();
-        $lot1 = $event->ticketLots()->create([
-            'name' => '1º lote', 'price_override' => '250.00',
-            'starts_at' => now()->subDays(5), 'ends_at' => now()->addDays(10), 'is_active' => true, 'sort' => 0,
-        ]);
-        $event->ticketLots()->create([
-            'name' => '2º lote', 'price_override' => '300.00',
-            'starts_at' => now()->addDays(10), 'ends_at' => now()->addDays(20), 'is_active' => true, 'sort' => 1,
-        ]);
-        $event->ticketLots()->create([
-            'name' => '3º lote', 'price_override' => '350.00',
-            'starts_at' => now()->addDays(20), 'ends_at' => now()->addDays(30), 'is_active' => true, 'sort' => 2,
-        ]);
+        $this->lots = [
+            $event->ticketLots()->create([
+                'name' => '1º lote', 'price_override' => '250.00',
+                'starts_at' => now()->subDays(20), 'ends_at' => now()->addDays(60), 'is_active' => true, 'sort' => 0,
+            ]),
+            $event->ticketLots()->create([
+                'name' => '2º lote', 'price_override' => '300.00',
+                'starts_at' => now()->subDays(20), 'ends_at' => now()->addDays(60), 'is_active' => true, 'sort' => 1,
+            ]),
+            $event->ticketLots()->create([
+                'name' => '3º lote', 'price_override' => '350.00',
+                'starts_at' => now()->subDays(20), 'ends_at' => now()->addDays(60), 'is_active' => true, 'sort' => 2,
+            ]),
+        ];
+        $this->lotIdx = 0;
 
-        return [$individual, $lot1];
+        return $individual;
     }
 
     /** Dia 1 = hoje 14h (fim 23:59 p/ dar baixa o dia todo); Dia 2 = amanhã. */
@@ -167,9 +180,9 @@ class SeminarioDemoSeeder extends Seeder
     }
 
     /** Cria um pedido PAGO com N participantes (Individual); observer gera a conta a receber. */
-    private function order(Event $event, TicketType $type, TicketLot $lot, array $participants): void
+    private function order(Event $event, TicketType $type, array $participants): void
     {
-        DB::transaction(function () use ($event, $type, $lot, $participants) {
+        DB::transaction(function () use ($event, $type, $participants) {
             $buyerData = $participants[0];
             $buyer = $this->user($buyerData['name']);
 
@@ -181,9 +194,11 @@ class SeminarioDemoSeeder extends Seeder
                 'status_id' => OrderStatus::idFor(OrderStatus::PAID),
             ]);
 
-            $total = 0;
+            $total = 0.0;
             foreach ($participants as $idx => $p) {
                 $participantUser = $idx === 0 ? $buyer : $this->user($p['name']);
+                $lot = $this->lots[$this->lotIdx++ % count($this->lots)]; // distribui entre os 3 lotes
+                $price = $lot->price_override;
                 $order->tickets()->create([
                     'event_id' => $event->id,
                     'ticket_type_id' => $type->id,
@@ -193,10 +208,10 @@ class SeminarioDemoSeeder extends Seeder
                     'participant_user_id' => $participantUser->id,
                     'participant_category_key' => $p['category'],
                     'participant_fields' => $p['fields'],
-                    'unit_price' => '250.00',
+                    'unit_price' => $price,
                     'status_id' => TicketStatus::idFor(TicketStatus::CONFIRMED),
                 ]);
-                $total += 250;
+                $total += (float) $price;
             }
 
             Payment::query()->create([

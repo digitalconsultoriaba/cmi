@@ -26,6 +26,7 @@ export default function Inscritos() {
   const { run, error, setError, busy } = useApiAction()
   const [tab, setTab] = useState('inscritos') // inscritos | financeiro
   const [search, setSearch] = useState('')
+  const [loja, setLoja] = useState('')
   const [status, setStatus] = useState('')
   const [perPage, setPerPage] = useState(25)
   const [page, setPage] = useState(1)
@@ -34,12 +35,13 @@ export default function Inscritos() {
 
   const params = new URLSearchParams()
   if (search) params.set('search', search)
+  if (loja) params.set('loja', loja)
   if (status) params.set('status', status)
   params.set('perPage', perPage)
   params.set('page', page)
 
   const { data } = useQuery({
-    queryKey: ['admin', 'event', eventId, 'attendees', search, status, perPage, page],
+    queryKey: ['admin', 'event', eventId, 'attendees', search, loja, status, perPage, page],
     queryFn: () => apiGet(`/admin/events/${eventId}/attendees?${params}`),
     keepPreviousData: true,
   })
@@ -77,10 +79,15 @@ export default function Inscritos() {
       <div className="card mb-3">
         <div className="card-body">
           <div className="row g-2 align-items-end">
-            <div className="col-md-5">
+            <div className="col-md-4">
               <label className="form-label">Buscar (irmão/convidado)</label>
               <input className="form-control" placeholder="Nome…"
                 value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+            </div>
+            <div className="col-md-4">
+              <label className="form-label">Buscar por loja / potência</label>
+              <input className="form-control" placeholder="Nome ou número da loja…"
+                value={loja} onChange={(e) => { setLoja(e.target.value); setPage(1) }} />
             </div>
             <div className="col-md-4">
               <label className="form-label">Situação</label>
@@ -96,15 +103,6 @@ export default function Inscritos() {
                 <option value="transferred">Transferido</option>
               </select>
             </div>
-            <div className="col-md-3">
-              <label className="form-label">Por página</label>
-              <select className="form-select" value={perPage}
-                onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1) }}>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
           </div>
         </div>
       </div>
@@ -116,7 +114,7 @@ export default function Inscritos() {
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead>
-              <tr><th>Participante</th><th>Ingresso</th><th>Camisa</th><th className="text-end">Valor</th><th>Situação</th><th /></tr>
+              <tr><th>Participante</th><th>Ingresso</th><th>Loja / Potência</th><th className="text-end">Valor</th><th>Situação</th><th /></tr>
             </thead>
             <tbody>
               {items.map((i) => (
@@ -133,10 +131,7 @@ export default function Inscritos() {
                       )}
                     </td>
                     <td>{i.ticketTypeName}</td>
-                    <td className="small">
-                      {i.shirt ?? '—'}
-                      {i.companionShirt && <div className="text-secondary">acomp.: {i.companionShirt}</div>}
-                    </td>
+                    <td className="small">{i.affiliation ?? '—'}</td>
                     <td className="text-end">
                       {money(i.amount)}
                       {i.paidAt && <div className="small text-secondary">pago em {dateTime(i.paidAt)}</div>}
@@ -168,21 +163,28 @@ export default function Inscritos() {
             </tbody>
           </table>
         </div>
-        {data && data.lastPage > 1 && (
-          <div className="card-footer d-flex align-items-center">
-            <p className="m-0 text-secondary">
-              Página {data.page} de {data.lastPage} · {data.total} cadastro(s)
-            </p>
-            <ul className="pagination m-0 ms-auto">
-              <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => setPage((p) => Math.max(1, p - 1))}>Anteriores</button>
-              </li>
-              <li className={`page-item ${page >= data.lastPage ? 'disabled' : ''}`}>
-                <button className="page-link" onClick={() => setPage((p) => p + 1)}>Próximos</button>
-              </li>
-            </ul>
+        <div className="card-footer d-flex align-items-center flex-wrap gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-secondary small">Por página</span>
+            <select className="form-select form-select-sm w-auto" value={perPage}
+              onChange={(e) => { setPerPage(Number(e.target.value)); setPage(1) }}>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
           </div>
-        )}
+          <p className="m-0 text-secondary small ms-3">
+            {data ? `Página ${data.page} de ${data.lastPage} · ${data.total} cadastro(s)` : ''}
+          </p>
+          <ul className="pagination m-0 ms-auto">
+            <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setPage((p) => Math.max(1, p - 1))}>Anteriores</button>
+            </li>
+            <li className={`page-item ${!data || page >= data.lastPage ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setPage((p) => p + 1)}>Próximos</button>
+            </li>
+          </ul>
+        </div>
       </div>
       </>
       )}

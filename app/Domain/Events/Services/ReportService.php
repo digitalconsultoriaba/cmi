@@ -497,6 +497,12 @@ class ReportService
                 ->orWhere('companion_name', 'like', "%{$s}%")
                 ->orWhere('code', 'like', "%{$s}%"));
         }
+        if (! empty($filters['loja'])) {
+            $l = $filters['loja'];
+            $query->where(fn ($q) => $q
+                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(participant_fields, '$.loja')) LIKE ?", ["%{$l}%"])
+                ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(participant_fields, '$.potencia')) LIKE ?", ["%{$l}%"]));
+        }
         if (! empty($filters['ticketType'])) {
             $query->where('ticket_type_id', $filters['ticketType']);
         }
@@ -527,6 +533,7 @@ class ReportService
             'isCouple' => (bool) $t->ticketType?->is_couple,
             'isCourtesy' => (bool) $t->is_courtesy,
             'ticketTypeName' => $t->ticketType?->name,
+            'affiliation' => ($t->participant_fields['loja'] ?? null) ?: ($t->participant_fields['potencia'] ?? null),
             'shirt' => $this->shirtLabel($t->shirtSize?->label, $t->shirtModel?->label),
             'companionShirt' => $this->shirtLabel($t->companionShirtSize?->label, $t->companionShirtModel?->label),
             'amount' => $this->money((string) $t->unit_price),
