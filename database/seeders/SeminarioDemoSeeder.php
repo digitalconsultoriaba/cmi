@@ -91,6 +91,8 @@ class SeminarioDemoSeeder extends Seeder
             $lot->recountSold();
         }
 
+        $this->createSponsorships($event);
+
         $this->command?->info('Demo criada: 30 individuais + 5 blocos (20) = 50 inscrições pagas; contas a receber geradas.');
     }
 
@@ -229,6 +231,25 @@ class SeminarioDemoSeeder extends Seeder
         });
     }
 
+    /** Dois patrocínios (Sicoob/Sicredi) de R$ 50k em 5× de R$ 10k, 1ª parcela recebida. */
+    private function createSponsorships(Event $event): void
+    {
+        $service = app(\App\Domain\Events\Services\SponsorshipService::class);
+        foreach (['Sicoob', 'Sicredi'] as $name) {
+            $sp = $service->createWithInstallments($event, [
+                'company_name' => $name,
+                'total_amount' => '50000.00',
+                'installments_count' => 5,
+                'payment_method' => 'transfer',
+                'first_due_date' => now()->startOfMonth()->toDateString(),
+            ]);
+            $service->payInstallment(
+                $sp->installments()->where('number', 1)->first(),
+                ['paid_at' => now(), 'method' => 'transfer']
+            );
+        }
+    }
+
     private function user(string $name): User
     {
         $user = User::factory()->create(['name' => $name, 'email' => fake()->unique()->safeEmail()]);
@@ -261,6 +282,23 @@ class SeminarioDemoSeeder extends Seeder
             DB::table('payments')->whereIn('order_id', $orderIds)->delete();
             DB::table('tickets')->whereIn('order_id', $orderIds)->delete();
             DB::table('orders')->whereIn('id', $orderIds)->delete();
+        }
+
+        // Patrocínios + parcelas + espelho financeiro do evento.
+        $spIds = DB::table('sponsorships')->where('event_id', $id)->pluck('id');
+        if ($spIds->isNotEmpty()) {
+            $instIds = DB::table('sponsorship_installments')->whereIn('sponsorship_id', $spIds)->pluck('id');
+            if ($instIds->isNotEmpty()) {
+                $spEntryIds = DB::table('financial_entries')
+                    ->where('source_type', \App\Domain\Events\Models\SponsorshipInstallment::class)
+                    ->whereIn('source_id', $instIds)->pluck('id');
+                if ($spEntryIds->isNotEmpty()) {
+                    DB::table('financial_settlements')->whereIn('entry_id', $spEntryIds)->delete();
+                    DB::table('financial_entries')->whereIn('id', $spEntryIds)->delete();
+                }
+                DB::table('sponsorship_installments')->whereIn('id', $instIds)->delete();
+            }
+            DB::table('sponsorships')->whereIn('id', $spIds)->delete();
         }
     }
 }
