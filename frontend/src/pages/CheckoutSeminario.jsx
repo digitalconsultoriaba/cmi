@@ -33,7 +33,9 @@ export default function CheckoutSeminario() {
   if (isLoading || !config) return <div className="ck"><div className="ck-wrap" style={{ paddingTop: 40 }}>Carregando…</div></div>
 
   const typeOf = (id) => config.ticketTypes.find((t) => t.id === id)
-  const rawPrice = (row) => parseMoney(typeOf(row.ticketTypeId)?.effectivePrice ?? '0')
+  // parseMoney devolve string decimal ("250.00"); somamos como número para
+  // não cair em concatenação de string no reduce do carrinho.
+  const rawPrice = (row) => Number(parseMoney(typeOf(row.ticketTypeId)?.effectivePrice ?? '0') ?? 0)
   const priceOf = (row) => (row.voucherCode ? 0 : rawPrice(row))
   const catLabel = (key) => config.categories.find((c) => c.key === key)?.label ?? ''
 
