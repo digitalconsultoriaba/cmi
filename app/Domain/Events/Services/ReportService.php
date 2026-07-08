@@ -487,7 +487,8 @@ class ReportService
         $query = Ticket::query()
             ->where('event_id', $event->id)
             ->with(['ticketType', 'status', 'shirtModel', 'shirtSize',
-                'companionShirtModel', 'companionShirtSize', 'order.status', 'order.payments.status'])
+                'companionShirtModel', 'companionShirtSize', 'order.status', 'order.payments.status',
+                'order' => fn ($q) => $q->withCount('tickets')])
             ->orderBy('participant_name');
 
         if (! empty($filters['search'])) {
@@ -545,6 +546,9 @@ class ReportService
             'orderCode' => $t->order?->code,
             'orderStatus' => $t->order?->status?->slug,
             'buyerUserId' => $t->order?->buyer_user_id,
+            // Pedido coletivo (bloco): mais de um ingresso no mesmo pedido.
+            'orderTicketsCount' => $t->order?->tickets_count ?? 1,
+            'orderTotal' => $t->order ? $this->money((string) $t->order->total_amount) : null,
             // Pedido ainda precisa de baixa? (pago/parcial → não; cortesia → não)
             'paymentPending' => ! $t->is_courtesy && in_array(
                 $t->order?->status?->slug,

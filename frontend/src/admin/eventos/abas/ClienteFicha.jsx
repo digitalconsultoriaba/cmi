@@ -149,13 +149,26 @@ export default function ClienteFicha({ userId, onClose }) {
       {tab === 'Ingressos' && (
         <div className="card"><div className="card-table table-responsive">
           <table className="table table-vcenter">
-            <thead><tr><th>Ingresso</th><th>Participante</th><th>Tipo</th><th>Camisa</th><th>Situação</th><th>Cortesia / Entrada</th><th /></tr></thead>
+            <thead><tr><th>Ingresso</th><th>Participante</th><th>Tipo</th><th className="text-end">Valor</th><th>Camisa</th><th>Situação</th><th>Cortesia / Entrada</th><th /></tr></thead>
             <tbody>
               {tickets.map((t) => (
                 <tr key={t.code}>
                   <td><code>{t.code}</code></td>
                   <td>{t.participantName}{t.companionName && <span className="text-secondary small"> + {t.companionName}</span>}</td>
-                  <td>{t.ticketTypeName}</td>
+                  <td>
+                    {t.ticketTypeName}
+                    {t.orderTicketsCount > 1 && (
+                      <div className="mt-1">
+                        <span className="badge bg-azure text-white">Coletivo · {t.orderTicketsCount} ingressos</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="text-end">
+                    {money(t.unitPrice)}
+                    {t.orderTicketsCount > 1 && (
+                      <div className="small text-secondary">Pedido {money(t.orderTotal)}</div>
+                    )}
+                  </td>
                   <td className="small">{t.shirt ?? '—'}</td>
                   <td><span className={`badge ${STATUS_BADGE[t.status] ?? 'bg-secondary text-white'}`}>{t.statusLabel}</span></td>
                   <td className="small">

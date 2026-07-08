@@ -130,10 +130,22 @@ export default function Inscritos() {
                         </div>
                       )}
                     </td>
-                    <td>{i.ticketTypeName}</td>
+                    <td>
+                      {i.ticketTypeName}
+                      {i.orderTicketsCount > 1 && (
+                        <div className="mt-1">
+                          <span className="badge bg-azure text-white">Coletivo · {i.orderTicketsCount} ingressos</span>
+                        </div>
+                      )}
+                    </td>
                     <td className="small">{i.affiliation ?? '—'}</td>
                     <td className="text-end">
                       {money(i.amount)}
+                      {i.orderTicketsCount > 1 && (
+                        <div className="small text-secondary">
+                          Pedido {money(i.orderTotal)} · {i.orderTicketsCount} ingressos
+                        </div>
+                      )}
                       {i.paidAt && <div className="small text-secondary">pago em {dateTime(i.paidAt)}</div>}
                     </td>
                     <td><span className={`badge ${STATUS_BADGE[i.status] ?? 'bg-secondary text-white'}`}>{statusLabel(i)}</span></td>
