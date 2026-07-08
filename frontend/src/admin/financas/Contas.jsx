@@ -67,7 +67,10 @@ export default function Contas({ direction }) {
               <option value="cancelled">Cancelado</option>
             </select></div>
         </div>
-        <div className="form-hint mt-1">Filtro por mês aplica-se ao vencimento das contas.</div>
+        <div className="form-hint mt-1">
+          O mês considera o <strong>{isReceivable ? 'recebimento' : 'pagamento'}</strong> quando a conta já foi baixada,
+          e o <strong>vencimento</strong> quando ainda está em aberto.
+        </div>
       </div></div>
 
       <div className="card">

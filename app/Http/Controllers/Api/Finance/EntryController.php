@@ -44,11 +44,29 @@ class EntryController extends Controller
                 $q->where($col, $data[$key]);
             }
         }
-        if (! empty($data['from'])) {
-            $q->where('due_date', '>=', $data['from']);
-        }
-        if (! empty($data['to'])) {
-            $q->where('due_date', '<=', $data['to']);
+        // Filtro de mês em regime de caixa: entra quem VENCE no período (contas
+        // ainda em aberto) OU quem foi RECEBIDO/PAGO no período (baixa no mês).
+        $from = $data['from'] ?? null;
+        $to = $data['to'] ?? null;
+        if ($from || $to) {
+            $q->where(function ($w) use ($from, $to) {
+                $w->where(function ($d) use ($from, $to) {
+                    if ($from) {
+                        $d->where('due_date', '>=', $from);
+                    }
+                    if ($to) {
+                        $d->where('due_date', '<=', $to);
+                    }
+                })->orWhereHas('settlements', function ($s) use ($from, $to) {
+                    $s->where('kind', '!=', 'reversal');
+                    if ($from) {
+                        $s->whereDate('settled_on', '>=', $from);
+                    }
+                    if ($to) {
+                        $s->whereDate('settled_on', '<=', $to);
+                    }
+                });
+            });
         }
         if (! empty($data['search'])) {
             $q->where('description', 'like', '%'.$data['search'].'%');
@@ -63,6 +81,27 @@ class EntryController extends Controller
         if (! empty($data['status'])) {
             $all = $all->filter(fn (FinancialEntry $e) => $e->status() === $data['status'])->values();
         }
+
+        // Data de competência de caixa: recebimento (se baixado) senão vencimento.
+        $settledOn = fn (FinancialEntry $e) => $e->settlements
+            ->where('kind', '!=', 'reversal')->max('settled_on');
+        $refDate = fn (FinancialEntry $e) => optional($settledOn($e) ?? $e->due_date)->toDateString();
+
+        // Mantém no mês só quem vence OU foi recebido no período (regime de caixa):
+        // o orWhereHas do SQL traz candidatos; aqui descartamos os baixados fora
+        // do período cujo vencimento caía dentro dele.
+        if ($from || $to) {
+            $all = $all->filter(function ($e) use ($refDate, $from, $to) {
+                $ref = $refDate($e);
+                return (! $from || $ref >= $from) && (! $to || $ref <= $to);
+            })->values();
+        }
+
+        // Ordena por recebimento/pagamento: baixados no topo (baixa mais recente
+        // primeiro); em aberto logo abaixo, por vencimento mais próximo.
+        $all = $all->filter(fn ($e) => $settledOn($e) !== null)->sortByDesc($settledOn)
+            ->concat($all->filter(fn ($e) => $settledOn($e) === null)->sortBy('due_date'))
+            ->values();
         $total = $all->count();
         $items = $all->slice(($page - 1) * $perPage, $perPage)->values();
 
