@@ -489,7 +489,8 @@ class ReportService
             ->with(['ticketType', 'status', 'shirtModel', 'shirtSize',
                 'companionShirtModel', 'companionShirtSize', 'order.status', 'order.payments.status',
                 'order' => fn ($q) => $q->withCount('tickets')])
-            ->orderBy('participant_name');
+            // Inscrições mais recentes primeiro (última compra no topo).
+            ->orderByDesc('created_at')->orderByDesc('id');
 
         if (! empty($filters['search'])) {
             $s = $filters['search'];
