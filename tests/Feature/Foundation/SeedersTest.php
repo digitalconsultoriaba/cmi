@@ -62,8 +62,8 @@ class SeedersTest extends TestCase
         $this->assertSame(EventStatus::PUBLISHED, $event->status->slug);
         $this->assertTrue($event->salesOpen(), 'evento demo nasce vendável');
 
-        $this->assertCount(3, $event->ticketTypes);
-        $this->assertCount(2, $event->ticketLots);
+        $this->assertCount(3, $event->ticketTypes); // Individual, Cortesia (ativos) + Casal (inativo)
+        $this->assertCount(3, $event->ticketLots);   // 1º/2º/3º lote (250/300/350) — SeminarioDemoSeeder
         $this->assertCount(2, $event->shirtModels);
 
         // Camisas com e sem estoque

@@ -30,6 +30,7 @@ class EventPanelController extends Controller
     {
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
+            'loja' => ['nullable', 'string', 'max:120'],
             'status' => ['nullable', 'string', 'max:30'],
             'type' => ['nullable', 'integer'],   // id do tipo de ingresso (contrato)
             'from' => ['nullable', 'date'],
@@ -40,6 +41,7 @@ class EventPanelController extends Controller
 
         return ApiResponse::data($reports->attendeesList($event, [
             'search' => $data['search'] ?? null,
+            'loja' => $data['loja'] ?? null,
             'status' => $data['status'] ?? null,
             'ticketType' => $data['type'] ?? null,
             'from' => $this->utc($data['from'] ?? null, false),

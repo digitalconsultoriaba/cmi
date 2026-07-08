@@ -57,13 +57,15 @@ export default function MinhaConta() {
 
         {/* Faixa do perfil */}
         <div className="container-xl d-flex align-items-center gap-3 pb-2 flex-wrap">
-          <span className="avatar avatar-lg" style={{
-            backgroundImage: user.avatarUrl ? `url(${user.avatarUrl})` : undefined,
-            backgroundSize: 'cover',
-            background: user.avatarUrl ? undefined : 'var(--brand-blue, #1b3a6b)', color: '#fff', fontSize: '1.25rem',
-          }}>
-            {!user.avatarUrl && initials(user.name)}
-          </span>
+          {user.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.name}
+              style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e6e7e9' }} />
+          ) : (
+            <span className="avatar avatar-lg"
+              style={{ background: 'var(--brand-blue, #1b3a6b)', color: '#fff', fontSize: '1.25rem' }}>
+              {initials(user.name)}
+            </span>
+          )}
           <div>
             <div className="h3 mb-0">{user.name}</div>
             <div className="text-secondary small">

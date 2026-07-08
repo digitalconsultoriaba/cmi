@@ -19,6 +19,9 @@ const TABS = [
   { to: 'cortesias', label: 'Cortesias', when: (e) => e.allowCourtesy || e.allowCourtesyVoucher },
   { to: 'patrocinio', label: 'Patrocínio' },
   { to: 'orcamento', label: 'Orçamento' },
+  // Aba "Inscrições" (config de categorias/campos do checkout) oculta do menu
+  // a pedido do usuário; a rota /inscricoes segue acessível e a config vem do
+  // seed. Para reexibir, reinserir: { to: 'inscricoes', label: 'Inscrições' }.
   { to: 'site', label: 'Site' },
   { to: 'relatorios', label: 'Relatórios' },
   { to: 'checkin', label: 'Check-in' },

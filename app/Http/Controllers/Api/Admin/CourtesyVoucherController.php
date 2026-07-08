@@ -24,43 +24,72 @@ class CourtesyVoucherController extends Controller
     }
 
     /**
-     * Relatório de cortesias do evento: geradas / utilizadas / canceladas,
-     * com a lista de pessoas (dados maçônicos do titular quando registrado).
+     * Relatório de cortesias do evento pelo ciclo do voucher:
+     * geradas (todas) / distribuídas (entregues a alguém) / resgatadas (viraram ingresso).
+     * Inclui também as cortesias automáticas (regra do evento) que não vêm de voucher.
+     * Cada linha traz os dados do titular quando o voucher já foi resgatado.
      */
     public function stats(Request $request, Event $event)
     {
-        $tickets = $event->tickets()
-            ->where('is_courtesy', true)
-            ->with(['status', 'order.buyerUser'])
+        $vouchers = $event->courtesyVouchers()
+            ->with(['redeemedTicket.order.buyerUser'])
+            ->latest('id')
             ->get();
 
-        $person = fn ($t) => [
-            'name' => $t->participant_name,
-            'potencia' => $t->order?->buyerUser?->potencia,
-            'loja' => $t->order?->buyerUser?->loja,
-            'cargoLoja' => $t->order?->buyerUser?->cargo_loja,
-            'cargoPotencia' => $t->order?->buyerUser?->cargo_potencia,
-        ];
+        $voucherTicketIds = $vouchers->pluck('redeemed_ticket_id')->filter()->values()->all();
 
-        $geradas = $tickets;
-        $utilizadas = $tickets->filter(fn ($t) => $t->status?->slug === \App\Domain\Events\Models\TicketStatus::USED);
-        $canceladas = $tickets->filter(fn ($t) => in_array(
-            $t->status?->slug,
-            [\App\Domain\Events\Models\TicketStatus::CANCELLED, \App\Domain\Events\Models\TicketStatus::REFUNDED],
-            true
-        ));
+        // Cortesias automáticas: ingressos de cortesia que não nasceram de um voucher.
+        $autoTickets = $event->tickets()
+            ->where('is_courtesy', true)
+            ->when($voucherTicketIds, fn ($q) => $q->whereNotIn('id', $voucherTicketIds))
+            ->with(['order.buyerUser'])
+            ->get();
+
+        $fromTicket = fn ($t, array $extra = []) => array_merge([
+            'name' => $t?->participant_name,
+            'potencia' => $t?->order?->buyerUser?->potencia,
+            'loja' => $t?->order?->buyerUser?->loja,
+            'cargoLoja' => $t?->order?->buyerUser?->cargo_loja,
+            'cargoPotencia' => $t?->order?->buyerUser?->cargo_potencia,
+        ], $extra);
+
+        $fromVoucher = function ($v) use ($fromTicket) {
+            $t = $v->redeemedTicket;
+
+            return $fromTicket($t, [
+                'code' => $v->code,
+                'note' => $v->note,
+                'status' => $v->status,
+                'name' => $t?->participant_name ?: ($v->note ?: null),
+                'distributedAt' => $v->distributed_at?->toDateString(),
+            ]);
+        };
+
+        $auto = $autoTickets->map(fn ($t) => $fromTicket($t, [
+            'code' => null,
+            'note' => 'Cortesia automática',
+            'status' => CourtesyVoucher::REDEEMED,
+        ]));
+
+        $geradas = $vouchers->map($fromVoucher)->concat($auto)->values();
+        $distribuidas = $vouchers
+            ->filter(fn ($v) => in_array($v->status, [CourtesyVoucher::DISTRIBUTED, CourtesyVoucher::REDEEMED], true))
+            ->map($fromVoucher)->concat($auto)->values();
+        $resgatadas = $vouchers
+            ->filter(fn ($v) => $v->status === CourtesyVoucher::REDEEMED)
+            ->map($fromVoucher)->concat($auto)->values();
 
         return response()->json([
             'data' => [
                 'counts' => [
                     'geradas' => $geradas->count(),
-                    'utilizadas' => $utilizadas->count(),
-                    'canceladas' => $canceladas->count(),
+                    'distribuidas' => $distribuidas->count(),
+                    'resgatadas' => $resgatadas->count(),
                 ],
                 'people' => [
-                    'geradas' => $geradas->map($person)->values(),
-                    'utilizadas' => $utilizadas->map($person)->values(),
-                    'canceladas' => $canceladas->map($person)->values(),
+                    'geradas' => $geradas,
+                    'distribuidas' => $distribuidas,
+                    'resgatadas' => $resgatadas,
                 ],
             ],
         ]);
@@ -103,6 +132,19 @@ class CourtesyVoucherController extends Controller
 
         // Ciclo só avança (guarda da fundação) — retroceder/repetir → 409
         $courtesyVoucher->transitionTo(CourtesyVoucher::DISTRIBUTED);
+
+        return CourtesyVoucherResource::make($courtesyVoucher->fresh());
+    }
+
+    /**
+     * Edita apenas a anotação do voucher (destinatário/observação) após a distribuição,
+     * sem alterar a situação. Vale para vouchers distribuídos ou resgatados.
+     */
+    public function updateNote(Request $request, Event $event, CourtesyVoucher $courtesyVoucher)
+    {
+        $data = $request->validate(['note' => ['nullable', 'string', 'max:500']]);
+
+        $courtesyVoucher->update(['note' => $data['note'] ?? null]);
 
         return CourtesyVoucherResource::make($courtesyVoucher->fresh());
     }

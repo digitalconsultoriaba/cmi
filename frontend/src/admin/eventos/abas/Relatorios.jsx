@@ -41,8 +41,6 @@ export default function Relatorios() {
 
   return (
     <>
-      <PresencaPorDia />
-
       <div className="card mb-3">
         <div className="card-body">
           <div className="row g-2 align-items-end">
@@ -71,6 +69,8 @@ export default function Relatorios() {
           </div>
         </div>
       </div>
+
+      {type === 'presencas' && <PresencaPorDia />}
 
       <div className="card">
         <div className="card-header d-flex align-items-center">

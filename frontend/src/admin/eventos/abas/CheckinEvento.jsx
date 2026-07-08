@@ -29,6 +29,8 @@ export default function CheckinEvento() {
 
   const [code, setCode] = useState('')
   const [search, setSearch] = useState('')
+  const [ckPage, setCkPage] = useState(1)
+  const [ckPerPage, setCkPerPage] = useState(25)
   const [cameraOn, setCameraOn] = useState(false)
   const [cameraError, setCameraError] = useState(null)
   const [selectedDay, setSelectedDay] = useState('')
@@ -55,7 +57,9 @@ export default function CheckinEvento() {
     keepPreviousData: true,
   })
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] })
+  // Força o refetch imediato (não só marca como stale) para a lista e os
+  // contadores atualizarem sozinhos após a baixa, sem recarregar a página.
+  const refresh = () => queryClient.refetchQueries({ queryKey: ['admin', 'event', eventId], type: 'active' })
 
   const validate = (value, origin = 'qr') => run(
     () => apiPost('/gate/checkin', { code: value, day: Number(selectedDay), origin }),
@@ -90,6 +94,9 @@ export default function CheckinEvento() {
 
   const counters = data?.counters
   const items = data?.items ?? []
+  const lastPage = Math.max(1, Math.ceil(items.length / ckPerPage))
+  const curPage = Math.min(ckPage, lastPage)
+  const pageItems = items.slice((curPage - 1) * ckPerPage, (curPage - 1) * ckPerPage + ckPerPage)
 
   return (
     <>
@@ -99,47 +106,72 @@ export default function CheckinEvento() {
       <DiasEvento days={days} selectedId={selectedDay} onSelect={(id) => setSelectedDay(String(id))}
         onFinalize={finalizar} onReopen={(d) => setReopening(d)} canReopen={isAdmin} busy={busy} />
 
-      {/* Números do dia */}
+      {/* Resumo do dia: números + gráfico presentes/ausentes */}
       {counters && (
         <div className="row row-deck row-cards mb-3">
           <Stat label="Comprados" value={counters.purchased} />
           <Stat label="Presentes" value={counters.present} className="text-green" />
           <Stat label="Ausentes" value={counters.absent} className="text-orange" />
-          <Stat label="% presença" value={`${counters.presentPct}%`} className="text-blue" />
+          <div className="col-6 col-lg-3">
+            <div className="card card-sm"><div className="card-body">
+              <div className="subheader d-flex justify-content-between">
+                <span>Presença</span><span className="text-blue">{counters.presentPct}%</span>
+              </div>
+              <div className="progress" style={{ height: 12 }}>
+                <div className="progress-bar bg-green" style={{ width: `${counters.presentPct}%` }}
+                  title={`Presentes: ${counters.present}`} />
+                <div className="progress-bar bg-orange" style={{ width: `${100 - counters.presentPct}%` }}
+                  title={`Ausentes: ${counters.absent}`} />
+              </div>
+              <div className="d-flex justify-content-between mt-1 small text-secondary">
+                <span>● {counters.present} presentes</span>
+                <span>{counters.absent} ausentes ●</span>
+              </div>
+            </div></div>
+          </div>
         </div>
       )}
 
-      {/* Participantes + validação no cabeçalho */}
+      {/* Validar ingresso — bloco em destaque (QR + código) */}
+      <div className="card mb-3">
+        <div className="card-body">
+          <div className="row g-3 align-items-center">
+            <div className="col-lg-7">
+              <label className="form-label">Validar ingresso</label>
+              <form className="input-group input-group-lg"
+                onSubmit={(e) => { e.preventDefault(); if (code.trim()) validate(code.trim()) }}>
+                <input className="form-control" placeholder="Escaneie o QR ou digite o código do ingresso" autoFocus
+                  value={code} onChange={(e) => setCode(e.target.value)} />
+                <button type="button" className={`btn ${cameraOn ? 'btn-outline-secondary' : 'btn-outline-primary'}`}
+                  onClick={() => setCameraOn(!cameraOn)}>{cameraOn ? 'Fechar câmera' : '📷 Ler QR'}</button>
+                <button type="submit" className="btn btn-primary" disabled={busy || !code.trim()}>Validar presença</button>
+              </form>
+              <div className="form-hint mt-1">A baixa registra a presença do participante no dia selecionado.</div>
+            </div>
+            {cameraOn && (
+              <div className="col-lg-5 text-center">
+                {cameraError && <div className="alert alert-warning py-2">{cameraError}</div>}
+                <div id="qr-reader-evento" style={{ maxWidth: 300, margin: '0 auto' }} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Participantes */}
       <div className="card">
         <div className="card-header d-flex align-items-center flex-wrap gap-2">
           <h3 className="card-title mb-0 me-2">Participantes</h3>
           <input className="form-control" style={{ flex: '1 1 260px', maxWidth: 460 }}
             placeholder="Buscar por nome ou código…"
-            value={search} onChange={(e) => setSearch(e.target.value)} />
-          <form className="d-flex ms-auto" onSubmit={(e) => { e.preventDefault(); if (code.trim()) validate(code.trim()) }}>
-            <div className="input-group" style={{ minWidth: 320 }}>
-              <input className="form-control" placeholder="Código do ingresso"
-                value={code} onChange={(e) => setCode(e.target.value)} />
-              <button type="button" className="btn" onClick={() => setCameraOn(!cameraOn)}>
-                {cameraOn ? 'Fechar' : 'Ler QR'}
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={busy || !code.trim()}>Validar</button>
-            </div>
-          </form>
+            value={search} onChange={(e) => { setSearch(e.target.value); setCkPage(1) }} />
         </div>
-
-        {cameraOn && (
-          <div className="card-body text-center border-bottom">
-            {cameraError && <div className="alert alert-warning">{cameraError}</div>}
-            <div id="qr-reader-evento" style={{ maxWidth: 320, margin: '0 auto' }} />
-          </div>
-        )}
 
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead><tr><th>Participante</th><th>Presença</th><th>Registro</th><th /></tr></thead>
             <tbody>
-              {items.map((i) => (
+              {pageItems.map((i) => (
                 <tr key={i.code} className={i.present ? 'bg-green-lt' : ''}>
                   <td>{i.participantName}
                     {i.companionName && <span className="text-secondary small"> + {i.companionName}</span>}</td>
@@ -160,6 +192,27 @@ export default function CheckinEvento() {
               {items.length === 0 && <tr><td colSpan={4} className="text-secondary">Nenhum participante no filtro.</td></tr>}
             </tbody>
           </table>
+        </div>
+
+        <div className="card-footer d-flex align-items-center flex-wrap gap-2">
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-secondary small">Por página</span>
+            <select className="form-select form-select-sm w-auto" value={ckPerPage}
+              onChange={(e) => { setCkPerPage(Number(e.target.value)); setCkPage(1) }}>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          <p className="m-0 text-secondary small ms-3">Página {curPage} de {lastPage} · {items.length} participante(s)</p>
+          <ul className="pagination m-0 ms-auto">
+            <li className={`page-item ${curPage <= 1 ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setCkPage((p) => Math.max(1, p - 1))}>Anteriores</button>
+            </li>
+            <li className={`page-item ${curPage >= lastPage ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => setCkPage((p) => Math.min(lastPage, p + 1))}>Próximos</button>
+            </li>
+          </ul>
         </div>
       </div>
 

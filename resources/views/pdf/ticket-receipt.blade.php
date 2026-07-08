@@ -40,7 +40,8 @@
     </table>
 
     <div class="qr">
-        {!! $qrSvg !!}
+        <img src="data:image/svg+xml;base64,{{ base64_encode($qrSvg) }}" alt="QR {{ $ticket->code }}"
+             style="width:200px; height:200px;">
         <div class="muted" style="margin-top:6px;">Apresente este QR code na entrada do evento.</div>
     </div>
 </div>

@@ -45,9 +45,29 @@ export default function Contas({ direction }) {
 
   const items = data?.items ?? []
   const isReceivable = direction === 'receivable'
+  const totals = data?.totals
 
   return (
     <>
+      <div className="row row-cards mb-3">
+        <div className="col-sm-6">
+          <div className="card card-sm">
+            <div className="card-body">
+              <div className="subheader">{isReceivable ? 'Recebido no mês' : 'Pago no mês'}</div>
+              <div className="h1 mb-0 text-green">{money(totals?.receivedInPeriod)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-sm-6">
+          <div className="card card-sm">
+            <div className="card-body">
+              <div className="subheader">{isReceivable ? 'Aguardando recebimento' : 'Aguardando pagamento'}</div>
+              <div className="h1 mb-0 text-orange">{money(totals?.pending)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="card mb-3"><div className="card-body">
         <div className="row g-2 align-items-end">
           <div className="col-md-4"><label className="form-label">Buscar</label>
@@ -67,7 +87,10 @@ export default function Contas({ direction }) {
               <option value="cancelled">Cancelado</option>
             </select></div>
         </div>
-        <div className="form-hint mt-1">Filtro por mês aplica-se ao vencimento das contas.</div>
+        <div className="form-hint mt-1">
+          O mês considera o <strong>{isReceivable ? 'recebimento' : 'pagamento'}</strong> quando a conta já foi baixada,
+          e o <strong>vencimento</strong> quando ainda está em aberto.
+        </div>
       </div></div>
 
       <div className="card">
@@ -80,9 +103,9 @@ export default function Contas({ direction }) {
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead><tr>
-              <th>Descrição</th><th>Evento</th><th>{isReceivable ? 'Cliente' : 'Fornecedor'}</th>
-              <th>Categoria</th><th className="text-end">Valor</th><th className="text-end">Saldo</th>
-              <th>Vencimento</th><th>Situação</th>
+              <th>Descrição</th><th>Evento</th>
+              <th className="text-end">Valor</th><th className="text-end">Saldo</th>
+              <th>Vencimento</th><th>{isReceivable ? 'Recebimento' : 'Data pgto'}</th><th>Situação</th>
             </tr></thead>
             <tbody>
               {items.map((e) => (
@@ -92,15 +115,14 @@ export default function Contas({ direction }) {
                     {e.readonly && <span className="badge bg-blue-lt ms-1">auto</span>}
                   </td>
                   <td>{e.event?.name ?? <span className="text-secondary">Geral</span>}</td>
-                  <td>{e.person ?? '—'}</td>
-                  <td>{e.category ?? '—'}</td>
                   <td className="text-end">{money(e.amount)}</td>
                   <td className="text-end">{money(e.balance)}</td>
                   <td>{e.dueDate ? new Date(e.dueDate + 'T00:00').toLocaleDateString('pt-BR') : '—'}</td>
+                  <td>{e.settledOn ? new Date(e.settledOn + 'T00:00').toLocaleDateString('pt-BR') : '—'}</td>
                   <td><span className={`badge ${STATUS_BADGE[e.status] ?? 'bg-secondary text-white'}`}>{e.statusLabel}</span></td>
                 </tr>
               ))}
-              {items.length === 0 && <tr><td colSpan={8} className="text-secondary">Nenhuma conta no filtro.</td></tr>}
+              {items.length === 0 && <tr><td colSpan={7} className="text-secondary">Nenhuma conta no filtro.</td></tr>}
             </tbody>
           </table>
         </div>

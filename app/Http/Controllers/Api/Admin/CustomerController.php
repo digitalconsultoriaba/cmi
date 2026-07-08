@@ -96,6 +96,10 @@ class CustomerController extends Controller
                     'participantName' => $t->participant_name,
                     'companionName' => $t->companion_name,
                     'ticketTypeName' => $t->ticketType?->name,
+                    'unitPrice' => number_format((float) $t->unit_price, 2, '.', ''),
+                    // Pedido coletivo (bloco): mais de um ingresso no mesmo pedido.
+                    'orderTicketsCount' => $t->order?->tickets->count() ?? 1,
+                    'orderTotal' => $t->order ? number_format((float) $t->order->total_amount, 2, '.', '') : null,
                     'shirt' => $t->shirtSize?->label
                         ? $t->shirtSize->label.($t->shirtModel?->label ? '/'.$t->shirtModel->label : '')
                         : null,

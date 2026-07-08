@@ -28,7 +28,13 @@ export default function Patrocinios() {
 
   if (!event) return <p className="text-secondary">Carregando…</p>
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'sponsorships'] })
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'sponsorships'] })
+    // Receber/cancelar patrocínio espelha no contas a receber e no painel do
+    // evento — invalida essas queries para a baixa aparecer sem recarregar.
+    queryClient.invalidateQueries({ queryKey: ['finance'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', 'event', String(eventId)] })
+  }
 
   const pagar = (payload) => run(
     () => apiPost(`/admin/events/${eventId}/sponsorships/${paying.sponsorship.id}/installments/${paying.installment.number}/pay`, payload),

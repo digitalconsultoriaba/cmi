@@ -33,7 +33,7 @@ class EntryController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $q = FinancialEntry::query()->with(['category', 'person', 'event', 'paymentMethod']);
+        $q = FinancialEntry::query()->with(['category', 'person', 'event', 'paymentMethod', 'settlements']);
 
         if (empty($data['includeCancelled'])) {
             $q->whereNull('cancelled_at');
@@ -44,11 +44,29 @@ class EntryController extends Controller
                 $q->where($col, $data[$key]);
             }
         }
-        if (! empty($data['from'])) {
-            $q->where('due_date', '>=', $data['from']);
-        }
-        if (! empty($data['to'])) {
-            $q->where('due_date', '<=', $data['to']);
+        // Filtro de mês em regime de caixa: entra quem VENCE no período (contas
+        // ainda em aberto) OU quem foi RECEBIDO/PAGO no período (baixa no mês).
+        $from = $data['from'] ?? null;
+        $to = $data['to'] ?? null;
+        if ($from || $to) {
+            $q->where(function ($w) use ($from, $to) {
+                $w->where(function ($d) use ($from, $to) {
+                    if ($from) {
+                        $d->where('due_date', '>=', $from);
+                    }
+                    if ($to) {
+                        $d->where('due_date', '<=', $to);
+                    }
+                })->orWhereHas('settlements', function ($s) use ($from, $to) {
+                    $s->where('kind', '!=', 'reversal');
+                    if ($from) {
+                        $s->whereDate('settled_on', '>=', $from);
+                    }
+                    if ($to) {
+                        $s->whereDate('settled_on', '<=', $to);
+                    }
+                });
+            });
         }
         if (! empty($data['search'])) {
             $q->where('description', 'like', '%'.$data['search'].'%');
@@ -63,6 +81,27 @@ class EntryController extends Controller
         if (! empty($data['status'])) {
             $all = $all->filter(fn (FinancialEntry $e) => $e->status() === $data['status'])->values();
         }
+
+        // Data de competência de caixa: recebimento (se baixado) senão vencimento.
+        $settledOn = fn (FinancialEntry $e) => $e->settlements
+            ->where('kind', '!=', 'reversal')->max('settled_on');
+        $refDate = fn (FinancialEntry $e) => optional($settledOn($e) ?? $e->due_date)->toDateString();
+
+        // Mantém no mês só quem vence OU foi recebido no período (regime de caixa):
+        // o orWhereHas do SQL traz candidatos; aqui descartamos os baixados fora
+        // do período cujo vencimento caía dentro dele.
+        if ($from || $to) {
+            $all = $all->filter(function ($e) use ($refDate, $from, $to) {
+                $ref = $refDate($e);
+                return (! $from || $ref >= $from) && (! $to || $ref <= $to);
+            })->values();
+        }
+
+        // Ordena por recebimento/pagamento: baixados no topo (baixa mais recente
+        // primeiro); em aberto logo abaixo, por vencimento mais próximo.
+        $all = $all->filter(fn ($e) => $settledOn($e) !== null)->sortByDesc($settledOn)
+            ->concat($all->filter(fn ($e) => $settledOn($e) === null)->sortBy('due_date'))
+            ->values();
         $total = $all->count();
         $items = $all->slice(($page - 1) * $perPage, $perPage)->values();
 
@@ -75,6 +114,16 @@ class EntryController extends Controller
             'totals' => [
                 'amount' => number_format((float) $all->sum(fn ($e) => (float) $e->amount), 2, '.', ''),
                 'settled' => number_format((float) $all->sum(fn ($e) => (float) $e->settled_amount), 2, '.', ''),
+                // Dinheiro que entrou/saiu no período (baixas com data no mês).
+                'receivedInPeriod' => number_format((float) $all->sum(fn ($e) => (float) $e->settlements
+                    ->where('kind', '!=', 'reversal')
+                    ->filter(fn ($s) => (! $from || $s->settled_on?->toDateString() >= $from)
+                        && (! $to || $s->settled_on?->toDateString() <= $to))
+                    ->sum('amount')), 2, '.', ''),
+                // Saldo em aberto (ainda a receber/pagar) das contas exibidas.
+                'pending' => number_format((float) $all
+                    ->filter(fn ($e) => ! in_array($e->status(), [FinancialEntry::SETTLED, FinancialEntry::CANCELLED], true))
+                    ->sum(fn ($e) => (float) $e->balance()), 2, '.', ''),
             ],
         ]);
     }
@@ -164,6 +213,10 @@ class EntryController extends Controller
             'status' => $e->status(),
             'statusLabel' => $e->statusLabel(),
             'dueDate' => $e->due_date?->toDateString(),
+            // Data da baixa (recebimento/pagamento): última baixa não-estorno.
+            'settledOn' => $e->relationLoaded('settlements')
+                ? optional($e->settlements->where('kind', '!=', 'reversal')->max('settled_on'))->toDateString()
+                : null,
             'origin' => $e->origin,
             'category' => $e->category?->name,
             'categoryId' => $e->category_id,

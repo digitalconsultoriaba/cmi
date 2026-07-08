@@ -52,6 +52,15 @@ Route::get('/public/events/{event:slug}', [PublicEventController::class, 'show']
 // ── Landing pública do Site (spec 013 — sem auth, por slug do site) ──
 Route::get('/public/sites/{slug}', [\App\Http\Controllers\Api\Public\PublicSiteController::class, 'show']);
 
+// ── Checkout do seminário (spec 014 — guest, sem auth) ───────────────
+Route::get('/public/events/{event:slug}/checkout-config', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'checkoutConfig']);
+Route::post('/public/vouchers/validate', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'validateVoucher']);
+Route::post('/public/orders', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'store']);
+Route::post('/public/orders/{order:code}/checkout/pix', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'pix']);
+Route::post('/public/orders/{order:code}/checkout/card', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'card']);
+Route::get('/public/orders/{order:code}/payment-status', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'paymentStatus']);
+Route::post('/public/orders/{order:code}/resend-access', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'resendAccess']);
+
 // ── Compra e área do inscrito (spec 004 — códigos públicos nas URLs) ─
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
@@ -131,6 +140,11 @@ Route::prefix('auth')->group(function () {
     Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
+
+    // Magic link passwordless (spec 014): consumo do link é rota WEB (sessão),
+    // ver routes/web.php `auth.magic`. Aqui só a solicitação por e-mail (XHR).
+    Route::post('/magic/request', [\App\Http\Controllers\Api\Auth\MagicLinkController::class, 'request'])
+        ->middleware('throttle:6,1');
 
     // Google (Socialite)
     Route::get('/google/redirect', [GoogleController::class, 'redirect']);
@@ -282,6 +296,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::get('/courtesy-vouchers', [CourtesyVoucherController::class, 'index']);
         Route::post('/courtesy-vouchers', [CourtesyVoucherController::class, 'generate']);
         Route::patch('/courtesy-vouchers/{courtesyVoucher}/distribute', [CourtesyVoucherController::class, 'distribute']);
+        Route::patch('/courtesy-vouchers/{courtesyVoucher}/note', [CourtesyVoucherController::class, 'updateNote']);
 
         Route::get('/sponsorships', [SponsorshipController::class, 'index']);
         Route::post('/sponsorships', [SponsorshipController::class, 'store']);
@@ -313,6 +328,22 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::post('/budget/sponsorships/{sponsorship}/generate-receivable', [BudgetSponsorshipController::class, 'generateReceivable'])->withoutScopedBindings();
 
         Route::put('/budget/scenarios/{key}', [BudgetScenarioController::class, 'upsert']);
+
+        // ── Categorias/campos/afiliações do checkout (spec 014) ──
+        Route::get('/participant-categories', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'index']);
+        Route::post('/participant-categories', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'store']);
+        Route::put('/participant-categories/{category}', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'update'])->withoutScopedBindings();
+        Route::delete('/participant-categories/{category}', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'destroy'])->withoutScopedBindings();
+        Route::post('/participant-categories/{category}/fields', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'storeField'])->withoutScopedBindings();
+        Route::patch('/participant-categories/{category}/fields/reorder', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'reorderFields'])->withoutScopedBindings();
+        Route::put('/participant-categories/{category}/fields/{field}', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'updateField'])->withoutScopedBindings();
+        Route::delete('/participant-categories/{category}/fields/{field}', [\App\Http\Controllers\Api\Admin\ParticipantCategoryController::class, 'destroyField'])->withoutScopedBindings();
+
+        Route::get('/affiliations', [\App\Http\Controllers\Api\Admin\AffiliationController::class, 'index']);
+        Route::post('/affiliations', [\App\Http\Controllers\Api\Admin\AffiliationController::class, 'store']);
+        Route::post('/affiliations/import', [\App\Http\Controllers\Api\Admin\AffiliationController::class, 'import']);
+        Route::put('/affiliations/{affiliation}', [\App\Http\Controllers\Api\Admin\AffiliationController::class, 'update'])->withoutScopedBindings();
+        Route::delete('/affiliations/{affiliation}', [\App\Http\Controllers\Api\Admin\AffiliationController::class, 'destroy'])->withoutScopedBindings();
 
         // ── Site do evento / CMS (spec 013) ──
         // Seções/itens não são filhos diretos do evento → withoutScopedBindings.

@@ -9,8 +9,8 @@ const STATUS_BADGE = { available: 'bg-green-lt', distributed: 'bg-blue-lt', rede
 
 const REPORT = [
   { key: 'geradas', label: 'Geradas', color: 'bg-blue text-white' },
-  { key: 'utilizadas', label: 'Utilizadas', color: 'bg-green text-white' },
-  { key: 'canceladas', label: 'Canceladas', color: 'bg-red text-white' },
+  { key: 'distribuidas', label: 'Distribuídas', color: 'bg-green text-white' },
+  { key: 'resgatadas', label: 'Resgatadas', color: 'bg-purple text-white' },
 ]
 
 export default function Cortesias() {
@@ -19,8 +19,18 @@ export default function Cortesias() {
   const { run, error, setError, busy } = useApiAction()
   const [quantity, setQuantity] = useState(10)
   const [filter, setFilter] = useState('')
-  const [notes, setNotes] = useState({})
+  const [notes, setNotes] = useState({}) // texto ao distribuir (voucher ainda disponível)
+  const [noteEdits, setNoteEdits] = useState({}) // edição da anotação após distribuir
   const [reportCat, setReportCat] = useState(null) // categoria aberta no modal
+  const [copied, setCopied] = useState(null) // id do voucher copiado (feedback)
+
+  const copiar = async (voucher) => {
+    try {
+      await navigator.clipboard.writeText(voucher.code)
+      setCopied(voucher.id)
+      setTimeout(() => setCopied((c) => (c === voucher.id ? null : c)), 1500)
+    } catch { /* clipboard indisponível: ignora silenciosamente */ }
+  }
 
   const eventId = event?.id
   const { data: vouchers = [] } = useQuery({
@@ -36,7 +46,10 @@ export default function Cortesias() {
 
   if (!event) return <p>Carregando…</p>
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'vouchers'] })
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'vouchers'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'courtesy-stats'] })
+  }
 
   const gerar = () => run(
     () => apiPost(`/admin/events/${eventId}/courtesy-vouchers`, { quantity: Number(quantity) }),
@@ -48,6 +61,18 @@ export default function Cortesias() {
       note: notes[voucher.id] ?? null,
     }),
     { onSuccess: refresh }
+  )
+
+  const salvarNota = (voucher) => run(
+    () => apiPatch(`/admin/events/${eventId}/courtesy-vouchers/${voucher.id}/note`, {
+      note: noteEdits[voucher.id] ?? '',
+    }),
+    {
+      onSuccess: () => {
+        refresh()
+        setNoteEdits((n) => { const c = { ...n }; delete c[voucher.id]; return c })
+      },
+    }
   )
 
   return (
@@ -106,14 +131,41 @@ export default function Cortesias() {
           <tbody>
             {vouchers.map((voucher) => (
               <tr key={voucher.id}>
-                <td><code>{voucher.code}</code></td>
+                <td>
+                  <span className="d-inline-flex align-items-center gap-2">
+                    <code>{voucher.code}</code>
+                    <button type="button" className="btn btn-icon btn-sm btn-ghost-secondary"
+                      title="Copiar código" onClick={() => copiar(voucher)}>
+                      {copied === voucher.id
+                        ? <span className="text-green small">Copiado!</span>
+                        : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="8" y="8" width="12" height="12" rx="2" />
+                            <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+                          </svg>
+                        )}
+                    </button>
+                  </span>
+                </td>
                 <td><span className={`badge ${STATUS_BADGE[voucher.status]}`}>{STATUS_LABELS[voucher.status]}</span></td>
                 <td>
                   {voucher.status === 'available' ? (
                     <input className="form-control form-control-sm" placeholder="Destinatário / observação"
                       value={notes[voucher.id] ?? ''}
                       onChange={(e) => setNotes({ ...notes, [voucher.id]: e.target.value })} />
-                  ) : (voucher.note ?? '—')}
+                  ) : (
+                    <div className="d-flex gap-1 align-items-center">
+                      <input className="form-control form-control-sm" placeholder="Destinatário / observação"
+                        value={noteEdits[voucher.id] ?? voucher.note ?? ''}
+                        onChange={(e) => setNoteEdits({ ...noteEdits, [voucher.id]: e.target.value })} />
+                      {noteEdits[voucher.id] !== undefined && noteEdits[voucher.id] !== (voucher.note ?? '') && (
+                        <button className="btn btn-sm btn-primary" onClick={() => salvarNota(voucher)} disabled={busy}>
+                          Salvar
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </td>
                 <td className="text-end">
                   {voucher.status === 'available' && (
@@ -138,15 +190,19 @@ export default function Cortesias() {
             if (people.length === 0) return <p className="text-secondary mb-0">Nenhuma cortesia nesta situação.</p>
             return (
               <table className="table table-vcenter">
-                <thead><tr><th>Nome</th><th>Potência</th><th>Loja</th><th>Cargo na Loja</th><th>Cargo na Potência</th></tr></thead>
+                <thead><tr>
+                  <th>Nome / destinatário</th><th>Situação</th><th>Código</th>
+                  <th>Loja</th><th>Potência</th><th>Cargo</th>
+                </tr></thead>
                 <tbody>
                   {people.map((p, i) => (
                     <tr key={i}>
                       <td className="fw-bold">{p.name ?? '—'}</td>
-                      <td>{p.potencia ?? '—'}</td>
+                      <td>{p.status ? <span className={`badge ${STATUS_BADGE[p.status]}`}>{STATUS_LABELS[p.status]}</span> : '—'}</td>
+                      <td>{p.code ? <code>{p.code}</code> : '—'}</td>
                       <td>{p.loja ?? '—'}</td>
-                      <td>{p.cargoLoja ?? '—'}</td>
-                      <td>{p.cargoPotencia ?? '—'}</td>
+                      <td>{p.potencia ?? '—'}</td>
+                      <td>{p.cargoLoja ?? p.cargoPotencia ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
