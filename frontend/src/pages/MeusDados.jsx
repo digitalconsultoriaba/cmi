@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
 import { apiGet, apiPost, apiPut } from '../lib/api'
 import { parseApiError, fieldError } from '../lib/forms'
+import { maskWhatsapp } from '../lib/whatsapp'
 
 export default function MeusDados() {
   const { user } = useAuth()
@@ -26,7 +27,7 @@ export default function MeusDados() {
 
   const base = {
     name: user.name ?? '',
-    phone: user.phone || pf.whatsapp || '',
+    phone: maskWhatsapp(user.phone || pf.whatsapp || ''),
     loja: user.loja || pf.loja || '',
     potencia: user.potencia || pf.potencia || '',
     cidade: user.cidade || pf.cidade || '',
@@ -80,7 +81,8 @@ export default function MeusDados() {
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">WhatsApp</label>
-                  <input className="form-control" value={form.phone} onChange={setForm('phone')} placeholder="(00) 00000-0000" />
+                  <input className="form-control" inputMode="numeric" placeholder="55 (27) 99267-9890"
+                    value={form.phone} onChange={(e) => setProfile({ ...form, phone: maskWhatsapp(e.target.value) })} />
                 </div>
                 <div className="col-md-6 mb-3">
                   <label className="form-label">E-mail</label>
