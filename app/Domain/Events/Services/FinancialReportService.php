@@ -137,8 +137,15 @@ class FinancialReportService
                 'receivable' => $this->overdueDir(FinancialEntry::RECEIVABLE, $filters),
             ],
             'balances' => [
-                'expected' => $totals['saldoPrevisto'],
-                'realized' => $totals['saldoRealizado'],
+                // Consistentes com os 4 cards do mês (recebido/pago/a receber/a pagar):
+                // realizado = caixa do mês; previsto = projeção se tudo que vence
+                // no mês for liquidado.
+                'expected' => $this->money(bcsub(
+                    bcadd($receivedMonth, $toReceive, 2),
+                    bcadd($paidMonth, $toPay, 2),
+                    2
+                )),
+                'realized' => $this->money(bcsub($receivedMonth, $paidMonth, 2)),
                 'monthResult' => $this->money(bcsub($receivedMonth, $paidMonth, 2)),
             ],
             'bestEvents' => $byEvent->take(5)->all(),

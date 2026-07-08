@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiUpload } from '../../lib/api'
 import { ApiErrorAlert, useApiAction } from '../components'
+import LancamentoModal from './LancamentoModal'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const STATUS_BADGE = {
@@ -14,6 +15,7 @@ export default function LancamentoDetalhe({ id, onClose }) {
   const { run, error, setError, busy } = useApiAction()
   const [baixa, setBaixa] = useState({ amount: '', settled_on: new Date().toISOString().slice(0, 10), payment_method_id: '', note: '' })
   const [showBaixa, setShowBaixa] = useState(false)
+  const [editing, setEditing] = useState(false)
 
   const { data: e } = useQuery({ queryKey: ['finance', 'entry', id], queryFn: () => apiGet(`/finance/entries/${id}`) })
   const { data: methods = [] } = useQuery({ queryKey: ['finance', 'methods'], queryFn: () => apiGet('/finance/payment-methods') })
@@ -71,10 +73,17 @@ export default function LancamentoDetalhe({ id, onClose }) {
           {e.status !== 'settled' && (
             showBaixa ? null : <button className="btn btn-success" onClick={() => { setShowBaixa(true); setBaixa({ ...baixa, amount: e.balance }) }}>Dar baixa</button>
           )}
+          <button className="btn" onClick={() => setEditing(true)}>Editar</button>
           {Number(e.settledAmount) > 0 && <button className="btn" onClick={estornar}>Estornar</button>}
           <label className="btn mb-0">Anexar comprovante<input type="file" hidden accept="application/pdf,image/*" onChange={anexar} /></label>
           <button className="btn btn-outline-danger" onClick={cancelar}>Cancelar lançamento</button>
         </div>
+      )}
+
+      {editing && (
+        <LancamentoModal direction={e.direction} entry={e}
+          onClose={() => setEditing(false)}
+          onSaved={() => { setEditing(false); refresh() }} />
       )}
       {e.readonly && <div className="alert alert-info">Lançamento automático (espelho de ingresso/patrocínio) — a baixa é feita na venda.</div>}
 

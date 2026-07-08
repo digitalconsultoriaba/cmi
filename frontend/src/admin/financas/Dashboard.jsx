@@ -67,8 +67,12 @@ export default function Dashboard() {
         <Stat label="Pago no mês" value={money(monthData.paid)} className="text-red" />
       </div>
       <div className="row row-deck row-cards mb-3">
-        <Stat label="Saldo previsto" value={money(balances.expected)} />
-        <Stat label="Saldo realizado" value={money(balances.realized)} className="text-green" />
+        <Stat label="Saldo previsto" value={money(balances.expected)}
+          hint="(Recebido + a receber) − (Pago + a pagar) do mês"
+          className={Number(balances.expected) < 0 ? 'text-red' : ''} />
+        <Stat label="Saldo realizado" value={money(balances.realized)}
+          hint="Recebido − Pago no mês (caixa)"
+          className={Number(balances.realized) < 0 ? 'text-red' : 'text-green'} />
         <Stat label="Vencidas a pagar" value={money(overdue.payable.amount)}
           hint={`${overdue.payable.count} conta(s)`} className="text-red" />
         <Stat label="Vencidas a receber" value={money(overdue.receivable.amount)}
