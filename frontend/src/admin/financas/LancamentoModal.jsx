@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { apiGet, apiPost, apiPatch } from '../../lib/api'
+import { apiGet, apiPost, apiPut } from '../../lib/api'
 import { ApiErrorAlert, useApiAction } from '../components'
 import { parseMoney } from '../../lib/money'
 
@@ -33,7 +33,7 @@ export default function LancamentoModal({ direction, eventId, entry, onClose, on
         payment_method_id: form.payment_method_id || null, event_id: form.event_id || null,
         due_date: form.due_date, notes: form.notes || null,
       }
-      run(() => apiPatch(`/finance/entries/${entry.id}`, payload), { onSuccess: onSaved })
+      run(() => apiPut(`/finance/entries/${entry.id}`, payload), { onSuccess: onSaved })
       return
     }
     const payload = {
