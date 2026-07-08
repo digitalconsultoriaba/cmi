@@ -33,7 +33,7 @@ class EntryController extends Controller
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $q = FinancialEntry::query()->with(['category', 'person', 'event', 'paymentMethod']);
+        $q = FinancialEntry::query()->with(['category', 'person', 'event', 'paymentMethod', 'settlements']);
 
         if (empty($data['includeCancelled'])) {
             $q->whereNull('cancelled_at');
@@ -164,6 +164,10 @@ class EntryController extends Controller
             'status' => $e->status(),
             'statusLabel' => $e->statusLabel(),
             'dueDate' => $e->due_date?->toDateString(),
+            // Data da baixa (recebimento/pagamento): última baixa não-estorno.
+            'settledOn' => $e->relationLoaded('settlements')
+                ? optional($e->settlements->where('kind', '!=', 'reversal')->max('settled_on'))->toDateString()
+                : null,
             'origin' => $e->origin,
             'category' => $e->category?->name,
             'categoryId' => $e->category_id,

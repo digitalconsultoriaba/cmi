@@ -80,9 +80,9 @@ export default function Contas({ direction }) {
         <div className="card-table table-responsive">
           <table className="table table-vcenter">
             <thead><tr>
-              <th>Descrição</th><th>Evento</th><th>{isReceivable ? 'Cliente' : 'Fornecedor'}</th>
-              <th>Categoria</th><th className="text-end">Valor</th><th className="text-end">Saldo</th>
-              <th>Vencimento</th><th>Situação</th>
+              <th>Descrição</th><th>Evento</th>
+              <th className="text-end">Valor</th><th className="text-end">Saldo</th>
+              <th>Vencimento</th><th>{isReceivable ? 'Recebimento' : 'Data pgto'}</th><th>Situação</th>
             </tr></thead>
             <tbody>
               {items.map((e) => (
@@ -92,15 +92,14 @@ export default function Contas({ direction }) {
                     {e.readonly && <span className="badge bg-blue-lt ms-1">auto</span>}
                   </td>
                   <td>{e.event?.name ?? <span className="text-secondary">Geral</span>}</td>
-                  <td>{e.person ?? '—'}</td>
-                  <td>{e.category ?? '—'}</td>
                   <td className="text-end">{money(e.amount)}</td>
                   <td className="text-end">{money(e.balance)}</td>
                   <td>{e.dueDate ? new Date(e.dueDate + 'T00:00').toLocaleDateString('pt-BR') : '—'}</td>
+                  <td>{e.settledOn ? new Date(e.settledOn + 'T00:00').toLocaleDateString('pt-BR') : '—'}</td>
                   <td><span className={`badge ${STATUS_BADGE[e.status] ?? 'bg-secondary text-white'}`}>{e.statusLabel}</span></td>
                 </tr>
               ))}
-              {items.length === 0 && <tr><td colSpan={8} className="text-secondary">Nenhuma conta no filtro.</td></tr>}
+              {items.length === 0 && <tr><td colSpan={7} className="text-secondary">Nenhuma conta no filtro.</td></tr>}
             </tbody>
           </table>
         </div>
