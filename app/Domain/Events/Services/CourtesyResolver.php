@@ -60,9 +60,10 @@ class CourtesyResolver
     // ── Voucher por participante no checkout do seminário (spec 014) ──────
 
     /**
-     * Localiza um voucher resgatável (available OU distributed) sob lock,
-     * validando pertencimento ao evento, não-uso e elegibilidade ao tipo.
-     * Lança DomainRuleViolation se inválido (spec 014, research R4).
+     * Localiza um voucher resgatável sob lock, validando pertencimento ao
+     * evento, elegibilidade ao tipo e — regra de negócio — que ele já tenha
+     * sido DISTRIBUÍDO. Um voucher apenas gerado (available) ainda não circulou
+     * e não pode ser resgatado no checkout. Lança DomainRuleViolation se inválido.
      */
     public function findRedeemable(Event $event, string $code, ?int $ticketTypeId = null): CourtesyVoucher
     {
@@ -72,10 +73,9 @@ class CourtesyResolver
             ->lockForUpdate()
             ->first();
 
-        if ($voucher === null
-            || ! in_array($voucher->status, [CourtesyVoucher::AVAILABLE, CourtesyVoucher::DISTRIBUTED], true)) {
+        if ($voucher === null || $voucher->status !== CourtesyVoucher::DISTRIBUTED) {
             throw new DomainRuleViolation(
-                'Voucher inválido, expirado ou já utilizado. Verifique o código informado.',
+                'Voucher inválido, não distribuído ou já utilizado. Verifique o código informado.',
                 'invalid_voucher'
             );
         }
@@ -100,8 +100,7 @@ class CourtesyResolver
             ->where('code', trim($code))
             ->first();
 
-        if ($voucher === null
-            || ! in_array($voucher->status, [CourtesyVoucher::AVAILABLE, CourtesyVoucher::DISTRIBUTED], true)) {
+        if ($voucher === null || $voucher->status !== CourtesyVoucher::DISTRIBUTED) {
             return false;
         }
 

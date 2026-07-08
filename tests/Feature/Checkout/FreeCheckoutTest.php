@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Checkout;
 
+use App\Domain\Events\Models\CourtesyVoucher;
 use App\Notifications\OrderAccessPtBr;
 use App\Notifications\TicketIssuedPtBr;
 use Illuminate\Support\Facades\Notification;
@@ -13,8 +14,8 @@ class FreeCheckoutTest extends CheckoutTestCase
     {
         Notification::fake();
         $this->seminarEvent();
-        $v1 = $this->voucher();
-        $v2 = $this->voucher();
+        $v1 = $this->voucher(CourtesyVoucher::DISTRIBUTED);
+        $v2 = $this->voucher(CourtesyVoucher::DISTRIBUTED);
 
         $resp = $this->postJson('/api/public/orders', $this->guestPayload([
             $this->item(['voucher_code' => $v1->code]),
