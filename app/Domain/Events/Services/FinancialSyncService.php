@@ -41,7 +41,7 @@ class FinancialSyncService
 
         $this->upsert(Order::class, $order->id, [
             'direction' => FinancialEntry::RECEIVABLE,
-            'description' => 'Ingressos — pedido '.$order->code,
+            'description' => 'Ingressos — '.($order->buyer_name ?: 'pedido '.$order->code),
             'amount' => $order->total_amount,
             'settled_amount' => $settled,
             'settled_on' => $paidOn ? \Illuminate\Support\Carbon::parse($paidOn)->toDateString() : now()->toDateString(),

@@ -57,7 +57,9 @@ export default function CheckinEvento() {
     keepPreviousData: true,
   })
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] })
+  // Força o refetch imediato (não só marca como stale) para a lista e os
+  // contadores atualizarem sozinhos após a baixa, sem recarregar a página.
+  const refresh = () => queryClient.refetchQueries({ queryKey: ['admin', 'event', eventId], type: 'active' })
 
   const validate = (value, origin = 'qr') => run(
     () => apiPost('/gate/checkin', { code: value, day: Number(selectedDay), origin }),
