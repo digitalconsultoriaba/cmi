@@ -22,6 +22,15 @@ export default function Cortesias() {
   const [notes, setNotes] = useState({}) // texto ao distribuir (voucher ainda disponível)
   const [noteEdits, setNoteEdits] = useState({}) // edição da anotação após distribuir
   const [reportCat, setReportCat] = useState(null) // categoria aberta no modal
+  const [copied, setCopied] = useState(null) // id do voucher copiado (feedback)
+
+  const copiar = async (voucher) => {
+    try {
+      await navigator.clipboard.writeText(voucher.code)
+      setCopied(voucher.id)
+      setTimeout(() => setCopied((c) => (c === voucher.id ? null : c)), 1500)
+    } catch { /* clipboard indisponível: ignora silenciosamente */ }
+  }
 
   const eventId = event?.id
   const { data: vouchers = [] } = useQuery({
@@ -122,7 +131,23 @@ export default function Cortesias() {
           <tbody>
             {vouchers.map((voucher) => (
               <tr key={voucher.id}>
-                <td><code>{voucher.code}</code></td>
+                <td>
+                  <span className="d-inline-flex align-items-center gap-2">
+                    <code>{voucher.code}</code>
+                    <button type="button" className="btn btn-icon btn-sm btn-ghost-secondary"
+                      title="Copiar código" onClick={() => copiar(voucher)}>
+                      {copied === voucher.id
+                        ? <span className="text-green small">Copiado!</span>
+                        : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="8" y="8" width="12" height="12" rx="2" />
+                            <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" />
+                          </svg>
+                        )}
+                    </button>
+                  </span>
+                </td>
                 <td><span className={`badge ${STATUS_BADGE[voucher.status]}`}>{STATUS_LABELS[voucher.status]}</span></td>
                 <td>
                   {voucher.status === 'available' ? (
