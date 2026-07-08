@@ -296,6 +296,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'require.role:admin,treasury
         Route::get('/courtesy-vouchers', [CourtesyVoucherController::class, 'index']);
         Route::post('/courtesy-vouchers', [CourtesyVoucherController::class, 'generate']);
         Route::patch('/courtesy-vouchers/{courtesyVoucher}/distribute', [CourtesyVoucherController::class, 'distribute']);
+        Route::patch('/courtesy-vouchers/{courtesyVoucher}/note', [CourtesyVoucherController::class, 'updateNote']);
 
         Route::get('/sponsorships', [SponsorshipController::class, 'index']);
         Route::post('/sponsorships', [SponsorshipController::class, 'store']);
