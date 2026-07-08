@@ -114,6 +114,16 @@ class EntryController extends Controller
             'totals' => [
                 'amount' => number_format((float) $all->sum(fn ($e) => (float) $e->amount), 2, '.', ''),
                 'settled' => number_format((float) $all->sum(fn ($e) => (float) $e->settled_amount), 2, '.', ''),
+                // Dinheiro que entrou/saiu no período (baixas com data no mês).
+                'receivedInPeriod' => number_format((float) $all->sum(fn ($e) => (float) $e->settlements
+                    ->where('kind', '!=', 'reversal')
+                    ->filter(fn ($s) => (! $from || $s->settled_on?->toDateString() >= $from)
+                        && (! $to || $s->settled_on?->toDateString() <= $to))
+                    ->sum('amount')), 2, '.', ''),
+                // Saldo em aberto (ainda a receber/pagar) das contas exibidas.
+                'pending' => number_format((float) $all
+                    ->filter(fn ($e) => ! in_array($e->status(), [FinancialEntry::SETTLED, FinancialEntry::CANCELLED], true))
+                    ->sum(fn ($e) => (float) $e->balance()), 2, '.', ''),
             ],
         ]);
     }

@@ -45,9 +45,29 @@ export default function Contas({ direction }) {
 
   const items = data?.items ?? []
   const isReceivable = direction === 'receivable'
+  const totals = data?.totals
 
   return (
     <>
+      <div className="row row-cards mb-3">
+        <div className="col-sm-6">
+          <div className="card card-sm">
+            <div className="card-body">
+              <div className="subheader">{isReceivable ? 'Recebido no mês' : 'Pago no mês'}</div>
+              <div className="h1 mb-0 text-green">{money(totals?.receivedInPeriod)}</div>
+            </div>
+          </div>
+        </div>
+        <div className="col-sm-6">
+          <div className="card card-sm">
+            <div className="card-body">
+              <div className="subheader">{isReceivable ? 'Aguardando recebimento' : 'Aguardando pagamento'}</div>
+              <div className="h1 mb-0 text-orange">{money(totals?.pending)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="card mb-3"><div className="card-body">
         <div className="row g-2 align-items-end">
           <div className="col-md-4"><label className="form-label">Buscar</label>
