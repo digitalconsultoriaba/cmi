@@ -25,6 +25,10 @@ export default function CheckoutSeminario() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [voucherIdx, setVoucherIdx] = useState(null) // participante do modal de voucher
+  const [vcode, setVcode] = useState('')
+  const [vmsg, setVmsg] = useState(null) // { ok, text }
+  const [vbusy, setVbusy] = useState(false)
 
   if (isLoading || !config) return <div className="ck"><div className="ck-wrap" style={{ paddingTop: 40 }}>Carregando…</div></div>
 
@@ -46,13 +50,26 @@ export default function CheckoutSeminario() {
   }
   const remove = (i) => setCart((c) => c.filter((_, j) => j !== i))
 
-  const applyVoucher = async (i) => {
-    const code = window.prompt('Código do voucher de gratuidade:')
+  const openVoucher = (i) => { setVoucherIdx(i); setVcode(''); setVmsg(null) }
+  const closeVoucher = () => { setVoucherIdx(null); setVcode(''); setVmsg(null) }
+
+  const submitVoucher = async () => {
+    const code = vcode.trim()
     if (!code) return
-    const row = cart[i]
-    const res = await apiPost('/public/vouchers/validate', { event_slug: slug, code: code.trim(), ticket_type_id: row.ticketTypeId })
-    if (res.valid) setCart((c) => c.map((r, j) => (j === i ? { ...r, voucherCode: code.trim() } : r)))
-    alert(res.message)
+    setVbusy(true); setVmsg(null)
+    try {
+      const row = cart[voucherIdx]
+      const res = await apiPost('/public/vouchers/validate', { event_slug: slug, code, ticket_type_id: row.ticketTypeId })
+      if (res.valid) {
+        setCart((c) => c.map((r, j) => (j === voucherIdx ? { ...r, voucherCode: code } : r)))
+        setVmsg({ ok: true, text: res.message })
+        setTimeout(closeVoucher, 900)
+      } else {
+        setVmsg({ ok: false, text: res.message })
+      }
+    } catch {
+      setVmsg({ ok: false, text: 'Não foi possível validar o voucher. Tente novamente.' })
+    } finally { setVbusy(false) }
   }
 
   const finalize = async () => {
@@ -143,7 +160,7 @@ export default function CheckoutSeminario() {
                             {step === 'cart' && <button className="ck-btn ck-btn-ghost ck-btn-sm" onClick={() => { setEditIdx(i); setAdding(true) }}>Editar</button>}
                             {step === 'cart' && (r.voucherCode
                               ? <button className="ck-btn ck-btn-light ck-btn-sm" onClick={() => setCart((c) => c.map((x, j) => j === i ? { ...x, voucherCode: null } : x))}>Remover voucher</button>
-                              : <button className="ck-btn ck-btn-primary ck-btn-sm" onClick={() => applyVoucher(i)}><IcGift width={16} height={16} /> Aplicar voucher</button>)}
+                              : <button className="ck-btn ck-btn-primary ck-btn-sm" onClick={() => openVoucher(i)}><IcGift width={16} height={16} /> Aplicar voucher</button>)}
                             <button className="ck-btn ck-btn-danger ck-btn-sm" onClick={() => remove(i)}>Remover</button>
                           </div>
                         </div>
@@ -223,6 +240,34 @@ export default function CheckoutSeminario() {
           </div>
         )}
       </div>
+
+      {voucherIdx != null && (
+        <div className="ck-modal-bg" onMouseDown={(e) => e.target === e.currentTarget && closeVoucher()}>
+          <div className="ck-modal">
+            <div className="ck-modal-head">
+              <span className="ico"><IcGift width={18} height={18} /></span>
+              <span className="tt">Aplicar voucher de gratuidade</span>
+              <button className="close" onClick={closeVoucher}>×</button>
+            </div>
+            <div className="ck-modal-body">
+              <p className="text-secondary" style={{ marginTop: 0 }}>
+                Participante: <strong>{cart[voucherIdx]?.participantName}</strong>
+              </p>
+              <label className="ck-label">Código do voucher</label>
+              <input className="ck-input" autoFocus placeholder="Ex.: CTY-ABC123"
+                value={vcode} onChange={(e) => { setVcode(e.target.value.toUpperCase()); setVmsg(null) }}
+                onKeyDown={(e) => e.key === 'Enter' && submitVoucher()} />
+              {vmsg && <div className={`ck-msg ${vmsg.ok ? 'ck-msg-ok' : 'ck-msg-err'}`}>{vmsg.text}</div>}
+            </div>
+            <div className="ck-modal-foot">
+              <button className="ck-btn ck-btn-light" onClick={closeVoucher}>Cancelar</button>
+              <button className="ck-btn ck-btn-primary" disabled={vbusy || !vcode.trim()} onClick={submitVoucher}>
+                {vbusy ? 'Validando…' : 'Aplicar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

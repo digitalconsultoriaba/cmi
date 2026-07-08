@@ -141,6 +141,19 @@
 /* Payment / done */
 .ck-center { max-width: 520px; margin: 0 auto; text-align: center; }
 
+/* Modal (voucher) */
+.ck-modal-bg { position: fixed; inset: 0; background: rgba(19,43,99,.42); display: flex; align-items: center; justify-content: center; z-index: 70; padding: 20px; }
+.ck-modal { background: #fff; border-radius: 16px; max-width: 460px; width: 100%; box-shadow: 0 24px 60px rgba(19,43,99,.3); overflow: hidden; }
+.ck-modal-head { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 11px; }
+.ck-modal-head .ico { width: 36px; height: 36px; border-radius: 10px; background: #E7F7EE; color: var(--green); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.ck-modal-head .tt { font-weight: 700; font-size: 1.08rem; }
+.ck-modal-head .close { margin-left: auto; background: none; border: 0; color: var(--muted); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.ck-modal-body { padding: 22px; }
+.ck-modal-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
+.ck-msg { padding: 10px 13px; border-radius: 10px; font-size: .9rem; margin-top: 12px; }
+.ck-msg-ok { color: #15803D; background: #E7F7EE; }
+.ck-msg-err { color: #B91C1C; background: #FEF2F2; }
+
 @media (max-width: 900px) {
   .ck-grid { grid-template-columns: 1fr; }
   .ck-summary { position: static; }
