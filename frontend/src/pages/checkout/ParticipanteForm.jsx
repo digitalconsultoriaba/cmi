@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { formatMoney } from '../../lib/money'
-import { maskWhatsapp } from '../../lib/whatsapp'
 import { IcUserPlus, IcBuilding, IcGlobe } from './icons'
 
 /** Autocomplete de afiliação: digita nº/nome → opções filtradas abaixo do campo. */
@@ -94,7 +93,7 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
   const [ticketTypeId, setTicketTypeId] = useState(initial?.ticketTypeId ?? ticketTypes.find((t) => t.purchasable)?.id ?? ticketTypes[0]?.id)
   const [name, setName] = useState(initial?.participantName ?? '')
   const [email, setEmail] = useState(initial?.participantEmail ?? '')
-  const [whatsapp, setWhatsapp] = useState(maskWhatsapp(initial?.whatsapp ?? ''))
+  const [whatsapp, setWhatsapp] = useState(initial?.whatsapp ?? '')
   const [fields, setFields] = useState(initial?.fields ?? {})
 
   const category = categories.find((c) => c.key === categoryKey)
@@ -148,8 +147,8 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
         <input className="ck-input" placeholder="Digite o nome completo" value={name} onChange={(e) => setName(e.target.value)} /></div>
 
       <div className="ck-field"><label className="ck-label">WhatsApp *</label>
-        <input className="ck-input" placeholder="55 (27) 99267-9890" inputMode="numeric"
-          value={whatsapp} onChange={(e) => setWhatsapp(maskWhatsapp(e.target.value))} /></div>
+        <input className="ck-input" placeholder="Com DDI/DDD — ex.: +55 27 99267-9890"
+          value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} /></div>
 
       <div className="ck-field"><label className="ck-label">E-mail *</label>
         <input type="email" className="ck-input" placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
