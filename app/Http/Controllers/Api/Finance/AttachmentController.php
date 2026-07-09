@@ -17,7 +17,9 @@ class AttachmentController extends Controller
             'file' => ['required', 'file', 'mimes:pdf,jpeg,png,webp', 'max:8192'],
             'kind' => ['nullable', 'in:receipt,invoice,contract,boleto,other'],
         ]);
-        $path = $request->file('file')->store('financial', 'public');
+        // Disco privado (storage/app/private): comprovantes/NF/contratos/boletos
+        // só saem pela rota autenticada abaixo, nunca por URL pública.
+        $path = $request->file('file')->store('financial', 'local');
         $att = $entry->attachments()->create([
             'path' => $path, 'kind' => $data['kind'] ?? 'other',
             'original_name' => $request->file('file')->getClientOriginalName(),
@@ -35,13 +37,13 @@ class AttachmentController extends Controller
     {
         abort_unless($attachment->entry_id === $entry->id, 404);
 
-        return Storage::disk('public')->download($attachment->path, $attachment->original_name);
+        return Storage::disk('local')->download($attachment->path, $attachment->original_name);
     }
 
     public function destroy(Request $request, FinancialEntry $entry, FinancialAttachment $attachment)
     {
         abort_unless($attachment->entry_id === $entry->id, 404);
-        Storage::disk('public')->delete($attachment->path);
+        Storage::disk('local')->delete($attachment->path);
         $attachment->delete();
 
         activity('financial.attachment_removed')->performedOn($entry)->causedBy($request->user())

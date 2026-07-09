@@ -2,6 +2,7 @@
 
 use App\Domain\Events\Exceptions\DomainRuleViolation;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeaders;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -25,6 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Sessão por cookie para o SPA (Sanctum stateful) nas rotas de API.
         $middleware->statefulApi();
+
+        // Cabeçalhos de segurança em toda resposta.
+        $middleware->append(SecurityHeaders::class);
 
         $middleware->alias([
             'require.role' => RoleMiddleware::class,

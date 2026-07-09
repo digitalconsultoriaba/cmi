@@ -40,7 +40,7 @@ export default function MediaUpload({ label, value, onChange, eventId, small }) 
         {url && <img src={url} alt="" style={{ height: small ? 40 : 64, borderRadius: 6, objectFit: 'cover', background: '#f1f3f7' }} />}
         <label className="btn btn-sm mb-0">
           {busy ? 'Enviando…' : (value ? 'Trocar' : 'Enviar imagem')}
-          <input type="file" hidden accept="image/jpeg,image/png,image/webp,image/svg+xml" onChange={send} disabled={busy} />
+          <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={send} disabled={busy} />
         </label>
         {value && <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => onChange(null)}>Remover</button>}
       </div>

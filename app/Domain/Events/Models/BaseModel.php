@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Base das tabelas de negócio: soft delete + auditoria (constituição, princípio V).
- * A fronteira de entrada é FormRequest (specs 002+) — por isso $guarded vazio.
+ * A fronteira de entrada é FormRequest (specs 002+) com whitelist via validated();
+ * ainda assim guardamos colunas de sistema como cinto extra (nunca vêm de input).
  */
 abstract class BaseModel extends Model
 {
@@ -19,7 +20,7 @@ abstract class BaseModel extends Model
     use SoftDeletes;
     use TracksAuditors;
 
-    protected $guarded = [];
+    protected $guarded = ['id', 'created_by', 'updated_by', 'deleted_at'];
 
     public function createdBy(): BelongsTo
     {

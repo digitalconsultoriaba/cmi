@@ -66,5 +66,24 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('auth-forgot', function (Request $request) {
             return Limit::perMinute(3)->by('forgot:'.$request->ip());
         });
+
+        // Checkout público (guest, sem auth): limita abuso do gateway/criação de
+        // pedidos por IP.
+        RateLimiter::for('public-checkout', function (Request $request) {
+            return Limit::perMinute(30)->by('pub:'.$request->ip());
+        });
+
+        // Validação de voucher: barra força-bruta de códigos de gratuidade.
+        RateLimiter::for('public-voucher', function (Request $request) {
+            return Limit::perMinute(10)->by('vch:'.$request->ip());
+        });
+
+        // Reenvio de acesso: dispara e-mails — limite estrito por pedido/IP.
+        RateLimiter::for('public-resend', function (Request $request) {
+            $order = $request->route('order');
+            $code = is_object($order) ? $order->code : $order;
+
+            return Limit::perMinute(3)->by('rsnd:'.$code.'|'.$request->ip());
+        });
     }
 }

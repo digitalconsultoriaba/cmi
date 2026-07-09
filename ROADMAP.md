@@ -37,3 +37,18 @@ sua área. O pacote em `base/` é material de referência; a constituição est�
 3. Credenciais Google OAuth (necessárias já na spec 002).
 4. Domínio + HTTPS (webhooks exigem URL pública).
 5. Política de reembolso (prazo/percentual) — necessária na spec 006.
+
+## Pendências de segurança (auditoria 2026-07 — decidir depois)
+
+Da varredura de segurança, o lote seguro já foi aplicado (branch
+`security-hardening` → main). Ficaram por terem tradeoff de UX/produto:
+
+1. **Magic link (`MagicLinkService`)** — hoje TTL de 14 dias, reutilizável.
+   Recomendado: TTL curto (15–30 min) + uso único (nonce invalidado no consumo).
+   Impacto: muda a experiência do acesso passwordless (spec 014).
+2. **Checkout guest (`GuestBuyerService::resolve`)** — vincula pedido a conta
+   existente só pelo e-mail, sem prova de posse (poluição de conta/inventário
+   por não autenticado). Desacoplar exige rever o fluxo guest.
+
+Config de produção (não-código): `SESSION_SECURE_COOKIE=true`; revisar se o
+papel `treasury` deve mesmo acessar todo o `/admin`.
