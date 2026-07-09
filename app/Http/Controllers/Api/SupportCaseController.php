@@ -25,12 +25,25 @@ class SupportCaseController extends Controller
 
     public function store(SupportCaseRequest $request)
     {
+        $user = $request->user();
+
         $order = $request->validated('order_code')
             ? Order::query()->where('code', $request->validated('order_code'))->first()
             : null;
         $ticket = $request->validated('ticket_code')
             ? Ticket::query()->where('code', $request->validated('ticket_code'))->first()
             : null;
+
+        // Posse: o chamado só pode referenciar pedido/ingresso do próprio usuário
+        // (evita IDOR — abrir reembolso/cancelamento sobre recurso de terceiro).
+        abort_if($order !== null && $order->buyer_user_id !== $user->id, 403,
+            'Este pedido não pertence à sua conta.');
+        abort_if($ticket !== null && ! (
+            $ticket->participant_user_id === $user->id
+            || ($ticket->participant_email !== null
+                && mb_strtolower($ticket->participant_email) === mb_strtolower($user->email))
+            || $ticket->order?->buyer_user_id === $user->id
+        ), 403, 'Este ingresso não pertence à sua conta.');
 
         $event = $ticket?->event ?? $order?->event
             ?? \App\Domain\Events\Models\Event::query()->latest('id')->firstOrFail();

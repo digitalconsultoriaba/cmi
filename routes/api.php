@@ -54,12 +54,17 @@ Route::get('/public/sites/{slug}', [\App\Http\Controllers\Api\Public\PublicSiteC
 
 // ── Checkout do seminário (spec 014 — guest, sem auth) ───────────────
 Route::get('/public/events/{event:slug}/checkout-config', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'checkoutConfig']);
-Route::post('/public/vouchers/validate', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'validateVoucher']);
-Route::post('/public/orders', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'store']);
-Route::post('/public/orders/{order:code}/checkout/pix', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'pix']);
-Route::post('/public/orders/{order:code}/checkout/card', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'card']);
+Route::post('/public/vouchers/validate', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'validateVoucher'])
+    ->middleware('throttle:public-voucher');
+Route::post('/public/orders', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'store'])
+    ->middleware('throttle:public-checkout');
+Route::post('/public/orders/{order:code}/checkout/pix', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'pix'])
+    ->middleware('throttle:public-checkout');
+Route::post('/public/orders/{order:code}/checkout/card', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'card'])
+    ->middleware('throttle:public-checkout');
 Route::get('/public/orders/{order:code}/payment-status', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'paymentStatus']);
-Route::post('/public/orders/{order:code}/resend-access', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'resendAccess']);
+Route::post('/public/orders/{order:code}/resend-access', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'resendAccess'])
+    ->middleware('throttle:public-resend');
 
 // ── Compra e área do inscrito (spec 004 — códigos públicos nas URLs) ─
 Route::middleware('auth:sanctum')->group(function () {
@@ -130,11 +135,12 @@ Route::prefix('treasury')->middleware(['auth:sanctum', 'require.role:treasury,ad
 
 Route::prefix('auth')->group(function () {
     // Público
-    Route::post('/register', RegisterController::class);
+    Route::post('/register', RegisterController::class)->middleware('throttle:6,1');
     Route::post('/login', [LoginController::class, 'login']);
     Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])
         ->middleware('throttle:auth-forgot');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset']);
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+        ->middleware('throttle:6,1');
 
     // Link assinado do e-mail (sem sessão — pode abrir em outro navegador)
     Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])

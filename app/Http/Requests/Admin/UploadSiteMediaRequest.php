@@ -14,7 +14,9 @@ class UploadSiteMediaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'mimes:jpeg,jpg,png,webp,svg', 'max:4096'],
+            // SVG fora: pode conter <script> e é servido inline no mesmo domínio
+            // (XSS armazenado). Só formatos raster.
+            'file' => ['required', 'file', 'mimes:jpeg,jpg,png,webp', 'max:4096'],
         ];
     }
 
@@ -22,7 +24,7 @@ class UploadSiteMediaRequest extends FormRequest
     {
         return [
             'file.required' => 'Selecione uma imagem.',
-            'file.mimes' => 'Formatos aceitos: JPG, PNG, WEBP ou SVG.',
+            'file.mimes' => 'Formatos aceitos: JPG, PNG ou WEBP.',
             'file.max' => 'A imagem deve ter no máximo 4 MB.',
         ];
     }
