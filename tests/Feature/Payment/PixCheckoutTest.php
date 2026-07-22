@@ -27,6 +27,7 @@ class PixCheckoutTest extends CheckoutTestCase
             'payments.boletos.base_url' => 'http://pix.test',
             'payments.boletos.token' => 'test-token',
             'payments.boletos.pix_expiration' => 3600,
+            'payments.boletos.notify_secret' => 'notify-secret',
         ]);
     }
 
@@ -189,5 +190,110 @@ class PixCheckoutTest extends CheckoutTestCase
 
         $this->getJson("/api/public/orders/{$code}/payment-status")
             ->assertOk()->assertJsonPath('data.status', OrderStatus::PENDING);
+    }
+
+    // ── Webhook (doc §5.1) ────────────────────────────────────────────────
+
+    public function test_cobranca_envia_notification_url_quando_configurada(): void
+    {
+        config(['payments.boletos.notify_url' => 'https://cmi.glmees.org.br/api/webhooks/pix']);
+        Http::fake(['pix.test/api/pix/cobranca' => Http::response(['data' => [
+            'txid' => 'tx_n', 'status' => 'ativa', 'copiaECola' => '000...986',
+        ]])]);
+
+        $code = $this->pendingOrderCode();
+        $this->postJson("/api/public/orders/{$code}/checkout/pix")->assertCreated();
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/api/pix/cobranca')
+            && $r['notificationUrl'] === 'https://cmi.glmees.org.br/api/webhooks/pix');
+    }
+
+    /** POST assinado no webhook, com corpo cru batendo com a assinatura HMAC. */
+    private function postPixWebhook(array $body, string $secret = 'notify-secret'): \Illuminate\Testing\TestResponse
+    {
+        $raw = json_encode($body);
+        $sig = 'sha256='.hash_hmac('sha256', $raw, $secret);
+
+        return $this->call('POST', '/api/webhooks/pix', [], [], [], [
+            'HTTP_X_PIX_SIGNATURE' => $sig,
+            'CONTENT_TYPE' => 'application/json',
+            'HTTP_ACCEPT' => 'application/json',
+        ], $raw);
+    }
+
+    public function test_webhook_valido_reconsulta_e_baixa(): void
+    {
+        Notification::fake();
+        Http::fake(function ($request) {
+            if ($request->method() === 'POST') {
+                return Http::response(['data' => ['txid' => 'tx_wh', 'status' => 'ativa', 'copiaECola' => '000...986']]);
+            }
+
+            return Http::response(['data' => [
+                'txid' => 'tx_wh', 'status' => 'concluida', 'valor' => 250.00,
+                'endToEndId' => 'E-wh-1', 'paidAt' => now()->toISOString(),
+            ]]);
+        });
+
+        [$code] = $this->pendingPix(); // gera cobrança com txid do fake? não — usa txid dinâmico
+        // Ajusta o txid do payment para casar com o fake de reconsulta.
+        Payment::query()->where('method', 'pix')->latest('id')->first()
+            ->update(['provider_charge_id' => 'tx_wh']);
+
+        $this->postPixWebhook([
+            'txid' => 'tx_wh', 'status' => 'concluida', 'valor' => 250.00,
+            'endToEndId' => 'E-wh-1', 'paidAt' => now()->toISOString(),
+        ])->assertOk()->assertJsonPath('data.result', 'ok');
+
+        $this->assertDatabaseHas('orders', [
+            'code' => $code, 'status_id' => OrderStatus::idFor(OrderStatus::PAID),
+        ]);
+    }
+
+    public function test_webhook_assinatura_invalida_401(): void
+    {
+        Http::fake(['pix.test/api/pix/cobranca' => Http::response(['data' => [
+            'txid' => 'tx_i', 'status' => 'ativa', 'copiaECola' => '000...986',
+        ]])]);
+        [, $payment] = $this->pendingPix();
+
+        $raw = json_encode(['txid' => $payment->provider_charge_id, 'endToEndId' => 'E-x']);
+        $res = $this->call('POST', '/api/webhooks/pix', [], [], [], [
+            'HTTP_X_PIX_SIGNATURE' => 'sha256=deadbeef',
+            'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
+        ], $raw);
+
+        $res->assertStatus(401);
+        $this->assertSame(PaymentStatus::PENDING, $payment->fresh()->status?->slug);
+    }
+
+    public function test_webhook_dedupe_por_end_to_end(): void
+    {
+        Notification::fake();
+        Http::fake(function ($request) {
+            if ($request->method() === 'POST') {
+                return Http::response(['data' => ['txid' => 'tx_d', 'status' => 'ativa', 'copiaECola' => '000...986']]);
+            }
+
+            return Http::response(['data' => [
+                'txid' => 'tx_d', 'status' => 'concluida', 'valor' => 250.00,
+                'endToEndId' => 'E-dup', 'paidAt' => now()->toISOString(),
+            ]]);
+        });
+
+        $this->pendingPix();
+        Payment::query()->where('method', 'pix')->latest('id')->first()->update(['provider_charge_id' => 'tx_d']);
+
+        $body = ['txid' => 'tx_d', 'status' => 'concluida', 'endToEndId' => 'E-dup'];
+        $this->postPixWebhook($body)->assertOk()->assertJsonPath('data.result', 'ok');
+        // Retry com o MESMO endToEndId → ignorado (dedupe).
+        $this->postPixWebhook($body)->assertOk()->assertJsonPath('data.result', 'ignored');
+    }
+
+    public function test_webhook_txid_desconhecido_ignored(): void
+    {
+        $this->postPixWebhook([
+            'txid' => 'tx_inexistente', 'status' => 'concluida', 'endToEndId' => 'E-none',
+        ])->assertOk()->assertJsonPath('data.result', 'ignored');
     }
 }

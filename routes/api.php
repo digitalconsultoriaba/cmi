@@ -113,6 +113,7 @@ Route::prefix('admin/support-cases')
 Route::post('/webhooks/sicoob', [WebhookController::class, 'sicoob']);
 Route::post('/webhooks/card', [WebhookController::class, 'card']);
 Route::post('/webhooks/asaas', [WebhookController::class, 'asaas']); // spec 015
+Route::post('/webhooks/pix', [WebhookController::class, 'pixNotify']); // spec 015 (PIX microsserviço)
 
 // ── Portaria (spec 007) ───────────────────────────────────────────────
 Route::prefix('gate')->middleware(['auth:sanctum', 'require.role:gate,admin'])->group(function () {

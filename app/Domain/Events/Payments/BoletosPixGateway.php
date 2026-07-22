@@ -31,11 +31,21 @@ class BoletosPixGateway implements PaymentGatewayContract
             ? max(60, (int) now()->diffInSeconds($order->reserved_until, false))
             : (int) config('payments.boletos.pix_expiration', 3600);
 
-        $data = $this->client->createCobranca([
+        $payload = [
             'valor' => (float) $order->total_amount,
             'expiracao' => $expiracao,
             'solicitacaoPagador' => 'Pedido '.$order->code,
-        ]);
+        ];
+
+        // Webhook (doc §5.1): pede o aviso de pagamento na nossa URL pública.
+        // Só em produção — o microsserviço recusa domínio fora da allowlist (422);
+        // sem isso, a baixa segue pelo polling/reconciliação.
+        $notifyUrl = (string) config('payments.boletos.notify_url');
+        if ($notifyUrl !== '') {
+            $payload['notificationUrl'] = $notifyUrl;
+        }
+
+        $data = $this->client->createCobranca($payload);
 
         return new ChargeData(
             externalId: (string) $data['txid'],

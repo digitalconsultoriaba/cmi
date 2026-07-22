@@ -28,6 +28,11 @@ return [
         'base_url' => env('BOLETOS_API_URL', 'http://host.docker.internal:18100'),
         'token' => env('BOLETOS_API_TOKEN'),
         'pix_expiration' => (int) env('BOLETOS_PIX_EXPIRACAO', 3600),
+        // Webhook de pagamento (doc v1.1.0 §5.1): URL pública HTTPS deste app que
+        // recebe o aviso de pagamento (enviada como `notificationUrl` na cobrança;
+        // vazio = só polling). `notify_secret` valida a assinatura HMAC do aviso.
+        'notify_url' => env('BOLETOS_PIX_NOTIFY_URL'),
+        'notify_secret' => env('SICOOB_PIX_NOTIFY_SECRET'),
     ],
 
     // ASAAS — Checkout hospedado de cartão (spec 015). Sandbox por env.
