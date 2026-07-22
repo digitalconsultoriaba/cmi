@@ -8,6 +8,7 @@ use App\Domain\Events\Models\OrderStatus;
 use App\Domain\Events\Models\Payment;
 use App\Domain\Events\Models\PaymentStatus;
 use App\Domain\Events\Payments\PaymentGateways;
+use App\Domain\Events\Payments\SupportsHostedCheckout;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -124,6 +125,49 @@ class CreateCharge
             source: PaymentEvidence::GATEWAY,
             raw: $result->raw,
         ));
+    }
+
+    /**
+     * Cria um checkout hospedado de cartão (ASAAS) e devolve a URL de redirect.
+     * A baixa NÃO ocorre aqui — chega por webhook (RegisterPayment).
+     *
+     * @return array{redirectUrl: string}
+     */
+    public function cardCheckout(Order $order, int $installments, ?array $customerData = null): array
+    {
+        $this->ensureChargeable($order, 'allow_card');
+
+        $gateway = $this->gateways->card();
+        if (! $gateway instanceof SupportsHostedCheckout) {
+            throw new DomainRuleViolation(
+                'Checkout hospedado não disponível para o meio de pagamento atual.',
+                'method_disabled'
+            );
+        }
+
+        return DB::transaction(function () use ($order, $gateway, $installments, $customerData) {
+            $this->expirePendingPayments($order);
+
+            // Snapshot do CPF do comprador (spec 014 — mesmo padrão de buyer_*).
+            $cpf = preg_replace('/\D/', '', (string) ($customerData['cpfCnpj'] ?? ''));
+            if ($cpf !== '' && empty($order->buyer_document)) {
+                $order->forceFill(['buyer_document' => $cpf])->save();
+            }
+
+            $checkout = $gateway->createCardCheckout($order, $installments, $customerData);
+
+            $order->payments()->create([
+                'amount' => $order->total_amount,
+                'method' => 'card',
+                'provider' => $gateway->providerName(),
+                'provider_charge_id' => $checkout->checkoutId,
+                'installments' => $installments,
+                'status_id' => PaymentStatus::idFor(PaymentStatus::PENDING),
+                'raw_response' => $checkout->raw,
+            ]);
+
+            return ['redirectUrl' => $checkout->redirectUrl];
+        });
     }
 
     /** Expira cobranças pendentes anteriores + cancela no provedor (melhor esforço). */

@@ -142,13 +142,13 @@ export default function EventoPublico() {
             <button
               className="btn btn-primary btn-lg"
               disabled={totalItems === 0}
-              onClick={() => navigate('/checkout')}
+              onClick={() => navigate(`/checkout/${slug}`)}
             >
               Continuar ({totalItems} ingresso{totalItems === 1 ? '' : 's'})
             </button>
             {event.allowCourtesy && (
               <p className="text-secondary mt-2">
-                Tem um voucher de cortesia? Informe no checkout — ou <Link to="/checkout">resgate agora</Link>.
+                Tem um voucher de cortesia? Informe no checkout — ou <Link to={`/checkout/${slug}`}>resgate agora</Link>.
               </p>
             )}
           </>

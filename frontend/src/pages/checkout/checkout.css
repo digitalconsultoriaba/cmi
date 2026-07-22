@@ -154,6 +154,24 @@
 .ck-msg-ok { color: #15803D; background: #E7F7EE; }
 .ck-msg-err { color: #B91C1C; background: #FEF2F2; }
 
+/* Campos de cobrança do comprador (spec 015) — um por linha */
+.ck-field-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.ck-hint { color: var(--muted); font-weight: 400; font-size: .78rem; }
+
+/* Telefone com seletor de país (bandeira + DDI) */
+.ck-phone { display: flex; gap: 8px; align-items: stretch; }
+.ck-phone-country { flex: 0 0 auto; width: 104px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); padding: 0 8px; font-size: .95rem; cursor: pointer; }
+.ck-phone-country:focus { outline: none; border-color: var(--blue); }
+.ck-phone-input { flex: 1 1 auto; min-width: 0; }
+
+/* Seletor de método de pagamento (spec 015) */
+.ck-pay-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.ck-pay-method { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); font-size: .92rem; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s; }
+.ck-pay-method:hover:not(:disabled) { border-color: var(--blue); }
+.ck-pay-method.active { border-color: var(--blue); background: var(--soft); color: var(--blue); }
+.ck-pay-method:disabled { opacity: .55; cursor: not-allowed; }
+.ck-pay-method .ck-badge { font-size: .68rem; }
+
 @media (max-width: 900px) {
   .ck-grid { grid-template-columns: 1fr; }
   .ck-summary { position: static; }

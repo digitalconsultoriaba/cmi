@@ -29,6 +29,23 @@ services:
         condition: service_healthy
     profiles: ["dev"]
 
+  scheduler:
+    build: docker/php
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www/html
+    environment:
+      DB_HOST: mysql
+      REDIS_HOST: redis
+      MAIL_HOST: mailpit
+    extra_hosts:
+      # Alcança o microsserviço PIX (Boletos SICOOB V2) no host — reconcile-pix.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    profiles: ["dev"]
+
   mysql:
     image: mysql:8.0
     environment:

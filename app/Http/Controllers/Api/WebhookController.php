@@ -35,6 +35,88 @@ class WebhookController extends Controller
         return $this->handle($request, 'card_gateway', (string) config('payments.card.webhook_secret'));
     }
 
+    /**
+     * Webhook do ASAAS (Checkout hospedado). Difere do handle() genérico: a
+     * origem é o header `asaas-access-token`, o dedupe usa o id do evento
+     * (`payload.id`, único por entrega — o mesmo pagamento gera vários eventos)
+     * e a correlação com o nosso Payment é por `checkoutSession` (= o id do
+     * checkout, gravado em provider_charge_id). O ASAAS não propaga o
+     * externalReference do checkout para o pagamento, então o vínculo é o
+     * checkoutSession.
+     */
+    public function asaas(Request $request)
+    {
+        $provider = 'asaas';
+        $secret = (string) config('payments.asaas.webhook_secret');
+        $signature = (string) $request->header('asaas-access-token', '');
+        $payload = $request->all();
+
+        if ($secret === '' || ! hash_equals($secret, $signature)) {
+            WebhookEvent::query()->create([
+                'provider' => $provider,
+                'external_id' => null,
+                'event_type' => 'invalid_signature',
+                'payload' => $payload,
+                'signature' => substr($signature, 0, 100),
+                'received_at' => now(),
+                'processed_at' => now(),
+                'result' => 'error',
+            ]);
+
+            return ApiResponse::error('Origem não reconhecida.', 'unauthenticated', 401);
+        }
+
+        // Dedupe pelo id do EVENTO (não do pagamento): um mesmo pagamento dispara
+        // PAYMENT_CONFIRMED e PAYMENT_RECEIVED, ambos legítimos.
+        $eventId = $payload['id'] ?? ($payload['payment']['id'] ?? null);
+        $checkoutId = $payload['payment']['checkoutSession'] ?? null;
+
+        try {
+            $event = WebhookEvent::query()->create([
+                'provider' => $provider,
+                'external_id' => $eventId,
+                'event_type' => $payload['event'] ?? null,
+                'payload' => $payload,
+                'signature' => substr($signature, 0, 100),
+                'received_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return ApiResponse::data(['result' => 'ignored']);
+        }
+
+        // Correlação por checkoutSession → nosso payment (provider_charge_id).
+        $payment = $checkoutId !== null
+            ? Payment::query()->where('provider', $provider)
+                ->where('provider_charge_id', $checkoutId)->first()
+            : null;
+
+        if ($payment === null) {
+            $event->forceFill(['processed_at' => now(), 'result' => 'ignored'])->save();
+
+            return ApiResponse::data(['result' => 'ignored']);
+        }
+
+        // Reconsulta obrigatória — o corpo do webhook nunca é fonte de verdade.
+        $status = $this->gateways->forProvider($provider)->getChargeStatus($payment);
+
+        if (! $status->isPaid()) {
+            $event->forceFill(['processed_at' => now(), 'result' => 'ignored'])->save();
+
+            return ApiResponse::data(['result' => 'ignored']);
+        }
+
+        $this->registerPayment->register($payment, new PaymentEvidence(
+            source: PaymentEvidence::WEBHOOK,
+            raw: ['webhook' => $payload, 'provider_status' => $status->raw],
+            paidAmount: $status->paidAmount,
+            paidAt: $status->paidAt,
+        ));
+
+        $event->forceFill(['processed_at' => now(), 'result' => 'ok'])->save();
+
+        return ApiResponse::data(['result' => 'ok']);
+    }
+
     private function handle(Request $request, string $provider, string $secret)
     {
         $payload = $request->all();

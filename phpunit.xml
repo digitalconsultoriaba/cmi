@@ -28,6 +28,13 @@
         <env name="DB_DATABASE" value="app_test"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
+        <!-- Pagamento: drivers fake por padrão nos testes (nunca chamar gateways reais) -->
+        <env name="PAYMENTS_PIX_DRIVER" value="fake"/>
+        <env name="PAYMENTS_CARD_DRIVER" value="fake"/>
+        <!-- Segredos de webhook determinísticos (independem do .env de cada dev) -->
+        <env name="SICOOB_WEBHOOK_SECRET" value="test-sicoob-secret"/>
+        <env name="CARD_WEBHOOK_SECRET" value="test-card-secret"/>
+        <env name="ASAAS_WEBHOOK_SECRET" value="test-asaas-secret"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

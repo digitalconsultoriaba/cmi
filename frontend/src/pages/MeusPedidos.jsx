@@ -120,6 +120,12 @@ export default function MeusPedidos() {
                   <Link className="btn btn-primary btn-sm" to={`/pedido/${order.code}/pagar`}>Pagar agora</Link>
                 </div>
               )}
+
+              {order.status === 'paid' && (
+                <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                  <a className="btn btn-outline-primary btn-sm" href={`/api/orders/${order.code}/receipt`}>Baixar comprovante</a>
+                </div>
+              )}
             </div>
 
             {open && (

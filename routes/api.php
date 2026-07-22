@@ -65,12 +65,17 @@ Route::post('/public/orders/{order:code}/checkout/card', [\App\Http\Controllers\
 Route::get('/public/orders/{order:code}/payment-status', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'paymentStatus']);
 Route::post('/public/orders/{order:code}/resend-access', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'resendAccess'])
     ->middleware('throttle:public-resend');
+Route::post('/public/orders/track', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'track'])
+    ->middleware('throttle:public-track'); // spec 015 — acompanhar por CPF
+Route::get('/public/orders/{order:code}/receipt', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'receipt'])
+    ->middleware('throttle:public-checkout'); // comprovante em PDF
 
 // ── Compra e área do inscrito (spec 004 — códigos públicos nas URLs) ─
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [OrderController::class, 'store']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order:code}', [OrderController::class, 'show']);
+    Route::get('/orders/{order:code}/receipt', [OrderController::class, 'receipt']); // comprovante PDF
     Route::get('/tickets', [TicketController::class, 'index']);
     Route::get('/tickets/{ticket:code}', [TicketController::class, 'show']);
     Route::get('/tickets/{ticket:code}/receipt', [TicketController::class, 'receipt']);
@@ -107,6 +112,7 @@ Route::prefix('admin/support-cases')
 // ── Webhooks (spec 005 — sem sessão; verificação por segredo) ────────
 Route::post('/webhooks/sicoob', [WebhookController::class, 'sicoob']);
 Route::post('/webhooks/card', [WebhookController::class, 'card']);
+Route::post('/webhooks/asaas', [WebhookController::class, 'asaas']); // spec 015
 
 // ── Portaria (spec 007) ───────────────────────────────────────────────
 Route::prefix('gate')->middleware(['auth:sanctum', 'require.role:gate,admin'])->group(function () {

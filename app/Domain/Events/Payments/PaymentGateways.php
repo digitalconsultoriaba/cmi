@@ -14,6 +14,7 @@ class PaymentGateways
     {
         return match (config('payments.pix_driver')) {
             'sicoob' => app(SicoobGateway::class),
+            'boletos' => app(BoletosPixGateway::class),
             'fake' => app(FakePixGateway::class),
             default => throw new InvalidArgumentException('pix_driver inválido: '.config('payments.pix_driver')),
         };
@@ -23,6 +24,7 @@ class PaymentGateways
     {
         return match (config('payments.card_driver')) {
             'fake' => app(FakeCardGateway::class),
+            'asaas' => app(AsaasGateway::class),
             default => throw new InvalidArgumentException('card_driver inválido: '.config('payments.card_driver')),
         };
     }
@@ -33,6 +35,7 @@ class PaymentGateways
         return match ($provider) {
             'sicoob' => $this->pix(),
             'card_gateway' => $this->card(),
+            'asaas' => app(AsaasGateway::class),
             default => throw new InvalidArgumentException("Provider desconhecido: $provider"),
         };
     }
