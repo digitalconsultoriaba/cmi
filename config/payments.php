@@ -21,4 +21,24 @@ return [
     'card' => [
         'webhook_secret' => env('CARD_WEBHOOK_SECRET'),
     ],
+
+    // PIX via microsserviço Boletos SICOOB V2 (spec 015). O microsserviço fala
+    // com o SICOOB (OAuth/mTLS); o cmi só consome a API dele com Bearer token.
+    'boletos' => [
+        'base_url' => env('BOLETOS_API_URL', 'http://host.docker.internal:18100'),
+        'token' => env('BOLETOS_API_TOKEN'),
+        'pix_expiration' => (int) env('BOLETOS_PIX_EXPIRACAO', 3600),
+    ],
+
+    // ASAAS — Checkout hospedado de cartão (spec 015). Sandbox por env.
+    'asaas' => [
+        'base_url' => env('ASAAS_SANDBOX', true)
+            ? 'https://api-sandbox.asaas.com/v3'
+            : 'https://api.asaas.com/v3',
+        'api_key' => env('ASAAS_API_KEY'),
+        'webhook_secret' => env('ASAAS_WEBHOOK_SECRET'),
+        'max_installments' => (int) env('ASAAS_MAX_INSTALLMENTS', 12),
+        // Base do frontend para montar as URLs de retorno (callback) do checkout.
+        'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:5173')),
+    ],
 ];

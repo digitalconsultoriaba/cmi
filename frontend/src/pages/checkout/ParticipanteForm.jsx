@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { formatMoney } from '../../lib/money'
 import { IcUserPlus, IcBuilding, IcGlobe } from './icons'
+import { PhoneField } from './fields'
 
 /** Autocomplete de afiliação: digita nº/nome → opções filtradas abaixo do campo. */
 function AutocompleteAfiliacao({ field, value, onChange, affiliations }) {
@@ -94,6 +95,7 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
   const [name, setName] = useState(initial?.participantName ?? '')
   const [email, setEmail] = useState(initial?.participantEmail ?? '')
   const [whatsapp, setWhatsapp] = useState(initial?.whatsapp ?? '')
+  const [whatsappCountry, setWhatsappCountry] = useState(initial?.whatsappCountry ?? 'BR')
   const [fields, setFields] = useState(initial?.fields ?? {})
 
   const category = categories.find((c) => c.key === categoryKey)
@@ -107,7 +109,7 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
     for (const f of category?.fields ?? []) {
       if (f.required && !String(fields[f.key] ?? '').trim()) return alert(`Preencha "${f.label}".`)
     }
-    onSubmit({ categoryKey, ticketTypeId, participantName: name.trim(), participantEmail: email.trim() || null, whatsapp: whatsapp.trim() || null, fields })
+    onSubmit({ categoryKey, ticketTypeId, participantName: name.trim(), participantEmail: email.trim() || null, whatsapp: whatsapp.trim() || null, whatsappCountry, fields })
     clear()
   }
 
@@ -147,8 +149,8 @@ export default function ParticipanteForm({ config, initial, onSubmit, onCancel }
         <input className="ck-input" placeholder="Digite o nome completo" value={name} onChange={(e) => setName(e.target.value)} /></div>
 
       <div className="ck-field"><label className="ck-label">WhatsApp *</label>
-        <input className="ck-input" placeholder="Com DDI/DDD — ex.: +55 27 99267-9890"
-          value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} /></div>
+        <PhoneField country={whatsappCountry} number={whatsapp}
+          onCountry={setWhatsappCountry} onNumber={setWhatsapp} /></div>
 
       <div className="ck-field"><label className="ck-label">E-mail *</label>
         <input type="email" className="ck-input" placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} /></div>

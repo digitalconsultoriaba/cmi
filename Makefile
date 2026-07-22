@@ -4,7 +4,7 @@
 COMPOSE = docker compose
 PHP     = $(COMPOSE) run --rm php
 
-.PHONY: up down install migrate fresh test dev api logs
+.PHONY: up down install migrate fresh test dev api scheduler logs
 
 ## Sobe os serviços (MySQL app+app_test, Redis, Mailpit)
 up:
@@ -38,8 +38,12 @@ test: up
 api:
 	$(COMPOSE) --profile dev up -d api
 
+## Sobe o scheduler (cron do Laravel: reconcile-pix a cada 10 min, etc.)
+scheduler:
+	$(COMPOSE) --profile dev up -d scheduler
+
 ## Ambiente completo de dev: API :8000 + Vite :5173 (foreground)
-dev: up api
+dev: up api scheduler
 	npm run dev --prefix frontend
 
 ## Logs dos serviços

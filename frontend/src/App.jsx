@@ -19,6 +19,8 @@ import MinhaConta from './pages/MinhaConta'
 import MeusDados from './pages/MeusDados'
 import AdminLayout from './admin/AdminLayout'
 import PagarPedido from './pages/PagarPedido'
+import AcompanharPedidos from './pages/AcompanharPedidos'
+import LandingHome from './pages/LandingHome'
 import Tesouraria from './admin/pages/Tesouraria'
 import TiposLotes from './admin/pages/TiposLotes'
 import Camisas from './admin/pages/Camisas'
@@ -89,7 +91,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LandingHome />} />
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
@@ -97,6 +99,7 @@ export default function App() {
           <Route path="/evento/:slug" element={<EventoPublico />} />
           <Route path="/site/:slug" element={<SitePublico />} />
           <Route path="/checkout/:slug" element={<CheckoutSeminario />} />
+          <Route path="/acompanhar" element={<AcompanharPedidos />} />
           <Route path="/acesso" element={<MagicLink />} />
           <Route
             path="/checkout"

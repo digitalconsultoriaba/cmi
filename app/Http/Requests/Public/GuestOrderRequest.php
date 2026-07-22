@@ -22,6 +22,7 @@ class GuestOrderRequest extends FormRequest
             'buyer' => ['required', 'array'],
             'buyer.name' => ['required', 'string', 'max:255'],
             'buyer.email' => ['required', 'email', 'max:255'],
+            'buyer.document' => ['nullable', 'string', 'max:20'],
             'items' => ['required', 'array', 'min:1', "max:$max"],
             'items.*.ticket_type_id' => ['required', 'integer'],
             'items.*.participant_name' => ['required', 'string', 'max:255'],

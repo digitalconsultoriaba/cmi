@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Events\Exceptions\DomainRuleViolation;
 use App\Domain\Events\Models\Event;
 use App\Domain\Events\Models\Order;
+use App\Domain\Events\Models\OrderStatus;
+use App\Domain\Events\Services\OrderReceiptPdf;
 use App\Domain\Events\Services\TicketPurchaseService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
@@ -49,5 +52,20 @@ class OrderController extends Controller
         $this->authorize('view', $order);
 
         return OrderResource::make($order->load(['event', 'status', 'tickets.status', 'tickets.ticketType', 'payments.status']));
+    }
+
+    /** Comprovante de compra em PDF — só após confirmação do pagamento. */
+    public function receipt(Request $request, Order $order, OrderReceiptPdf $pdf)
+    {
+        $this->authorize('view', $order);
+
+        if ($order->status?->slug !== OrderStatus::PAID) {
+            throw new DomainRuleViolation(
+                'O comprovante fica disponível após a confirmação do pagamento.',
+                'not_confirmed'
+            );
+        }
+
+        return $pdf->download($order);
     }
 }

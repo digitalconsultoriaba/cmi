@@ -85,5 +85,10 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(3)->by('rsnd:'.$code.'|'.$request->ip());
         });
+
+        // Acompanhar por CPF: barra varredura de documentos por IP (spec 015).
+        RateLimiter::for('public-track', function (Request $request) {
+            return Limit::perMinute(10)->by('trk:'.$request->ip());
+        });
     }
 }

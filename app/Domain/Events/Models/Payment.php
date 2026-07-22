@@ -17,7 +17,7 @@ class Payment extends BaseAuditedModel
     public const STATUS_LOOKUP = PaymentStatus::class;
 
     public const METHODS = ['pix', 'boleto', 'card', 'manual'];
-    public const PROVIDERS = ['sicoob', 'card_gateway', 'manual'];
+    public const PROVIDERS = ['sicoob', 'card_gateway', 'asaas', 'manual'];
 
     protected $casts = [
         'amount' => 'decimal:2',

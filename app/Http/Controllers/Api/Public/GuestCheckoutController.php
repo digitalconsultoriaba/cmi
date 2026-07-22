@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers\Api\Public;
 
+use App\Domain\Events\Exceptions\DomainRuleViolation;
 use App\Domain\Events\Models\Event;
 use App\Domain\Events\Models\Order;
 use App\Domain\Events\Models\OrderStatus;
+use App\Domain\Events\Payments\PaymentGateways;
+use App\Domain\Events\Payments\SupportsHostedCheckout;
 use App\Domain\Events\Services\CourtesyResolver;
 use App\Domain\Events\Services\CreateCharge;
 use App\Domain\Events\Services\GuestBuyerService;
 use App\Domain\Events\Services\OrderConfirmedNotifier;
+use App\Domain\Events\Services\OrderReceiptPdf;
+use App\Domain\Events\Services\ReconcilePayments;
 use App\Domain\Events\Services\TicketPurchaseService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CardCheckoutRequest;
@@ -30,6 +35,8 @@ class GuestCheckoutController extends Controller
         private readonly CourtesyResolver $courtesy,
         private readonly CreateCharge $createCharge,
         private readonly OrderConfirmedNotifier $notifier,
+        private readonly PaymentGateways $gateways,
+        private readonly ReconcilePayments $reconcile,
     ) {
     }
 
@@ -101,6 +108,13 @@ class GuestCheckoutController extends Controller
 
         $order = $this->purchase->purchaseSeminar($event, $buyer, $request->validated('items'), true);
 
+        // Snapshot do CPF do comprador (permite acompanhar por CPF, inclusive na
+        // inscrição gratuita — mesmo padrão do checkout de cartão).
+        $document = preg_replace('/\D/', '', (string) ($buyerData['document'] ?? ''));
+        if ($document !== '' && empty($order->buyer_document)) {
+            $order->forceFill(['buyer_document' => $document])->save();
+        }
+
         $free = $order->status?->slug === OrderStatus::PAID;
         if ($free) {
             $this->notifier->notify($order); // gratuito: confirma e entrega já
@@ -121,8 +135,20 @@ class GuestCheckoutController extends Controller
 
     public function card(CardCheckoutRequest $request, Order $order)
     {
+        $installments = (int) $request->validated('installments');
+
+        // Driver com checkout hospedado (ASAAS): cria o checkout e devolve a URL
+        // de redirect — a baixa chega depois por webhook. customerData (opcional)
+        // pré-preenche o cadastro do comprador na página hospedada.
+        if ($this->gateways->card() instanceof SupportsHostedCheckout) {
+            return ApiResponse::data($this->createCharge->cardCheckout(
+                $order, $installments, $request->validated('customerData'),
+            ));
+        }
+
+        // Driver síncrono por token (fake): cobra na hora e baixa o pedido.
         $payment = $this->createCharge->card(
-            $order, $request->validated('token'), (int) $request->validated('installments'),
+            $order, (string) $request->validated('token'), $installments,
         );
 
         return PaymentResource::make($payment->fresh());
@@ -130,6 +156,13 @@ class GuestCheckoutController extends Controller
 
     public function paymentStatus(Request $request, Order $order)
     {
+        // Reconsulta em tempo real as cobranças pendentes deste pedido (PIX pelo
+        // microsserviço não manda webhook ao cmi — a baixa chega no polling).
+        if ($order->status?->slug === OrderStatus::PENDING) {
+            $this->reconcile->reconcileOrder($order);
+            $order->refresh();
+        }
+
         $lastPaid = $order->payments()->latest('paid_at')->whereNotNull('paid_at')->first();
 
         return ApiResponse::data([
@@ -144,5 +177,39 @@ class GuestCheckoutController extends Controller
         $this->notifier->notify($order);
 
         return ApiResponse::data(['sent' => true]);
+    }
+
+    /** Acompanhar pedidos por CPF/CNPJ (guest). Só dígitos; sem PII na resposta. */
+    public function track(Request $request)
+    {
+        $data = $request->validate(['document' => ['required', 'string', 'max:20']]);
+        $digits = preg_replace('/\D/', '', $data['document']);
+
+        // CPF (11) ou CNPJ (14): abaixo disso não consulta (evita varredura).
+        if (strlen($digits) < 11) {
+            return OrderResource::collection(collect());
+        }
+
+        $orders = Order::query()
+            ->where('buyer_document', $digits)
+            ->with(['event', 'status', 'tickets.status', 'tickets.ticketType', 'payments.status'])
+            ->latest('id')
+            ->limit(20)
+            ->get();
+
+        return OrderResource::collection($orders);
+    }
+
+    /** Comprovante de compra em PDF (guest) — só após confirmação do pagamento. */
+    public function receipt(Order $order, OrderReceiptPdf $pdf)
+    {
+        if ($order->status?->slug !== OrderStatus::PAID) {
+            throw new DomainRuleViolation(
+                'O comprovante fica disponível após a confirmação do pagamento.',
+                'not_confirmed'
+            );
+        }
+
+        return $pdf->download($order);
     }
 }
