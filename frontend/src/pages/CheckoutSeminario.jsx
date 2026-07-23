@@ -395,7 +395,7 @@ export default function CheckoutSeminario() {
 }
 
 function PagamentoStep({ order, customerData, onBack, onPaid }) {
-  const [method, setMethod] = useState('card')
+  const [method, setMethod] = useState('pix')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
   const [pix, setPix] = useState(null) // cobrança PIX gerada (QR + copia-e-cola)
@@ -451,11 +451,11 @@ function PagamentoStep({ order, customerData, onBack, onPaid }) {
       <p className="ck-card-sub" style={{ textAlign: 'center' }}>Pedido {order.code} — total {formatMoney(order.totalAmount)}</p>
 
       <div className="ck-pay-methods">
-        <button type="button" className={`ck-pay-method ${method === 'card' ? 'active' : ''}`} disabled={!!pix} onClick={() => setMethod('card')}>
-          Cartão de crédito/débito
-        </button>
         <button type="button" className={`ck-pay-method ${method === 'pix' ? 'active' : ''}`} onClick={() => setMethod('pix')}>
           PIX
+        </button>
+        <button type="button" className={`ck-pay-method ${method === 'card' ? 'active' : ''}`} disabled={!!pix} onClick={() => setMethod('card')}>
+          Cartão de crédito/débito
         </button>
       </div>
 

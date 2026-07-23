@@ -41,15 +41,17 @@ class TicketReceiptPdf
             'outputBase64' => true,
         ])))->render($base.'/validar/'.$ticket->code);
 
-        $logoPath = public_path('logo.png');
+        // Triquetra (mesma do e-mail/favicon) — cabeçalho navy do ingresso.
+        $logoPath = public_path('favicon-192x192.png');
         $logoData = is_file($logoPath)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
             : null;
 
+        // Tamanho sob medida (pt) para o cartão caber inteiro em 1 página.
         return Pdf::loadView('pdf.ticket', [
             'ticket' => $ticket,
             'qrDataUri' => $qrDataUri,
             'logoData' => $logoData,
-        ])->setPaper('a5', 'portrait');
+        ])->setPaper([0, 0, 430, 770]);
     }
 }

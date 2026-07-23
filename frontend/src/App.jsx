@@ -42,6 +42,7 @@ import Inscricoes from './admin/eventos/abas/Inscricoes'
 import SiteLayout from './admin/eventos/abas/SiteLayout'
 import SitePublico from './pages/SitePublico'
 import CheckoutSeminario from './pages/CheckoutSeminario'
+import ValidarIngresso from './pages/ValidarIngresso'
 import MagicLink from './pages/MagicLink'
 import Usuarios from './admin/eventos/Usuarios'
 // Módulo financeiro central (spec 010)
@@ -105,6 +106,7 @@ function AppRoutes() {
           <Route path="/evento/:slug" element={<EventoPublico />} />
           <Route path="/site/:slug" element={<SitePublico />} />
           <Route path="/checkout/:slug" element={<CheckoutSeminario />} />
+          <Route path="/validar/:code" element={<ValidarIngresso />} />
           <Route path="/acesso" element={<MagicLink />} />
           <Route
             path="/checkout"
