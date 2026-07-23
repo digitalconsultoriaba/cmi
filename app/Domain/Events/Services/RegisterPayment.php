@@ -31,7 +31,15 @@ class RegisterPayment
             $order = Order::query()->whereKey($payment->order_id)->lockForUpdate()->first();
             $paidAmount = $evidence->paidAmount ?? $payment->amount;
 
-            $payment->forceFill([
+            // Metadados do cartão capturados na confirmação (só quando vierem —
+            // ex.: parcelas reais do ASAAS, escolhidas pelo comprador na página).
+            $cardMeta = array_filter([
+                'card_brand' => $evidence->cardBrand,
+                'card_last4' => $evidence->cardLast4,
+                'installments' => $evidence->installments,
+            ], fn ($v) => $v !== null);
+
+            $payment->forceFill(array_merge([
                 'paid_at' => $evidence->paidAt ?? now(),
                 'registered_by' => $evidence->actorId,
                 'raw_response' => array_merge(
@@ -39,7 +47,7 @@ class RegisterPayment
                     $evidence->raw
                 ),
                 'note' => $evidence->note ?? $payment->note,
-            ]);
+            ], $cardMeta));
             $payment->transitionTo(PaymentStatus::PAID);
 
             // Trilha (spec 008): a baixa é do operador quando manual; do

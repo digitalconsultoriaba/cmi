@@ -110,6 +110,9 @@ class WebhookController extends Controller
             raw: ['webhook' => $payload, 'provider_status' => $status->raw],
             paidAmount: $status->paidAmount,
             paidAt: $status->paidAt,
+            cardBrand: $status->cardBrand,
+            cardLast4: $status->cardLast4,
+            installments: $status->installments,
         ));
 
         $event->forceFill(['processed_at' => now(), 'result' => 'ok'])->save();
@@ -192,6 +195,9 @@ class WebhookController extends Controller
             raw: ['webhook' => $payload, 'provider_status' => $status->raw],
             paidAmount: $status->paidAmount,
             paidAt: $status->paidAt,
+            cardBrand: $status->cardBrand,
+            cardLast4: $status->cardLast4,
+            installments: $status->installments,
         ));
 
         $event->forceFill(['processed_at' => now(), 'result' => 'ok'])->save();
@@ -266,6 +272,9 @@ class WebhookController extends Controller
             raw: ['webhook' => $payload, 'provider_status' => $status->raw],
             paidAmount: $status->paidAmount,
             paidAt: $status->paidAt,
+            cardBrand: $status->cardBrand,
+            cardLast4: $status->cardLast4,
+            installments: $status->installments,
         ));
 
         $event->forceFill(['processed_at' => now(), 'result' => 'ok'])->save();

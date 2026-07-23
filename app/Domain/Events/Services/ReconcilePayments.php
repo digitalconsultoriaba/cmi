@@ -149,6 +149,9 @@ class ReconcilePayments
                 raw: ['provider_status' => $status->raw],
                 paidAmount: $status->paidAmount,
                 paidAt: $status->paidAt,
+                cardBrand: $status->cardBrand,
+                cardLast4: $status->cardLast4,
+                installments: $status->installments,
             ));
             $summary['settled']++;
         } elseif (in_array($status->state, [ChargeStatus::EXPIRED, ChargeStatus::CANCELLED], true)) {

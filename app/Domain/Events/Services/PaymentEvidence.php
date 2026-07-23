@@ -22,6 +22,10 @@ final readonly class PaymentEvidence
         public ?Carbon $paidAt = null,
         public ?int $actorId = null,
         public ?string $note = null,
+        // Metadados do cartão vindos da confirmação (bandeira, final, parcelas).
+        public ?string $cardBrand = null,
+        public ?string $cardLast4 = null,
+        public ?int $installments = null,
     ) {
     }
 }

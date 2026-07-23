@@ -3,7 +3,7 @@
 namespace Tests\Feature\Checkout;
 
 use App\Domain\Events\Models\CourtesyVoucher;
-use App\Notifications\OrderAccessPtBr;
+use App\Notifications\AccessCreatedPtBr;
 use App\Notifications\TicketIssuedPtBr;
 use Illuminate\Support\Facades\Notification;
 
@@ -31,8 +31,9 @@ class FreeCheckoutTest extends CheckoutTestCase
             $this->assertSame('courtesy', $t['status']);
         }
 
-        // Entrega imediata: participantes recebem ingresso; comprador guest recebe acesso.
+        // Entrega imediata: participantes recebem ingresso; comprador + participantes
+        // recebem o acesso (conta + senha).
         Notification::assertSentTimes(TicketIssuedPtBr::class, 2);
-        Notification::assertSentTimes(OrderAccessPtBr::class, 1);
+        Notification::assertSentTimes(AccessCreatedPtBr::class, 3);
     }
 }

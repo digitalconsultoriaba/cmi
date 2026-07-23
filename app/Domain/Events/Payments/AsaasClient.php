@@ -34,6 +34,19 @@ class AsaasClient
             ->json();
     }
 
+    /**
+     * Consulta um parcelamento (installment) por id — traz `installmentCount`
+     * (nº de parcelas) e `installmentValue`. O pagamento parcelado só carrega o
+     * id do parcelamento; a contagem vem daqui.
+     */
+    public function getInstallment(string $id): array
+    {
+        return $this->request()
+            ->get($this->baseUrl().'/installments/'.$id)
+            ->throw()
+            ->json();
+    }
+
     private function request(): PendingRequest
     {
         return Http::withHeaders(['access_token' => (string) config('payments.asaas.api_key')])

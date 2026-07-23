@@ -118,15 +118,17 @@ class AsaasGateway implements PaymentGatewayContract, SupportsHostedCheckout
     public function getChargeStatus(Payment $payment): ChargeStatus
     {
         // Reconsulta o pagamento pelo checkoutSession (= provider_charge_id do
-        // nosso payment). O ASAAS NÃO propaga externalReference do checkout para
-        // o pagamento, mas expõe o vínculo pelo checkoutSession. Serve tanto ao
-        // webhook quanto à reconciliação.
-        $response = $this->client->listPayments([
-            'checkoutSession' => $payment->provider_charge_id,
-            'limit' => 20,
-        ]);
+        // nosso payment). O filtro `?checkoutSession=` do ASAAS NÃO funciona
+        // (devolve vazio mesmo com pagamentos vinculados) e o pagamento NÃO herda
+        // o externalReference do checkout — então listamos os recentes e casamos
+        // por checkoutSession aqui. Parcelado gera N pagamentos, todos com o mesmo
+        // checkoutSession; qualquer um CONFIRMED confirma o pedido inteiro.
+        $response = $this->client->listPayments(['limit' => 100]);
 
-        $rows = $response['data'] ?? [];
+        $rows = array_values(array_filter(
+            $response['data'] ?? [],
+            fn ($p) => ($p['checkoutSession'] ?? null) === $payment->provider_charge_id,
+        ));
         $paid = null;
         $expired = false;
 
@@ -152,6 +154,9 @@ class AsaasGateway implements PaymentGatewayContract, SupportsHostedCheckout
                 paidAmount: null,
                 paidAt: $when !== null ? Carbon::parse($when) : null,
                 raw: $paid,
+                cardBrand: $paid['creditCard']['creditCardBrand'] ?? null,
+                cardLast4: $paid['creditCard']['creditCardNumber'] ?? null,
+                installments: $this->resolveInstallments($paid),
             );
         }
 
@@ -159,6 +164,35 @@ class AsaasGateway implements PaymentGatewayContract, SupportsHostedCheckout
             state: $expired ? ChargeStatus::EXPIRED : ChargeStatus::PENDING,
             raw: $response,
         );
+    }
+
+    /**
+     * Nº real de parcelas escolhido pelo comprador na página do ASAAS. À vista
+     * (sem `installment`) → 1. Parcelado → o pagamento só carrega o id do
+     * parcelamento; a contagem vem de uma consulta ao parcelamento. Falha na
+     * consulta → null (não sobrescreve com valor errado; a placeholder permanece).
+     */
+    private function resolveInstallments(array $paid): ?int
+    {
+        if (isset($paid['installmentCount'])) {
+            return (int) $paid['installmentCount'] ?: null;
+        }
+
+        if (empty($paid['installment'])) {
+            return 1; // à vista
+        }
+
+        try {
+            $inst = $this->client->getInstallment((string) $paid['installment']);
+
+            return ((int) ($inst['installmentCount'] ?? 0)) ?: null;
+        } catch (\Throwable $e) {
+            Log::warning('ASAAS: falha ao consultar parcelamento', [
+                'installment' => $paid['installment'], 'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     public function cancelCharge(Payment $payment): void

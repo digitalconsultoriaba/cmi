@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Checkout;
 
-use App\Notifications\OrderAccessPtBr;
+use App\Domain\Events\Models\Role;
+use App\Notifications\AccessCreatedPtBr;
 use App\Notifications\TicketIssuedPtBr;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
@@ -27,8 +28,13 @@ class TicketDeliveryTest extends CheckoutTestCase
 
         Notification::assertSentTimes(TicketIssuedPtBr::class, 2);
 
+        // Acesso (conta + senha) criado para comprador + 2 participantes (3 e-mails).
+        Notification::assertSentTimes(AccessCreatedPtBr::class, 3);
+
         $buyer = User::query()->where('email', 'comprador@ex.com')->firstOrFail();
-        Notification::assertSentTo($buyer, OrderAccessPtBr::class);
+        Notification::assertSentTo($buyer, AccessCreatedPtBr::class);
+        $this->assertNotNull($buyer->password);          // conta com senha criada
+        $this->assertTrue($buyer->hasRole(Role::ATTENDEE)); // papel participante
     }
 
     public function test_reenvio_de_acesso(): void

@@ -16,6 +16,11 @@ final readonly class ChargeStatus
         public ?string $paidAmount = null,
         public ?Carbon $paidAt = null,
         public array $raw = [],
+        // Metadados do cartão capturados na confirmação (ASAAS): bandeira, final
+        // e nº real de parcelas escolhido pelo comprador (1 = à vista).
+        public ?string $cardBrand = null,
+        public ?string $cardLast4 = null,
+        public ?int $installments = null,
     ) {
     }
 

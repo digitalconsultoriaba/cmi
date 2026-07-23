@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Domain\Events\Models\Order;
+use App\Domain\Events\Models\PaymentStatus;
 use App\Domain\Events\Services\OrderReceiptPdf;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -21,16 +22,21 @@ class PaymentConfirmedPtBr extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)
-            ->subject('Pagamento confirmado — '.$this->order->event->name)
-            ->greeting('Olá, '.$this->order->buyer_name.'!')
-            ->line('Recebemos o seu pagamento e seus ingressos estão confirmados. 🎉')
-            ->line('Pedido: '.$this->order->code);
+        $base = rtrim((string) config('app.frontend_url'), '/');
+        $payment = $this->order->payments()
+            ->whereIn('status_id', PaymentStatus::idsFor([PaymentStatus::PAID]))
+            ->latest('paid_at')->first();
 
-        foreach ($this->order->tickets as $ticket) {
-            $message->line('• '.$ticket->participant_name.' — '.$ticket->ticketType?->name
-                .' ('.$ticket->code.')');
-        }
+        $message = (new MailMessage)
+            ->subject('Pagamento confirmado — '.$this->order->event?->name)
+            ->view('emails.payment-confirmed', [
+                'order' => $this->order->loadMissing('event', 'tickets.ticketType', 'tickets.ticketLot'),
+                'payment' => $payment,
+                'eventName' => $this->order->event?->name,
+                'logoUrl' => $base.'/favicon-192x192.png',
+                'entrarUrl' => $base.'/entrar',
+                'trackUrl' => $base.'/acompanhar',
+            ]);
 
         // Anexa o comprovante de compra em PDF (falha nunca impede o e-mail).
         try {
@@ -45,9 +51,6 @@ class PaymentConfirmedPtBr extends Notification
             ]);
         }
 
-        return $message
-            ->action('Ver meus ingressos', config('app.frontend_url').'/minha-conta/ingressos')
-            ->line('O comprovante de compra está anexado a este e-mail.')
-            ->salutation('Plataforma de Eventos');
+        return $message;
     }
 }
