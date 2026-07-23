@@ -33,9 +33,13 @@ class SeminarioCheckoutSeeder extends Seeder
             ['cargo', 'Cargo na potência', 'conditional', false, ['question' => 'Possui cargo na potência?']],
         ]);
 
-        // Lista real de lojas da GLMEES (database/data/glmees_lojas.php).
-        foreach (require database_path('data/glmees_lojas.php') as $i => $name) {
-            $event->affiliations()->firstOrCreate(['name' => $name], ['sort' => $i, 'is_active' => true]);
+        // Lista real de lojas da GLMEES (database/data/glmees_lojas.php). Sync:
+        // remove afiliações fora da lista (ex.: exemplos antigos) e faz upsert
+        // com a ordem — idempotente e auto-corretivo em re-seed.
+        $lojas = require database_path('data/glmees_lojas.php');
+        $event->affiliations()->whereNotIn('name', $lojas)->forceDelete();
+        foreach ($lojas as $i => $name) {
+            $event->affiliations()->updateOrCreate(['name' => $name], ['sort' => $i, 'is_active' => true]);
         }
     }
 
