@@ -26,10 +26,6 @@ class MagicLinkController extends Controller
         Auth::guard('web')->login($account);
         $request->session()->regenerate();
 
-        if (! $account->hasVerifiedEmail()) {
-            $account->markEmailAsVerified();
-        }
-
         return redirect(config('app.frontend_url').'/minha-conta/ingressos');
     }
 
@@ -60,10 +56,6 @@ class MagicLinkController extends Controller
 
         Auth::guard('web')->login($account);
         $request->session()->regenerate();
-
-        if (! $account->hasVerifiedEmail()) {
-            $account->markEmailAsVerified();
-        }
 
         return redirect($front.'/minha-conta/ingressos');
     }

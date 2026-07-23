@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
+import Loading from '../../components/Loading'
 
 const money = (value) => Number(value ?? 0).toLocaleString('pt-BR', {
   style: 'currency', currency: 'BRL',
@@ -42,7 +43,7 @@ export default function Dashboard() {
     queryFn: () => apiGet('/admin/dashboard'),
   })
 
-  if (!data) return <p className="text-secondary">Carregando…</p>
+  if (!data) return <Loading fullscreen={false} />
 
   const { people, revenue, shirts, byLot, byMethod, courtesies, ticketsByStatus } = data
 

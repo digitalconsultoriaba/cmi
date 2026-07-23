@@ -64,7 +64,7 @@ class GuestCheckoutController extends Controller
                 ])->values(),
             ])->values();
 
-        $affiliations = $event->affiliations()->where('is_active', true)->get()
+        $affiliations = $event->affiliations()->where('is_active', true)->orderBy('sort')->get()
             ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])->values();
 
         $logoPath = $event->eventSite?->identity['logoPath'] ?? $event->banner_path;
@@ -108,7 +108,7 @@ class GuestCheckoutController extends Controller
 
         $order = $this->purchase->purchaseSeminar($event, $buyer, $request->validated('items'), true);
 
-        // Snapshot do CPF do comprador (permite acompanhar por CPF, inclusive na
+        // Snapshot do CPF do comprador (consta no comprovante/registro, inclusive na
         // inscrição gratuita — mesmo padrão do checkout de cartão).
         $document = preg_replace('/\D/', '', (string) ($buyerData['document'] ?? ''));
         if ($document !== '' && empty($order->buyer_document)) {
@@ -177,27 +177,6 @@ class GuestCheckoutController extends Controller
         $this->notifier->notify($order);
 
         return ApiResponse::data(['sent' => true]);
-    }
-
-    /** Acompanhar pedidos por CPF/CNPJ (guest). Só dígitos; sem PII na resposta. */
-    public function track(Request $request)
-    {
-        $data = $request->validate(['document' => ['required', 'string', 'max:20']]);
-        $digits = preg_replace('/\D/', '', $data['document']);
-
-        // CPF (11) ou CNPJ (14): abaixo disso não consulta (evita varredura).
-        if (strlen($digits) < 11) {
-            return OrderResource::collection(collect());
-        }
-
-        $orders = Order::query()
-            ->where('buyer_document', $digits)
-            ->with(['event', 'status', 'tickets.status', 'tickets.ticketType', 'payments.status'])
-            ->latest('id')
-            ->limit(20)
-            ->get();
-
-        return OrderResource::collection($orders);
     }
 
     /** Comprovante de compra em PDF (guest) — só após confirmação do pagamento. */

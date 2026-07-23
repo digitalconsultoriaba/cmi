@@ -9,6 +9,7 @@ import Participantes from './orcamento/Participantes'
 import Comparativo from './orcamento/Comparativo'
 import Simuladores from './orcamento/Simuladores'
 import Graficos from './orcamento/Graficos'
+import Loading from '../../../components/Loading'
 
 /** Aba Orçamento do evento (spec 011) — planejamento e previsão financeira. */
 export default function Orcamento() {
@@ -23,7 +24,7 @@ export default function Orcamento() {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] })
 
-  if (isLoading || !data) return <p className="text-secondary">Carregando…</p>
+  if (isLoading || !data) return <Loading fullscreen={false} />
 
   return (
     <>

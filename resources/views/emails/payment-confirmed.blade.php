@@ -8,8 +8,8 @@
     @endphp
 
     <span class="pill">&#10003; Pagamento confirmado</span>
-    <h2 class="title">Sua inscrição está confirmada</h2>
-    <p class="lead">Olá, <b>{{ $order->buyer_name }}</b>! Recebemos seu pagamento com sucesso. Sua inscrição no <b>{{ $order->event?->name }}</b> está confirmada, e o ingresso de cada participante já está disponível. Guarde este e-mail: o comprovante de compra segue anexo.</p>
+    <h2 class="title">Pagamento do pedido confirmado</h2>
+    <p class="lead">Olá, <b>{{ $order->buyer_name }}</b>! Recebemos o pagamento do seu pedido com sucesso. Sua inscrição no <b>{{ $order->event?->name }}</b> está confirmada e o ingresso de cada participante já está disponível. Guarde este e-mail: o comprovante de pagamento segue anexo.</p>
 
     <div class="panel">
         <div class="row"><span class="k">Pedido</span><span class="v mono">{{ $order->code }}</span></div>
@@ -38,7 +38,7 @@
 
     <div class="cta"><a href="{{ $entrarUrl }}">Acessar meus ingressos</a></div>
 
-    <p class="note"><b>Comprovante de compra (PDF)</b> anexado a este e-mail. Cada participante recebe também o próprio ingresso, com QR code, por e-mail.</p>
+    <p class="note"><b>Comprovante de pagamento (PDF)</b> anexado a este e-mail. Cada participante recebe também o próprio ingresso, com QR code, por e-mail.</p>
 
-    <p class="secondary">Prefere consultar depois? Acompanhe seus pedidos pelo CPF em <a href="{{ $trackUrl }}">{{ preg_replace('#^https?://#', '', $trackUrl) }}</a>.</p>
+    <p class="secondary">Prefere consultar depois? Acompanhe seus pedidos pelo painel em <a href="{{ $entrarUrl }}">{{ preg_replace('#^https?://#', '', $entrarUrl) }}</a>.</p>
 @endsection

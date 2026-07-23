@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { apiGet, apiPost } from '../lib/api'
 import { formatMoney } from '../lib/money'
 import { parseApiError } from '../lib/forms'
+import Loading from '../components/Loading'
 
 const STATUS_LABEL = {
   pending: 'Aguardando pagamento', paid: 'Pago', partially_paid: 'Parcialmente pago',
@@ -56,7 +57,7 @@ export default function MeusPedidos() {
     }
   }
 
-  if (isLoading) return <p>Carregando…</p>
+  if (isLoading) return <Loading fullscreen={false} />
 
   return (
     <>

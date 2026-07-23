@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
+import Loading from '../../components/Loading'
 
 /** Lista de eventos da portaria — clicar leva ao check-in daquele evento. */
 export default function PortariaEventos() {
@@ -18,7 +19,7 @@ export default function PortariaEventos() {
         <div className="text-secondary">Escolha o evento para fazer o check-in.</div>
       </div>
 
-      {isLoading && <p className="text-secondary">Carregando…</p>}
+      {isLoading && <Loading fullscreen={false} />}
 
       <div className="row row-cards">
         {events.map((ev) => (

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
 import { Card, ApiErrorAlert, StatusBadge, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../lib/api'
+import Loading from '../../components/Loading'
 
 const TYPE_LABELS = {
   hero: 'Capa', text: 'Texto', schedule: 'Programação',
@@ -63,7 +64,7 @@ export default function Landing() {
     enabled: !!eventId,
   })
 
-  if (!event) return <p>Carregando…</p>
+  if (!event) return <Loading fullscreen={false} />
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'landing-blocks'] })
 

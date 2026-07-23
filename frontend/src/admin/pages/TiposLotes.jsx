@@ -4,6 +4,7 @@ import { useAdminEvent } from '../AdminLayout'
 import { Card, ApiErrorAlert, StatusBadge, Modal, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut, apiDelete, apiPatch } from '../../lib/api'
 import { parseMoney, formatMoney } from '../../lib/money'
+import Loading from '../../components/Loading'
 
 function TypeForm({ initial, onSubmit, onCancel, busy }) {
   const [form, setForm] = useState(initial ?? {
@@ -135,7 +136,7 @@ export default function TiposLotes() {
     enabled: !!eventId,
   })
 
-  if (!event) return <p>Carregando…</p>
+  if (!event) return <Loading fullscreen={false} />
 
   const refreshTypes = () => queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'ticket-types'] })
   const refreshLots = () => queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'lots'] })

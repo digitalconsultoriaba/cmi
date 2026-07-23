@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
 import { Card, ApiErrorAlert, StatusBadge, useApiAction } from '../components'
 import { apiPost, apiPut, apiUpload } from '../../lib/api'
+import Loading from '../../components/Loading'
 
 const FLAGS = [
   ['allowPix', 'Aceita Pix'],
@@ -48,7 +49,7 @@ export default function Evento() {
     }
   }, [event])
 
-  if (isLoading || !event || !form) return <p>Carregando…</p>
+  if (isLoading || !event || !form) return <Loading fullscreen={false} />
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value })

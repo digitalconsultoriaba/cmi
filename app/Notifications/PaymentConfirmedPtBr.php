@@ -35,7 +35,6 @@ class PaymentConfirmedPtBr extends Notification
                 'eventName' => $this->order->event?->name,
                 'logoUrl' => $base.'/favicon-192x192.png',
                 'entrarUrl' => $base.'/entrar',
-                'trackUrl' => $base.'/acompanhar',
             ]);
 
         // Anexa o comprovante de compra em PDF (falha nunca impede o e-mail).

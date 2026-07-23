@@ -33,7 +33,8 @@ class SeminarioCheckoutSeeder extends Seeder
             ['cargo', 'Cargo na potência', 'conditional', false, ['question' => 'Possui cargo na potência?']],
         ]);
 
-        foreach (['Loja Exemplo nº 1', 'Loja Exemplo nº 2', 'Loja Exemplo nº 3'] as $i => $name) {
+        // Lista real de lojas da GLMEES (database/data/glmees_lojas.php).
+        foreach (require database_path('data/glmees_lojas.php') as $i => $name) {
             $event->affiliations()->firstOrCreate(['name' => $name], ['sort' => $i, 'is_active' => true]);
         }
     }

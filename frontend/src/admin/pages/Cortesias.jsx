@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
 import { Card, ApiErrorAlert, Modal, useApiAction } from '../components'
 import { apiGet, apiPost, apiPatch } from '../../lib/api'
+import Loading from '../../components/Loading'
 
 const STATUS_LABELS = { available: 'Disponível', distributed: 'Distribuído', redeemed: 'Resgatado' }
 const STATUS_BADGE = { available: 'bg-green-lt', distributed: 'bg-blue-lt', redeemed: 'bg-purple-lt' }
@@ -44,7 +45,7 @@ export default function Cortesias() {
     enabled: !!eventId,
   })
 
-  if (!event) return <p>Carregando…</p>
+  if (!event) return <Loading fullscreen={false} />
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'vouchers'] })

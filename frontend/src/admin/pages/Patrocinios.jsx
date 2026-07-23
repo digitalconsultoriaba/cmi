@@ -4,6 +4,7 @@ import { useAdminEvent } from '../AdminLayout'
 import { ApiErrorAlert, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut } from '../../lib/api'
 import { parseMoney, formatMoney } from '../../lib/money'
+import Loading from '../../components/Loading'
 
 const STATUS_LABELS = { pending: 'Pendente', partial: 'Parcial', paid: 'Pago', cancelled: 'Cancelado' }
 const STATUS_BADGE = {
@@ -26,7 +27,7 @@ export default function Patrocinios() {
     enabled: !!eventId,
   })
 
-  if (!event) return <p className="text-secondary">Carregando…</p>
+  if (!event) return <Loading fullscreen={false} />
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'sponsorships'] })

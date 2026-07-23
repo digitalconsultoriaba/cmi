@@ -5,6 +5,7 @@ import { apiGet, apiPost } from '../lib/api'
 import { formatMoney } from '../lib/money'
 import { parseApiError } from '../lib/forms'
 import { useCart } from '../cart/CartProvider'
+import Loading from '../components/Loading'
 
 /** Casca com header da marca (estilo Tabler). */
 function Shell({ children }) {
@@ -82,7 +83,7 @@ export default function Checkout() {
     )
   }
 
-  if (!event) return <Shell><p className="text-secondary">Carregando…</p></Shell>
+  if (!event) return <Shell><Loading fullscreen={false} /></Shell>
 
   const set = (key, field, value) => setParticipants((current) => ({
     ...current,

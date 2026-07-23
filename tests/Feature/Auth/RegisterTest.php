@@ -4,7 +4,6 @@ namespace Tests\Feature\Auth;
 
 use App\Domain\Events\Models\Role;
 use App\Models\User;
-use App\Notifications\VerifyEmailPtBr;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -25,15 +24,12 @@ class RegisterTest extends AuthTestCase
         ], $overrides);
     }
 
-    public function test_cadastro_cria_conta_com_papel_attendee_sessao_e_verificacao(): void
+    public function test_cadastro_cria_conta_com_papel_attendee_e_sessao(): void
     {
-        Notification::fake();
-
         $response = $this->postJson('/api/auth/register', $this->payload());
 
         $response->assertCreated()
             ->assertJsonPath('data.email', 'ana@exemplo.com')
-            ->assertJsonPath('data.emailVerified', false)
             ->assertJsonPath('data.hasPassword', true)
             ->assertJsonPath('data.roles.0', Role::ATTENDEE);
 
@@ -41,7 +37,6 @@ class RegisterTest extends AuthTestCase
 
         $user = User::query()->where('email', 'ana@exemplo.com')->firstOrFail();
         $this->assertTrue($user->hasRole(Role::ATTENDEE));
-        Notification::assertSentTo($user, VerifyEmailPtBr::class);
     }
 
     public function test_email_e_normalizado_no_cadastro(): void

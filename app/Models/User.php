@@ -4,9 +4,7 @@ namespace App\Models;
 
 use App\Domain\Events\Models\Role;
 use App\Notifications\ResetPasswordPtBr;
-use App\Notifications\VerifyEmailPtBr;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
@@ -60,11 +58,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // ── Notificações pt-BR (spec 002) ───────────────────────────────
-
-    public function sendEmailVerificationNotification(): void
-    {
-        $this->notify(new VerifyEmailPtBr);
-    }
 
     public function sendPasswordResetNotification($token): void
     {

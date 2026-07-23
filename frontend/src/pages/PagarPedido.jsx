@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { apiGet, apiPost } from '../lib/api'
 import { formatMoney } from '../lib/money'
 import { parseApiError } from '../lib/forms'
+import Loading from '../components/Loading'
 
 const METHOD_LABEL = { pix: 'Pix', boleto: 'Boleto', card: 'Cartão' }
 
@@ -71,7 +72,7 @@ export default function PagarPedido() {
     refetchInterval: (query) => (query.state.data?.status === 'pending' ? 3000 : false),
   })
 
-  if (!order || !event) return <Shell><p className="text-secondary">Carregando…</p></Shell>
+  if (!order || !event) return <Shell><Loading fullscreen={false} /></Shell>
 
   const isPaid = status?.status === 'paid' || order.status === 'paid'
 

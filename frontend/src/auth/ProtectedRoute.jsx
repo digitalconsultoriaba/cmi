@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthProvider'
+import Loading from '../components/Loading'
 
 // Sem sessão → /entrar guardando o destino; após o login, volta (FR-012).
 export default function ProtectedRoute({ children }) {
@@ -7,7 +8,7 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation()
 
   if (isLoading) {
-    return <p style={{ padding: '2rem' }}>Carregando…</p>
+    return <Loading />
   }
 
   if (!user) {

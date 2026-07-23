@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../../lib/api'
 import DonutChart from '../../components/DonutChart'
+import Loading from '../../../components/Loading'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -25,7 +26,7 @@ export default function PainelEvento() {
     queryFn: () => apiGet(`/admin/events/${eventId}/dashboard`),
   })
 
-  if (!data) return <p className="text-secondary">Carregando…</p>
+  if (!data) return <Loading fullscreen={false} />
 
   const { counters, financial, ticketsByStatus, byTicketType } = data
 

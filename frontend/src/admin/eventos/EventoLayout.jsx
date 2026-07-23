@@ -5,6 +5,7 @@ import { useAdminEvent } from '../AdminLayout'
 import { useApiAction, ApiErrorAlert } from '../components'
 import { apiPost, apiUpload } from '../../lib/api'
 import EventoModal from '../components/EventoModal'
+import Loading from '../../components/Loading'
 
 // Contexto para telas internas (ficha do cliente) esconderem as abas do evento
 const EventoUI = createContext(null)
@@ -45,7 +46,7 @@ export default function EventoLayout() {
   const [editing, setEditing] = useState(false)
   const [hideChrome, setHideChrome] = useState(false) // ficha do cliente esconde as abas
 
-  if (isLoading || !event) return <p className="text-secondary">Carregando…</p>
+  if (isLoading || !event) return <Loading fullscreen={false} />
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'event'] })
 

@@ -24,10 +24,9 @@ class MeTest extends AuthTestCase
         $this->actingAs($user)->getJson('/api/auth/me')
             ->assertOk()
             ->assertJsonStructure(['data' => [
-                'id', 'name', 'email', 'emailVerified', 'document', 'phone',
+                'id', 'name', 'email', 'document', 'phone',
                 'avatarUrl', 'hasPassword', 'mustChangePassword', 'roles',
             ]])
-            ->assertJsonPath('data.emailVerified', true)
             ->assertJsonPath('data.mustChangePassword', false)
             ->assertJsonCount(2, 'data.roles');
     }

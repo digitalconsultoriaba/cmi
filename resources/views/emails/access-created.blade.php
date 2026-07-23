@@ -19,7 +19,7 @@
             <p class="label" style="margin:0 0 4px;">Senha temporária</p>
             <p class="mono num" style="font-size:24px; letter-spacing:4px; font-weight:700; color:#17357A; background:#fff; border:1px dashed #C9A24B; border-radius:8px; padding:12px 16px; text-align:center; margin:0;">{{ $password }}</p>
         </div>
-        <p style="color:#8A6D1F; font-size:12px; margin:10px 0 0; line-height:1.45;">&#128274; Em <b>{{ preg_replace('#^https?://#', '', $entrarUrl) }}</b>, informe o e-mail e a senha acima. Por segurança, <b>altere a senha no primeiro acesso</b> e nunca compartilhe estes dados.</p>
+        <p style="color:#8A6D1F; font-size:12px; margin:10px 0 0; line-height:1.45;">&#128274; Em <a href="{{ $entrarUrl }}" style="color:#17357A; font-weight:700; text-decoration:underline;">{{ preg_replace('#^https?://#', '', $entrarUrl) }}</a>, informe o e-mail e a senha acima. Por segurança, <b>altere a senha no primeiro acesso</b> e nunca compartilhe estes dados.</p>
     </div>
 
     <p class="note">Não reconhece esta inscrição? Se você não comprou nem foi incluído em um pedido do Seminário, ignore este e-mail — nenhuma ação é necessária.</p>

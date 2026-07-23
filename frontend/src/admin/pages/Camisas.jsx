@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminEvent } from '../AdminLayout'
 import { Card, ApiErrorAlert, Modal, useApiAction } from '../components'
 import { apiGet, apiPost, apiPut, apiDelete } from '../../lib/api'
+import Loading from '../../components/Loading'
 
 export default function Camisas() {
   const { data: event } = useAdminEvent()
@@ -20,7 +21,7 @@ export default function Camisas() {
     enabled: !!eventId,
   })
 
-  if (!event) return <p>Carregando…</p>
+  if (!event) return <Loading fullscreen={false} />
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', eventId, 'shirt-models'] })
 

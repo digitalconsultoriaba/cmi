@@ -1,0 +1,32 @@
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+}
+
+/* Tela cheia: cobre a viewport durante a navegação */
+.app-loading--full {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  background: #f5f7fb;
+  z-index: 2000;
+}
+
+.app-loading__logo {
+  width: 104px;
+  height: 104px;
+  object-fit: contain;
+  /* Fade in/out (+ leve pulse) para simular o carregamento */
+  animation: app-loading-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes app-loading-pulse {
+  0%, 100% { opacity: .3; transform: scale(.92); }
+  50%      { opacity: 1;  transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loading__logo { animation: none; opacity: 1; }
+}

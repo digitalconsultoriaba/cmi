@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../auth/AuthProvider'
-import { apiPost, apiUpload } from '../lib/api'
+import { apiUpload } from '../lib/api'
 import { parseApiError } from '../lib/forms'
 
 function initials(name) {
@@ -20,7 +20,6 @@ export default function MinhaConta() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [resent, setResent] = useState(false)
   const [error, setError] = useState(null)
 
   if (!user) return null
@@ -33,9 +32,6 @@ export default function MinhaConta() {
     setError(null)
     const data = new FormData(); data.append('avatar', file)
     try { await apiUpload('/auth/avatar', data); refreshMe() } catch (err) { setError(parseApiError(err)) }
-  }
-  const reenviar = async () => {
-    try { await apiPost('/auth/email/resend'); setResent(true) } catch (err) { setError(parseApiError(err)) }
   }
   const sair = async () => { await logout.mutateAsync(); navigate('/entrar', { replace: true }) }
 
@@ -68,12 +64,7 @@ export default function MinhaConta() {
           )}
           <div>
             <div className="h3 mb-0">{user.name}</div>
-            <div className="text-secondary small">
-              {user.email}{' '}
-              {user.emailVerified
-                ? <span className="badge bg-success text-white ms-1">verificado</span>
-                : <span className="badge bg-warning text-dark ms-1">não verificado</span>}
-            </div>
+            <div className="text-secondary small">{user.email}</div>
           </div>
           <label className="btn btn-sm ms-auto mb-0">
             Trocar foto
@@ -99,13 +90,6 @@ export default function MinhaConta() {
       <div className="page-body mt-0">
         <div className="container-xl py-3">
           {error && <div className="alert alert-danger">{error.message}</div>}
-          {!user.emailVerified && (
-            <div className="alert alert-warning">
-              Confirme seu e-mail para o acesso completo.{' '}
-              {resent ? 'E-mail reenviado — confira a caixa de entrada.'
-                : <button className="btn btn-sm btn-warning ms-2" onClick={reenviar}>Reenviar confirmação</button>}
-            </div>
-          )}
           <Outlet />
         </div>
       </div>

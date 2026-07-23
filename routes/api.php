@@ -15,7 +15,6 @@ use App\Http\Controllers\Api\Admin\ShirtSizeController;
 use App\Http\Controllers\Api\Admin\SponsorshipController;
 use App\Http\Controllers\Api\Admin\TicketLotController;
 use App\Http\Controllers\Api\Admin\TicketTypeController;
-use App\Http\Controllers\Api\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\ProfileController;
@@ -64,8 +63,6 @@ Route::post('/public/orders/{order:code}/checkout/card', [\App\Http\Controllers\
 Route::get('/public/orders/{order:code}/payment-status', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'paymentStatus']);
 Route::post('/public/orders/{order:code}/resend-access', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'resendAccess'])
     ->middleware('throttle:public-resend');
-Route::post('/public/orders/track', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'track'])
-    ->middleware('throttle:public-track'); // spec 015 — acompanhar por CPF
 Route::get('/public/orders/{order:code}/receipt', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'receipt'])
     ->middleware('throttle:public-checkout'); // comprovante em PDF
 
@@ -148,11 +145,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])
         ->middleware('throttle:6,1');
 
-    // Link assinado do e-mail (sem sessão — pode abrir em outro navegador)
-    Route::get('/verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
     // Magic link passwordless (spec 014): consumo do link é rota WEB (sessão),
     // ver routes/web.php `auth.magic`. Aqui só a solicitação por e-mail (XHR).
     Route::post('/magic/request', [\App\Http\Controllers\Api\Auth\MagicLinkController::class, 'request'])
@@ -162,8 +154,6 @@ Route::prefix('auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', MeController::class);
         Route::post('/logout', [LoginController::class, 'logout']);
-        Route::post('/email/resend', [EmailVerificationController::class, 'resend'])
-            ->middleware('throttle:auth-email');
         // Autoatendimento da conta (spec 009)
         Route::put('/profile', [ProfileController::class, 'update']);
         Route::post('/password', [ProfileController::class, 'changePassword']);

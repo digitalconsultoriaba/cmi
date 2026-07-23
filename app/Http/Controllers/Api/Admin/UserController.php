@@ -42,7 +42,6 @@ class UserController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'], // hash pelo cast do model
-            'email_verified_at' => now(),    // conta de equipe já entra ativa
         ]);
         $user->roles()->sync([Role::idFor($data['role'])]);
 

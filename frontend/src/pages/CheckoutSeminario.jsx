@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../lib/api'
 import { formatMoney, parseMoney } from '../lib/money'
 import { loadCheckout, saveCheckout, clearCheckout } from '../lib/checkoutStore'
+import Loading from '../components/Loading'
 import ParticipanteForm from './checkout/ParticipanteForm'
 import './checkout/checkout.css'
 import { IcUsers, IcMail, IcPhone, IcShield, IcTicket, IcGift, IcChevron, IcCompass, IcCheck } from './checkout/icons'
@@ -46,11 +47,13 @@ export default function CheckoutSeminario() {
   const [vmsg, setVmsg] = useState(null) // { ok, text }
   const [vbusy, setVbusy] = useState(false)
 
-  // Sincroniza o carrinho no navegador; ao concluir, limpa. (Depois dos useState:
-  // usa `step`, que precisa estar declarado antes — senão TDZ = tela branca.)
+  // Sincroniza o carrinho no navegador. Ao CONCLUIR o pagamento (step 'done'),
+  // limpa SEMPRE — inclusive no retorno do ASAAS — para o próximo acesso não vir
+  // com os participantes/dados do pedido anterior pré-preenchidos.
+  // (Depois dos useState: usa `step`, que precisa estar declarado antes — TDZ.)
   useEffect(() => {
-    if (returnedCode) return
     if (step === 'done') { clearCheckout(slug); return }
+    if (returnedCode) return // retorno do ASAAS: não re-salva o carrinho
     saveCheckout(slug, { cart, buyer })
   }, [cart, buyer, step, slug, returnedCode])
 
@@ -59,7 +62,7 @@ export default function CheckoutSeminario() {
     if (returnedCode && sp.get('paid')) clearCheckout(slug)
   }, [returnedCode, slug])
 
-  if (isLoading || !config) return <div className="ck"><div className="ck-wrap" style={{ paddingTop: 40 }}>Carregando…</div></div>
+  if (isLoading || !config) return <Loading />
 
   const typeOf = (id) => config.ticketTypes.find((t) => t.id === id)
   // parseMoney devolve string decimal ("250.00"); somamos como número para
@@ -141,8 +144,8 @@ export default function CheckoutSeminario() {
   }
 
   const digitsLen = (v) => (v || '').replace(/\D/g, '').length
-  // CPF é sempre exigido (permite acompanhar por CPF, inclusive na inscrição
-  // gratuita). Os demais dados de cobrança só no pedido pago (cartão via ASAAS).
+  // CPF é sempre exigido (consta no comprovante/registro do pedido, inclusive na
+  // inscrição gratuita). Os demais dados de cobrança só no pedido pago (cartão via ASAAS).
   const cpfOk = digitsLen(buyer.cpfCnpj) >= 11
   const billingOk = cpfOk && (total <= 0 || (
     digitsLen(buyer.phone) >= 10 &&
@@ -163,12 +166,12 @@ export default function CheckoutSeminario() {
         <div className="ck-watermark"><IcCompass style={{ color: '#fff' }} /></div>
         <div className="ck-header-inner">
           <div style={{ textAlign: 'right', marginBottom: 8 }}>
-            <a href="/acompanhar" style={{ color: '#fff', fontSize: '.85rem', textDecoration: 'underline', opacity: 0.92 }}>
-              Já comprou? Acompanhe seus pedidos pelo CPF →
+            <a href="/entrar" style={{ color: '#fff', fontSize: '.85rem', textDecoration: 'underline', opacity: 0.92 }}>
+              Já comprou? Acompanhe seus pedidos pelo painel →
             </a>
           </div>
           <div className="ck-header-top">
-            <span className="ck-seal"><img src="/logo.png" alt="CMI · GLMEES" /></span>
+            <a href="/" className="ck-seal" aria-label="Voltar para a página inicial"><img src="/logo.png" alt="CMI · GLMEES" /></a>
             <div>
               <div className="ck-title">{config.event.name}</div>
               <div className="ck-subtitle">Complete sua inscrição adicionando um ou mais participantes ao carrinho.</div>
@@ -283,7 +286,7 @@ export default function CheckoutSeminario() {
                     <label className="ck-label">E-mail do comprador</label>
                     <input type="email" className="ck-input" style={{ marginBottom: 10 }} value={buyer.email} onChange={(e) => setBuyerField('email', e.target.value)} placeholder="voce@email.com" />
 
-                    {/* CPF/CNPJ sempre visível — permite acompanhar por CPF mesmo na inscrição gratuita. */}
+                    {/* CPF/CNPJ sempre visível — consta no comprovante/registro, mesmo na inscrição gratuita. */}
                     <label className="ck-label">CPF/CNPJ</label>
                     <input className="ck-input" style={{ marginBottom: total > 0 ? 10 : 0 }} value={buyer.cpfCnpj} onChange={(e) => setBuyerField('cpfCnpj', maskCpfCnpj(e.target.value))} placeholder="000.000.000-00" inputMode="numeric" />
 
@@ -354,7 +357,7 @@ export default function CheckoutSeminario() {
               {(result?.order?.code || returnedCode) && (
                 <a className="ck-btn ck-btn-primary" href={`/api/public/orders/${result?.order?.code || returnedCode}/receipt`}>Baixar comprovante</a>
               )}
-              <a className="ck-btn ck-btn-light" href="/acompanhar">Acompanhar meus pedidos</a>
+              <a className="ck-btn ck-btn-light" href="/entrar">Acompanhar meus pedidos</a>
             </div>
           </div>
         )}
@@ -537,7 +540,7 @@ function ConfirmacaoStep({ code, onPaid }) {
       {paid && code && (
         <div className="ck-actions">
           <a className="ck-btn ck-btn-primary" href={`/api/public/orders/${code}/receipt`}>Baixar comprovante</a>
-          <a className="ck-btn ck-btn-light" href="/acompanhar">Acompanhar meus pedidos</a>
+          <a className="ck-btn ck-btn-light" href="/entrar">Acompanhar meus pedidos</a>
         </div>
       )}
     </div>

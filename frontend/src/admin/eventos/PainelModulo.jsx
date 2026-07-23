@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
 import DonutChart from '../components/DonutChart'
 import AreaChart from '../components/AreaChart'
+import Loading from '../../components/Loading'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const monthLabel = (ym) => {
@@ -45,7 +46,7 @@ export default function PainelModulo() {
     keepPreviousData: true,
   })
 
-  if (!data) return <p className="text-secondary">Carregando…</p>
+  if (!data) return <Loading fullscreen={false} />
 
   const { cards, eventsByStatus, inscriptionsByMonth } = data
 

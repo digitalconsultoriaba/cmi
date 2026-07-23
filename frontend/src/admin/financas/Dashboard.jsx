@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '../../lib/api'
 import MonthYearSelect, { CURRENT_MONTH, CURRENT_YEAR, monthRange } from './MonthYearSelect'
+import Loading from '../../components/Loading'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -39,7 +40,7 @@ export default function Dashboard() {
     keepPreviousData: true,
   })
 
-  if (!data) return <p className="text-secondary">Carregando…</p>
+  if (!data) return <Loading fullscreen={false} />
   const { month: monthData, overdue, balances, bestEvents, worstEvents, dueBuckets, upcoming } = data
 
   return (

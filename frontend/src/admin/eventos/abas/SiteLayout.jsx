@@ -20,6 +20,7 @@ import Faq from './site/Faq'
 import CtaFinal from './site/CtaFinal'
 import Rodape from './site/Rodape'
 import Legal from './site/Legal'
+import Loading from '../../../components/Loading'
 
 // Ordem e rótulos do menu do CMS (espelha as seções do site).
 const PANELS = [
@@ -52,7 +53,7 @@ export default function SiteLayout() {
     enabled: !!event?.id,
   })
 
-  if (!event || isLoading || !site) return <p className="text-secondary">Carregando o site…</p>
+  if (!event || isLoading || !site) return <Loading fullscreen={false} />
 
   const languages = site.activeLanguages || ['pt']
   const section = site.sections.find((s) => s.type === active)

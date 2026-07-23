@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Domain\Events\Models\Ticket;
+use App\Domain\Events\Services\TicketReceiptPdf;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -30,7 +31,7 @@ class TicketIssuedPtBr extends Notification
         $qrSvg = QrCode::format('svg')->size(196)->margin(0)->errorCorrection('M')
             ->generate($base.'/validar/'.$ticket->code);
 
-        return (new MailMessage)
+        $message = (new MailMessage)
             ->subject('Seu ingresso — '.$ticket->event?->name)
             ->view('emails.ticket-issued', [
                 'ticket' => $ticket,
@@ -39,5 +40,19 @@ class TicketIssuedPtBr extends Notification
                 'logoUrl' => $base.'/favicon-192x192.png',
                 'entrarUrl' => $base.'/entrar',
             ]);
+
+        // Anexa o ingresso em PDF (mesmo do download em Meus Ingressos). Falha
+        // no PDF nunca impede o e-mail — o QR inline ainda vale.
+        try {
+            $message->attachData(
+                app(TicketReceiptPdf::class)->bytes($ticket),
+                'ingresso-'.$ticket->code.'.pdf',
+                ['mime' => 'application/pdf'],
+            );
+        } catch (\Throwable) {
+            // silencioso
+        }
+
+        return $message;
     }
 }

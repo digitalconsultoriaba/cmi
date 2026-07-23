@@ -147,12 +147,17 @@ class AsaasGateway implements PaymentGatewayContract, SupportsHostedCheckout
             // paidAmount fica null de propósito: o valor cobrado pode incluir
             // juros de parcelamento repassados ao comprador; a baixa usa o total
             // do pedido (payment->amount), evitando falso "parcialmente pago".
+            // ASAAS envia data SEM hora (ex.: "2026-07-23") em confirmedDate/
+            // paymentDate — usá-la zeraria a hora (00:00) no comprovante. Só
+            // aproveitamos quando vier com horário; senão o RegisterPayment usa
+            // now() (momento real em que a confirmação foi processada).
             $when = $paid['confirmedDate'] ?? $paid['paymentDate'] ?? null;
+            $hasTime = is_string($when) && preg_match('/[T ]\d{2}:\d{2}/', $when) === 1;
 
             return new ChargeStatus(
                 state: ChargeStatus::PAID,
                 paidAmount: null,
-                paidAt: $when !== null ? Carbon::parse($when) : null,
+                paidAt: $hasTime ? Carbon::parse($when) : null,
                 raw: $paid,
                 cardBrand: $paid['creditCard']['creditCardBrand'] ?? null,
                 cardLast4: $paid['creditCard']['creditCardNumber'] ?? null,

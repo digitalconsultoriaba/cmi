@@ -19,7 +19,6 @@ import MinhaConta from './pages/MinhaConta'
 import MeusDados from './pages/MeusDados'
 import AdminLayout from './admin/AdminLayout'
 import PagarPedido from './pages/PagarPedido'
-import AcompanharPedidos from './pages/AcompanharPedidos'
 import TrocarSenha from './pages/TrocarSenha'
 import LandingHome from './pages/LandingHome'
 import Tesouraria from './admin/pages/Tesouraria'
@@ -106,7 +105,6 @@ function AppRoutes() {
           <Route path="/evento/:slug" element={<EventoPublico />} />
           <Route path="/site/:slug" element={<SitePublico />} />
           <Route path="/checkout/:slug" element={<CheckoutSeminario />} />
-          <Route path="/acompanhar" element={<AcompanharPedidos />} />
           <Route path="/acesso" element={<MagicLink />} />
           <Route
             path="/checkout"

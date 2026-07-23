@@ -4,6 +4,7 @@ import { apiGet, apiPost } from '../lib/api'
 import { formatMoney } from '../lib/money'
 import { parseApiError } from '../lib/forms'
 import QrCode from '../components/QrCode'
+import Loading from '../components/Loading'
 
 const STATUS_LABEL = {
   reserved: 'Reservado', awaiting_payment: 'Aguardando pagamento', paid: 'Pago',
@@ -137,7 +138,7 @@ export default function MeusIngressos() {
     queryFn: () => apiGet('/tickets'),
   })
 
-  if (isLoading) return <p>Carregando…</p>
+  if (isLoading) return <Loading fullscreen={false} />
 
   const refresh = () => {
     setAction(null)

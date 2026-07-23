@@ -59,10 +59,6 @@ class AppServiceProvider extends ServiceProvider
      */
     private function configureRateLimiters(): void
     {
-        RateLimiter::for('auth-email', function (Request $request) {
-            return Limit::perMinute(1)->by('resend:'.($request->user()?->id ?: $request->ip()));
-        });
-
         RateLimiter::for('auth-forgot', function (Request $request) {
             return Limit::perMinute(3)->by('forgot:'.$request->ip());
         });
@@ -84,11 +80,6 @@ class AppServiceProvider extends ServiceProvider
             $code = is_object($order) ? $order->code : $order;
 
             return Limit::perMinute(3)->by('rsnd:'.$code.'|'.$request->ip());
-        });
-
-        // Acompanhar por CPF: barra varredura de documentos por IP (spec 015).
-        RateLimiter::for('public-track', function (Request $request) {
-            return Limit::perMinute(10)->by('trk:'.$request->ip());
         });
     }
 }

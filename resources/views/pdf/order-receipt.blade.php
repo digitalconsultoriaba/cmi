@@ -30,10 +30,10 @@
             <td style="vertical-align:middle;">
                 @if($logoData)<img class="brand" src="{{ $logoData }}" alt="logo">@endif
             </td>
-            <td class="right" style="vertical-align:middle;"><span class="tag">Comprovante de compra</span></td>
+            <td class="right" style="vertical-align:middle;"><span class="tag">Comprovante de pagamento</span></td>
         </tr></table>
         <div class="title">{{ $order->event->name }}</div>
-        <div class="subtitle">Comprovante da sua inscrição — guarde este documento.</div>
+        <div class="subtitle">Comprovante de pagamento do pedido — guarde este documento.</div>
     </div>
 
     <div class="content">
@@ -74,7 +74,7 @@
     </div>
 
     <div class="footer">
-        Este é o comprovante da sua compra no {{ $order->event->name }}.
+        Este é o comprovante de pagamento do seu pedido no {{ $order->event->name }}.
         @if($order->event->support_email) Dúvidas: {{ $order->event->support_email }}.@endif
         Documento emitido em {{ now()->format('d/m/Y H:i') }}.
     </div>

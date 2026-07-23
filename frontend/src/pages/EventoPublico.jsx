@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiGet } from '../lib/api'
 import { formatMoney } from '../lib/money'
 import { useCart } from '../cart/CartProvider'
+import Loading from '../components/Loading'
 
 function Bloco({ block }) {
   const p = block.payload ?? {}
@@ -77,7 +78,7 @@ export default function EventoPublico() {
     retry: false,
   })
 
-  if (isLoading) return <p style={{ padding: '2rem' }}>Carregando…</p>
+  if (isLoading) return <Loading />
   if (isError) return <p style={{ padding: '2rem' }}>Evento não encontrado.</p>
 
   if (event.cancelled) {

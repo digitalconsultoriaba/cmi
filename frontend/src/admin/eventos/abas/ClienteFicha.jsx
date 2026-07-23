@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../../../lib/api'
 import { ApiErrorAlert, Modal, useApiAction } from '../../components'
 import { useEventoUI } from '../EventoLayout'
+import Loading from '../../../components/Loading'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const dt = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR') : '—')
@@ -79,7 +80,7 @@ export default function ClienteFicha({ userId, onClose }) {
     })
   }
 
-  if (!data) return <p className="text-secondary">Carregando…</p>
+  if (!data) return <Loading fullscreen={false} />
 
   const { customer, stats, orders, tickets, history } = data
 

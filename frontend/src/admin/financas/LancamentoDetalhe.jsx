@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiUpload } from '../../lib/api'
 import { ApiErrorAlert, useApiAction } from '../components'
 import LancamentoModal from './LancamentoModal'
+import Loading from '../../components/Loading'
 
 const money = (v) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const STATUS_BADGE = {
@@ -22,7 +23,7 @@ export default function LancamentoDetalhe({ id, onClose }) {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['finance', 'entry', id] })
 
-  if (!e) return <p className="text-secondary">Carregando…</p>
+  if (!e) return <Loading fullscreen={false} />
   const isReceivable = e.direction === 'receivable'
 
   const darBaixa = () => run(() => apiPost(`/finance/entries/${id}/settle`, {
