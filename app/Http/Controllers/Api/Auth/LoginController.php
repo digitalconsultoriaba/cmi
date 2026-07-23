@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use App\Support\ApiResponse;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\JsonResponse;
@@ -25,18 +24,6 @@ class LoginController extends Controller
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
             throw new ThrottleRequestsException;
-        }
-
-        // Conta só-Google: orientar em vez de erro opaco (FR-010).
-        $user = User::query()->where('email', $request->email)->first();
-
-        if ($user !== null && $user->password === null && $user->google_id !== null) {
-            RateLimiter::hit($throttleKey, 60);
-
-            throw ValidationException::withMessages([
-                'email' => 'Esta conta usa o Google para entrar. Use "Entrar com Google" '
-                    .'ou defina uma senha em "Esqueci minha senha".',
-            ]);
         }
 
         if (! Auth::attempt($request->only(['email', 'password']))) {

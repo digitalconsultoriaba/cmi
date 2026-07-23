@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Domain\Events\Services\MagicLinkService;
+use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -27,6 +29,12 @@ class AccessCreatedPtBr extends Notification
     {
         $base = rtrim((string) config('app.frontend_url'), '/');
 
+        // Botão = login por token em 1 clique (→ cai na troca de senha já logado);
+        // login+senha ficam como alternativa manual no corpo do e-mail.
+        $magicUrl = $notifiable instanceof User
+            ? app(MagicLinkService::class)->tokenLinkFor($notifiable)
+            : $base.'/entrar';
+
         return (new MailMessage)
             ->subject('Sua conta de acesso'.($this->eventName !== null ? ' — '.$this->eventName : ''))
             ->view('emails.access-created', [
@@ -35,6 +43,7 @@ class AccessCreatedPtBr extends Notification
                 'eventName' => $this->eventName,
                 'logoUrl' => $base.'/favicon-192x192.png',
                 'entrarUrl' => $base.'/entrar',
+                'magicUrl' => $magicUrl,
             ]);
     }
 }

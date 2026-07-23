@@ -16,6 +16,11 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
       },
+      // Login por link do e-mail (rota web com sessão) — ver auth.magic.token.
+      '/auth/magic': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
       '/storage': {
         target: 'http://localhost:8000',
         changeOrigin: true,

@@ -30,7 +30,7 @@ class UserResource extends JsonResource
             'pais' => $this->pais,
             'avatarUrl' => $this->avatar_url,
             'hasPassword' => $this->password !== null,
-            'hasGoogle' => $this->google_id !== null,
+            'mustChangePassword' => (bool) $this->must_change_password,
             'roles' => $this->roles->pluck('slug')->values(),
         ];
     }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
 import ProtectedRoute from './auth/ProtectedRoute'
 import RoleRoute from './auth/RoleRoute'
@@ -20,6 +20,7 @@ import MeusDados from './pages/MeusDados'
 import AdminLayout from './admin/AdminLayout'
 import PagarPedido from './pages/PagarPedido'
 import AcompanharPedidos from './pages/AcompanharPedidos'
+import TrocarSenha from './pages/TrocarSenha'
 import LandingHome from './pages/LandingHome'
 import Tesouraria from './admin/pages/Tesouraria'
 import TiposLotes from './admin/pages/TiposLotes'
@@ -85,13 +86,19 @@ function Home() {
   )
 }
 
-export default function App() {
+function AppRoutes() {
+  const { user } = useAuth()
+  const location = useLocation()
+
+  // 1º acesso: conta gerada na compra (senha temporária) troca a senha antes de tudo.
+  if (user?.mustChangePassword && location.pathname !== '/trocar-senha') {
+    return <Navigate to="/trocar-senha" replace />
+  }
+
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <CartProvider>
         <Routes>
           <Route path="/" element={<LandingHome />} />
+          <Route path="/trocar-senha" element={<ProtectedRoute><TrocarSenha /></ProtectedRoute>} />
           <Route path="/entrar" element={<Entrar />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/esqueci-senha" element={<EsqueciSenha />} />
@@ -183,6 +190,15 @@ export default function App() {
             <Route path="landing/:eventId?" element={<RoleRoute role="admin"><Landing /></RoleRoute>} />
           </Route>
         </Routes>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <AppRoutes />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

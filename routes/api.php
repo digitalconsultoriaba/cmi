@@ -16,7 +16,6 @@ use App\Http\Controllers\Api\Admin\SponsorshipController;
 use App\Http\Controllers\Api\Admin\TicketLotController;
 use App\Http\Controllers\Api\Admin\TicketTypeController;
 use App\Http\Controllers\Api\Auth\EmailVerificationController;
-use App\Http\Controllers\Api\Auth\GoogleController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\MeController;
 use App\Http\Controllers\Api\Auth\ProfileController;
@@ -158,10 +157,6 @@ Route::prefix('auth')->group(function () {
     // ver routes/web.php `auth.magic`. Aqui só a solicitação por e-mail (XHR).
     Route::post('/magic/request', [\App\Http\Controllers\Api\Auth\MagicLinkController::class, 'request'])
         ->middleware('throttle:6,1');
-
-    // Google (Socialite)
-    Route::get('/google/redirect', [GoogleController::class, 'redirect']);
-    Route::get('/google/callback', [GoogleController::class, 'callback']);
 
     // Autenticado
     Route::middleware('auth:sanctum')->group(function () {

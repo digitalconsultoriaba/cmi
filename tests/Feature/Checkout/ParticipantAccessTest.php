@@ -41,6 +41,26 @@ class ParticipantAccessTest extends CheckoutTestCase
         Notification::assertSentTo($part, AccessCreatedPtBr::class);
     }
 
+    public function test_conta_gerada_exige_troca_de_senha_no_primeiro_acesso(): void
+    {
+        Notification::fake();
+        $this->seminarEvent();
+
+        $this->payOrder([
+            $this->item(['participant_name' => 'Novo Part', 'participant_email' => 'novo2@ex.com']),
+        ]);
+
+        $user = User::query()->where('email', 'novo2@ex.com')->firstOrFail();
+        $this->assertTrue($user->must_change_password);
+
+        // No 1º acesso, trocar a senha NÃO exige a atual e limpa a flag.
+        $this->actingAs($user)->postJson('/api/auth/password', [
+            'password' => 'MinhaNovaSenha1', 'password_confirmation' => 'MinhaNovaSenha1',
+        ])->assertOk()->assertJsonPath('data.mustChangePassword', false);
+
+        $this->assertFalse($user->fresh()->must_change_password);
+    }
+
     public function test_email_com_conta_existente_nao_e_sobrescrito_nem_reenviado(): void
     {
         Notification::fake();

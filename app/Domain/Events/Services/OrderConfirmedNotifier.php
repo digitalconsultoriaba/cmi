@@ -33,10 +33,12 @@ class OrderConfirmedNotifier
 
         $this->ensureAccess($order);
 
+        // Todo participante recebe o SEU ingresso — inclusive quando é o próprio
+        // comprador (comprador que também participa recebe os 3 e-mails).
         foreach ($order->tickets as $ticket) {
             $participant = $ticket->participantUser;
-            if ($participant === null || $participant->id === $order->buyer_user_id) {
-                continue; // sem conta própria, ou é o próprio comprador
+            if ($participant === null) {
+                continue; // e-mail do participante não informado (sem conta)
             }
             $this->safeNotify(fn () => $participant->notify(new TicketIssuedPtBr($ticket)), $ticket->code);
         }
@@ -61,7 +63,8 @@ class OrderConfirmedNotifier
             }
 
             $plain = $this->generatePassword();
-            $user->forceFill(['password' => $plain])->save(); // cast 'hashed' → grava o hash
+            // Senha temporária: cast 'hashed' grava o hash; troca obrigatória no 1º acesso.
+            $user->forceFill(['password' => $plain, 'must_change_password' => true])->save();
             $user->assignRole(Role::ATTENDEE);
 
             $this->safeNotify(

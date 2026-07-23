@@ -44,15 +44,18 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        // Quem já tem senha precisa confirmar a atual (contas só-Google não)
-        if ($user->password !== null
+        // Quem já tem senha confirma a atual (contas só-Google não). No 1º acesso
+        // obrigatório (must_change_password) dispensa — acabou de logar com a temporária.
+        if (! $user->must_change_password
+            && $user->password !== null
             && ! Hash::check($data['current_password'] ?? '', $user->password)) {
             throw ValidationException::withMessages([
                 'current_password' => 'A senha atual está incorreta.',
             ]);
         }
 
-        $user->forceFill(['password' => $data['password']])->save();
+        // Trocar a senha limpa a exigência de troca no 1º acesso (spec 002/015).
+        $user->forceFill(['password' => $data['password'], 'must_change_password' => false])->save();
 
         return UserResource::make($user->fresh());
     }

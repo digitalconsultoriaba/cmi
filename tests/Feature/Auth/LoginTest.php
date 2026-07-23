@@ -68,22 +68,6 @@ class LoginTest extends AuthTestCase
         $this->assertGuest();
     }
 
-    public function test_conta_so_google_recebe_orientacao_no_login_com_senha(): void
-    {
-        User::factory()->create([
-            'email' => 'google@exemplo.com',
-            'password' => null,
-            'google_id' => 'g-123',
-        ]);
-
-        $response = $this->postJson('/api/auth/login', [
-            'email' => 'google@exemplo.com',
-            'password' => 'tanto-faz-123',
-        ])->assertUnprocessable();
-
-        $this->assertStringContainsString('Google', $response->json('errors.email.0'));
-    }
-
     public function test_forca_bruta_e_bloqueada_apos_5_tentativas(): void
     {
         User::factory()->create([

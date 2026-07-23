@@ -94,30 +94,6 @@ class PasswordResetTest extends AuthTestCase
         ])->assertUnprocessable();
     }
 
-    public function test_conta_so_google_ganha_senha_local(): void
-    {
-        $user = User::factory()->create([
-            'email' => 'google@exemplo.com',
-            'password' => null,
-            'google_id' => 'g-123',
-        ]);
-        $token = Password::createToken($user);
-
-        $this->postJson('/api/auth/reset-password', [
-            'token' => $token,
-            'email' => 'google@exemplo.com',
-            'password' => 'agora-tenho-senha1',
-            'password_confirmation' => 'agora-tenho-senha1',
-        ])->assertOk();
-
-        $this->assertNotNull($user->fresh()->password);
-
-        $this->postJson('/api/auth/login', [
-            'email' => 'google@exemplo.com',
-            'password' => 'agora-tenho-senha1',
-        ])->assertOk()->assertJsonPath('data.hasGoogle', true);
-    }
-
     public function test_solicitacoes_em_excesso_sao_bloqueadas(): void
     {
         Notification::fake();

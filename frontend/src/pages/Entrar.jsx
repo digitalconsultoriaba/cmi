@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
-import { apiGet } from '../lib/api'
 import { parseApiError, fieldError } from '../lib/forms'
 
 export default function Entrar() {
@@ -16,7 +15,6 @@ export default function Entrar() {
 
   const from = location.state?.from?.pathname ?? null
   const verified = params.get('verified') === '1'
-  const google = params.get('google')
 
   const submit = async (event) => {
     event.preventDefault()
@@ -30,16 +28,6 @@ export default function Entrar() {
         ? (from && from.startsWith('/painel') ? from : '/painel')
         : '/minha-conta'
       navigate(target, { replace: true })
-    } catch (err) {
-      setError(parseApiError(err))
-    }
-  }
-
-  const loginGoogle = async () => {
-    setError(null)
-    try {
-      const { url } = await apiGet('/auth/google/redirect')
-      window.location.assign(url)
     } catch (err) {
       setError(parseApiError(err))
     }
@@ -59,8 +47,6 @@ export default function Entrar() {
             <h2 className="h2 text-center mb-4">Entrar na sua conta</h2>
 
             {verified && <div className="alert alert-success">E-mail confirmado! Faça login para continuar.</div>}
-            {google === 'ok' && <div className="alert alert-success">Login com Google concluído. Redirecionando…</div>}
-            {google === 'erro' && <div className="alert alert-danger">Não foi possível entrar com o Google. Tente novamente.</div>}
             {error && error.status !== 429 && !fieldError(error, 'email') && (
               <div className="alert alert-danger">{error.message}</div>
             )}
@@ -87,12 +73,6 @@ export default function Entrar() {
                 </button>
               </div>
             </form>
-
-            <div className="hr-text my-3">ou</div>
-
-            <button type="button" className="btn w-100" onClick={loginGoogle}>
-              Entrar com Google
-            </button>
           </div>
         </div>
 

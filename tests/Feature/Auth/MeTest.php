@@ -17,7 +17,6 @@ class MeTest extends AuthTestCase
     {
         $user = User::factory()->create([
             'email' => 'ana@exemplo.com',
-            'google_id' => 'g-123',
         ]);
         $user->assignRole(Role::ATTENDEE);
         $user->assignRole(Role::ADMIN);
@@ -26,10 +25,10 @@ class MeTest extends AuthTestCase
             ->assertOk()
             ->assertJsonStructure(['data' => [
                 'id', 'name', 'email', 'emailVerified', 'document', 'phone',
-                'avatarUrl', 'hasPassword', 'hasGoogle', 'roles',
+                'avatarUrl', 'hasPassword', 'mustChangePassword', 'roles',
             ]])
             ->assertJsonPath('data.emailVerified', true)
-            ->assertJsonPath('data.hasGoogle', true)
+            ->assertJsonPath('data.mustChangePassword', false)
             ->assertJsonCount(2, 'data.roles');
     }
 

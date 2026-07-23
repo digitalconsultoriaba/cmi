@@ -32,7 +32,8 @@ class PasswordResetController extends Controller
         $status = Password::reset(
             $request->only(['email', 'password', 'password_confirmation', 'token']),
             function ($user, string $password) {
-                $user->forceFill(['password' => $password])->save();
+                // Redefinir também zera a exigência de troca no 1º acesso.
+                $user->forceFill(['password' => $password, 'must_change_password' => false])->save();
                 event(new PasswordReset($user));
             }
         );
