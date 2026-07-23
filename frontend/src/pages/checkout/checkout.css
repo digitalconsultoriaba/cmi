@@ -80,12 +80,17 @@
 .ck-toggle button.on { background: var(--blue); color: #fff; }
 
 /* Buttons */
-.ck-btn { border: 0; border-radius: 11px; padding: 12px 20px; font-size: .95rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: .15s; }
-.ck-btn-primary { background: var(--blue); color: #fff; }
+.ck-btn { border: 0; border-radius: 11px; padding: 12px 20px; font-size: .95rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: .15s; text-decoration: none; }
+.ck-btn:hover { text-decoration: none; }
+.ck-btn-primary, .ck-btn-primary:hover { color: #fff; }
+.ck-btn-primary { background: var(--blue); }
 .ck-btn-primary:hover { background: #1a3576; box-shadow: 0 8px 20px rgba(31,63,139,.28); }
 .ck-btn-primary:disabled { background: #AEBAD2; cursor: not-allowed; box-shadow: none; }
-.ck-btn-light { background: #EEF2F8; color: #45526B; }
+.ck-btn-light, .ck-btn-light:hover { color: #45526B; }
+.ck-btn-light { background: #EEF2F8; }
 .ck-btn-light:hover { background: #E3E9F3; }
+/* Linha de ações (botões lado a lado, com respiro entre eles) */
+.ck-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
 .ck-btn-ghost { background: #fff; color: var(--blue); border: 1px solid var(--line); }
 .ck-btn-ghost:hover { border-color: var(--blue); }
 .ck-btn-danger { background: #fff; color: #DC2626; border: 1px solid #F2D2D2; }

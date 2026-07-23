@@ -72,7 +72,8 @@ export default function CheckoutSeminario() {
   const discounts = cart.reduce((s, r) => s + (r.voucherCode ? rawPrice(r) : 0), 0)
   const total = subtotal - discounts
 
-  const stepIndex = step === 'cart' ? 0 : step === 'review' ? 1 : 2
+  // 'done' = 3 para que os três passos (inclusive Pagamento) apareçam com check.
+  const stepIndex = step === 'cart' ? 0 : step === 'review' ? 1 : step === 'done' ? 3 : 2
 
   const addToCart = (data) => {
     if (editIdx != null) { setCart((c) => c.map((r, i) => (i === editIdx ? { ...r, ...data } : r))); setEditIdx(null) }
@@ -331,7 +332,7 @@ export default function CheckoutSeminario() {
 
         {step === 'payment' && result && <PagamentoStep order={result.order} customerData={customerData} onBack={() => setStep('review')} onPaid={() => setStep('done')} />}
 
-        {step === 'confirming' && <ConfirmacaoStep code={returnedCode || result?.order?.code} />}
+        {step === 'confirming' && <ConfirmacaoStep code={returnedCode || result?.order?.code} onPaid={() => setStep('done')} />}
 
         {step === 'payment_failed' && (
           <div className="ck-card ck-center" style={{ marginTop: 26, padding: '48px 24px' }}>
@@ -348,11 +349,13 @@ export default function CheckoutSeminario() {
             <div className="ck-empty-ico" style={{ background: '#E7F7EE', color: '#16A34A', width: 68, height: 68 }}><IcCheck width={32} height={32} /></div>
             <h2 style={{ fontWeight: 800 }}>Inscrição confirmada!</h2>
             <p className="ck-card-sub">Enviamos os ingressos e o acesso por e-mail. Cada participante recebe o seu; o comprador acessa todos.</p>
-            <p>Pedido: <strong>{result?.order?.code}</strong></p>
-            {result?.order?.code && (
-              <a className="ck-btn ck-btn-primary" style={{ marginTop: 10 }} href={`/api/public/orders/${result.order.code}/receipt`}>Baixar comprovante</a>
-            )}
-            <a className="ck-btn ck-btn-light" style={{ marginTop: 8 }} href="/acompanhar">Acompanhar meus pedidos</a>
+            <p>Pedido: <strong>{result?.order?.code || returnedCode}</strong></p>
+            <div className="ck-actions">
+              {(result?.order?.code || returnedCode) && (
+                <a className="ck-btn ck-btn-primary" href={`/api/public/orders/${result?.order?.code || returnedCode}/receipt`}>Baixar comprovante</a>
+              )}
+              <a className="ck-btn ck-btn-light" href="/acompanhar">Acompanhar meus pedidos</a>
+            </div>
           </div>
         )}
       </div>
@@ -501,7 +504,7 @@ function PagamentoStep({ order, customerData, onBack, onPaid }) {
 }
 
 /** Retorno do ASAAS: aguarda a confirmação (webhook) fazendo polling do status. */
-function ConfirmacaoStep({ code }) {
+function ConfirmacaoStep({ code, onPaid }) {
   const { data } = useQuery({
     queryKey: ['guest-pay-status', code],
     queryFn: () => apiGet(`/public/orders/${code}/payment-status`),
@@ -509,6 +512,10 @@ function ConfirmacaoStep({ code }) {
     refetchInterval: (query) => (query.state.data?.status === 'paid' ? false : 3000),
   })
   const paid = data?.status === 'paid'
+
+  // Pago → vai para a tela final 'done' (unifica a confirmação e marca o
+  // passo Pagamento como concluído no stepper).
+  useEffect(() => { if (paid) onPaid?.() }, [paid])
 
   return (
     <div className="ck-card ck-center" style={{ marginTop: 26, padding: '48px 24px' }}>
@@ -528,10 +535,10 @@ function ConfirmacaoStep({ code }) {
       )}
       {code && <p>Pedido: <strong>{code}</strong></p>}
       {paid && code && (
-        <>
-          <a className="ck-btn ck-btn-primary" style={{ marginTop: 10 }} href={`/api/public/orders/${code}/receipt`}>Baixar comprovante</a>
-          <a className="ck-btn ck-btn-light" style={{ marginTop: 8 }} href="/acompanhar">Acompanhar meus pedidos</a>
-        </>
+        <div className="ck-actions">
+          <a className="ck-btn ck-btn-primary" href={`/api/public/orders/${code}/receipt`}>Baixar comprovante</a>
+          <a className="ck-btn ck-btn-light" href="/acompanhar">Acompanhar meus pedidos</a>
+        </div>
       )}
     </div>
   )
