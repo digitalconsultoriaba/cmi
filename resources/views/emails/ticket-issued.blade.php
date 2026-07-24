@@ -2,7 +2,7 @@
 
 @section('content')
     <span class="pill">Seu ingresso</span>
-    <h2 class="title">Seu ingresso está pronto</h2>
+    <h2 class="title">Seu ingresso já está disponível</h2>
     <p class="lead">Olá, <b>{{ $ticket->participant_name }}</b>! Este é o seu ingresso para o <b>{{ $ticket->event?->name }}</b>. Apresente o QR code abaixo na entrada do evento.</p>
 
     <div class="panel" style="border-left-color:#C9A24B;">
