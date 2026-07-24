@@ -409,7 +409,7 @@ function PagamentoStep({ order, customerData, onBack, onPaid }) {
       // oferta até o máximo — o backend limita ao teto configurado.
       // customerData pré-preenche o cadastro do comprador na página do ASAAS.
       const { redirectUrl } = await apiPost(`/public/orders/${order.code}/checkout/card`, {
-        installments: 12,
+        installments: 5,
         ...(customerData ? { customerData } : {}),
       })
       if (redirectUrl) { window.location.href = redirectUrl; return }
@@ -472,7 +472,7 @@ function PagamentoStep({ order, customerData, onBack, onPaid }) {
             </p>
           ) : (
             <p className="ck-card-sub" style={{ textAlign: 'center', marginTop: 10, fontSize: '.82rem' }}>
-              Você será direcionado ao ambiente seguro do ASAAS para concluir o pagamento. A opção de parcelar (à vista ou em até 12×, com os juros) é escolhida lá.
+              Você será direcionado ao ambiente seguro do ASAAS para concluir o pagamento. A opção de parcelar (à vista ou em até 5×, com os juros) é escolhida lá.
             </p>
           )}
         </div>
