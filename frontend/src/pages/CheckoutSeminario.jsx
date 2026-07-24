@@ -463,12 +463,18 @@ function PagamentoStep({ order, customerData, onBack, onPaid }) {
 
       {method === 'card' && (
         <div style={{ marginTop: 16 }}>
-          <button className="ck-btn ck-btn-primary ck-btn-block" disabled={busy} onClick={payCard}>
+          <button className="ck-btn ck-btn-primary ck-btn-block" disabled={busy || Number(order.totalAmount) < 5} onClick={payCard}>
             {busy ? 'Redirecionando…' : 'Pagar com cartão'}
           </button>
-          <p className="ck-card-sub" style={{ textAlign: 'center', marginTop: 10, fontSize: '.82rem' }}>
-            Você será direcionado ao ambiente seguro do ASAAS para concluir o pagamento. A opção de parcelar (à vista ou em até 12×, com os juros) é escolhida lá.
-          </p>
+          {Number(order.totalAmount) < 5 ? (
+            <p className="ck-card-sub" style={{ textAlign: 'center', marginTop: 10, fontSize: '.82rem', color: '#B91C1C' }}>
+              O cartão exige valor mínimo de <b>R$ 5,00</b>. Para este valor, use o <b>PIX</b>.
+            </p>
+          ) : (
+            <p className="ck-card-sub" style={{ textAlign: 'center', marginTop: 10, fontSize: '.82rem' }}>
+              Você será direcionado ao ambiente seguro do ASAAS para concluir o pagamento. A opção de parcelar (à vista ou em até 12×, com os juros) é escolhida lá.
+            </p>
+          )}
         </div>
       )}
 

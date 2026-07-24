@@ -48,6 +48,7 @@ class PublicTicketController extends Controller
             'eventName' => $ticket->event?->name,
             'ticketType' => $ticket->is_courtesy ? 'Cortesia' : $ticket->ticketType?->name,
             'lote' => $ticket->ticketLot?->name,
+            'value' => $ticket->is_courtesy ? 'Cortesia' : 'R$ '.number_format((float) $ticket->unit_price, 2, ',', '.'),
         ]);
     }
 }

@@ -41,8 +41,8 @@ class TicketReceiptPdf
             'outputBase64' => true,
         ])))->render($base.'/validar/'.$ticket->code);
 
-        // Triquetra (mesma do e-mail/favicon) — cabeçalho navy do ingresso.
-        $logoPath = public_path('favicon-192x192.png');
+        // Mesma logo do comprovante (selos CMI/GLMEES) — cabeçalho navy.
+        $logoPath = public_path('logo.png');
         $logoData = is_file($logoPath)
             ? 'data:image/png;base64,'.base64_encode((string) file_get_contents($logoPath))
             : null;

@@ -64,6 +64,7 @@ export default function ValidarIngresso() {
                 <Row k="Participante" v={t.participantName} />
                 <Row k="Evento" v={t.eventName} />
                 <Row k="Ingresso" v={[t.ticketType, t.lote && `Lote ${t.lote}`].filter(Boolean).join(' · ')} />
+                <Row k="Valor" v={t.value} />
                 <Row k="Código" v={t.code} mono />
                 <Row k="Situação" v={t.statusLabel} />
               </div>

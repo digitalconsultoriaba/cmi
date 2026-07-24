@@ -18,6 +18,7 @@
         @if($ticket->ticketLot?->name)
             <div class="row"><span class="k">Lote</span><span class="v">{{ $ticket->ticketLot->name }}</span></div>
         @endif
+        <div class="row"><span class="k">Valor</span><span class="v">{{ $ticket->is_courtesy ? 'Cortesia' : 'R$ '.number_format((float) $ticket->unit_price, 2, ',', '.') }}</span></div>
     </div>
 
     <div style="text-align:center; margin:0 0 22px;">
@@ -29,7 +30,7 @@
     </div>
 
     <div style="padding:11px 14px; background:#EAF3EC; border:1px solid #CDE6D3; border-radius:9px; margin:0 0 8px;">
-        <span style="font-size:11.5px; color:#2c5138; line-height:1.45;"><b>Ingresso válido.</b> O QR carrega uma assinatura que comprova a emissão pelo sistema do Seminário — a portaria valida no check-in. Ingresso pessoal e intransferível.</span>
+        <span style="font-size:11.5px; color:#2c5138; line-height:1.45;"><b>Ingresso válido.</b> O QR Code possui assinatura digital e será validado pela recepção do evento no momento do check-in.</span>
     </div>
 
     <div class="cta" style="margin-top:18px;"><a href="{{ $entrarUrl }}">Acessar minha conta</a></div>

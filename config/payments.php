@@ -43,6 +43,8 @@ return [
         'api_key' => env('ASAAS_API_KEY'),
         'webhook_secret' => env('ASAAS_WEBHOOK_SECRET'),
         'max_installments' => (int) env('ASAAS_MAX_INSTALLMENTS', 12),
+        // Valor mínimo por cobrança de cartão exigido pelo ASAAS (R$ 5,00).
+        'min_amount' => (float) env('ASAAS_MIN_AMOUNT', 5.00),
         // Base do frontend para montar as URLs de retorno (callback) do checkout.
         'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:5173')),
     ],

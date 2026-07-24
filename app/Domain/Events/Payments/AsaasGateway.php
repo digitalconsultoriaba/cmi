@@ -34,6 +34,16 @@ class AsaasGateway implements PaymentGatewayContract, SupportsHostedCheckout
 
     public function createCardCheckout(Order $order, int $installments, ?array $customerData = null): HostedCheckout
     {
+        // ASAAS exige valor mínimo por cobrança de cartão (R$ 5,00) — abaixo disso
+        // a API recusa (400). Barramos aqui com mensagem clara direcionando ao PIX.
+        $min = (float) config('payments.asaas.min_amount', 5.0);
+        if ((float) $order->total_amount < $min) {
+            throw new DomainRuleViolation(
+                'O pagamento com cartão exige valor mínimo de R$ '.number_format($min, 2, ',', '.').'. Para valores menores, use o PIX.',
+                'card_min_amount',
+            );
+        }
+
         $max = (int) config('payments.asaas.max_installments', 12);
         $installments = max(1, min($installments, $max));
 

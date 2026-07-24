@@ -9,12 +9,14 @@
         /* Card do ingresso, flutuando sobre o fundo escuro */
         .ticket { background: #fff; border-radius: 18px; margin: 26px 22px; position: relative; }
 
-        .t-head { background: #17357A; color: #fff; padding: 22px 24px 20px; text-align: center; border-radius: 18px 18px 0 0; }
-        .t-head .taghold { text-align: right; margin-bottom: 4px; }
+        .t-head { background: #17357A; color: #fff; padding: 18px 24px 20px; border-radius: 18px 18px 0 0; }
+        .t-head .taghold { text-align: right; margin-bottom: 6px; }
         .t-head .tag { display: inline-block; background: #C9A24B; color: #17357A; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: bold; padding: 4px 10px; border-radius: 999px; }
-        .t-head .brand { height: 54px; width: auto; }
-        .t-head .org { color: #C9A24B; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; margin: 10px 0 0; }
-        .t-head .event { font-family: 'DejaVu Serif', Georgia, serif; font-size: 18px; font-weight: bold; color: #EAF0FB; margin: 3px 0 0; }
+        .t-head .brandrow { border-collapse: collapse; }
+        .t-head .logocell { vertical-align: middle; }
+        .t-head .brand { height: 52px; width: auto; }
+        .t-head .titlecell { vertical-align: middle; padding-left: 16px; }
+        .t-head .event { font-family: 'DejaVu Serif', Georgia, serif; font-size: 17px; font-weight: bold; color: #EAF0FB; line-height: 1.2; letter-spacing: .5px; margin: 0; }
         .rule-gold { height: 3px; background: #C9A24B; }
 
         .content { padding: 22px 24px 6px; }
@@ -55,9 +57,10 @@
     <div class="ticket">
         <div class="t-head">
             <div class="taghold"><span class="tag">Ingresso</span></div>
-            @if($logoData)<img class="brand" src="{{ $logoData }}" alt="logo">@endif
-            <div class="org">Grande Loja Maçônica do ES</div>
-            <div class="event">{{ $ticket->event->name }}</div>
+            <table class="brandrow"><tr>
+                <td class="logocell">@if($logoData)<img class="brand" src="{{ $logoData }}" alt="logo">@endif</td>
+                <td class="titlecell"><div class="event">SEMINÁRIO<br>INTERNACIONAL<br>DA MAÇONARIA 2026</div></td>
+            </tr></table>
         </div>
         <div class="rule-gold"></div>
 
@@ -76,8 +79,8 @@
                     <td><div class="k">Pedido</div><div class="v mono">{{ $ticket->order?->code }}</div></td>
                 </tr>
                 <tr>
+                    <td><div class="k">Valor</div><div class="v">{{ $ticket->is_courtesy ? 'Cortesia' : 'R$ '.number_format((float) $ticket->unit_price, 2, ',', '.') }}</div></td>
                     <td><div class="k">Emitido em</div><div class="v">{{ now()->format('d/m/Y') }}</div></td>
-                    <td></td>
                 </tr>
             </table>
         </div>
@@ -97,7 +100,7 @@
         <div class="valid">
             <table style="width:100%;"><tr>
                 <td style="width:32px; vertical-align:top;"><div class="dot"><table class="dotc"><tr><td>&#10003;</td></tr></table></div></td>
-                <td class="txt"><b>Ingresso válido.</b> O QR carrega uma assinatura digital que comprova que foi emitido pelo sistema do Seminário — a portaria valida na hora do check-in.</td>
+                <td class="txt"><b>Ingresso válido.</b> O QR Code possui assinatura digital e será validado pela recepção do evento no momento do check-in.</td>
             </tr></table>
         </div>
 
