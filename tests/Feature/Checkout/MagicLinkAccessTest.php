@@ -32,6 +32,11 @@ class MagicLinkAccessTest extends CheckoutTestCase
             $this->item(['participant_name' => 'Irmão 2', 'participant_email' => 'i2@ex.com']),
         ]))->assertCreated();
 
+        // Meus Ingressos mostra só emitidos — confirma os ingressos da compra.
+        \App\Domain\Events\Models\Ticket::query()
+            ->whereIn('participant_email', ['i1@ex.com', 'i2@ex.com'])
+            ->update(['status_id' => \App\Domain\Events\Models\TicketStatus::idFor(\App\Domain\Events\Models\TicketStatus::CONFIRMED)]);
+
         $buyer = User::query()->where('email', 'comprador@ex.com')->firstOrFail();
         $p1 = User::query()->where('email', 'i1@ex.com')->firstOrFail();
 

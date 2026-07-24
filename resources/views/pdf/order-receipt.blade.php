@@ -5,11 +5,15 @@
     <style>
         @page { margin: 0; }
         body { font-family: DejaVu Sans, sans-serif; color: #1F2A44; font-size: 12px; margin: 0; }
-        .header { background: #17357A; color: #fff; padding: 22px 32px; }
-        .header .brand { height: 52px; }
-        .tag { display: inline-block; padding: 3px 12px; border-radius: 12px; background: #fff; color: #17357A; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; }
-        .title { font-size: 20px; font-weight: bold; margin: 14px 0 2px; }
-        .subtitle { color: #C6D4EF; font-size: 12px; }
+        .header { background: #17357A; color: #fff; padding: 18px 32px 20px; }
+        .header .taghold { text-align: right; margin-bottom: 4px; }
+        .tag { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #C9A24B; color: #17357A; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; }
+        .header .brandrow td { vertical-align: middle; }
+        .header .logocell { width: 120px; }
+        .header .brand { height: 50px; }
+        .header .titlecell { padding-left: 16px; }
+        .header .ev { font-family: 'DejaVu Serif', Georgia, serif; font-size: 17px; font-weight: bold; color: #EAF0FB; line-height: 1.2; letter-spacing: .5px; }
+        .rule-gold { height: 3px; background: #C9A24B; }
         .content { padding: 22px 32px; }
         h2 { font-size: 12px; color: #17357A; text-transform: uppercase; letter-spacing: .5px; margin: 18px 0 6px; border-bottom: 1px solid #E6ECF5; padding-bottom: 5px; }
         table.kv { width: 100%; }
@@ -26,15 +30,13 @@
 </head>
 <body>
     <div class="header">
-        <table style="width:100%;"><tr>
-            <td style="vertical-align:middle;">
-                @if($logoData)<img class="brand" src="{{ $logoData }}" alt="logo">@endif
-            </td>
-            <td class="right" style="vertical-align:middle;"><span class="tag">Comprovante de pagamento</span></td>
+        <div class="taghold"><span class="tag">Comprovante de pagamento</span></div>
+        <table class="brandrow" style="width:100%;"><tr>
+            <td class="logocell">@if($logoData)<img class="brand" src="{{ $logoData }}" alt="logo">@endif</td>
+            <td class="titlecell"><div class="ev">SEMINÁRIO<br>INTERNACIONAL<br>DA MAÇONARIA 2026</div></td>
         </tr></table>
-        <div class="title">{{ $order->event->name }}</div>
-        <div class="subtitle">Comprovante de pagamento do pedido — guarde este documento.</div>
     </div>
+    <div class="rule-gold"></div>
 
     <div class="content">
         <h2>Pedido</h2>
@@ -74,8 +76,8 @@
     </div>
 
     <div class="footer">
-        Este é o comprovante de pagamento do seu pedido no {{ $order->event->name }}.
-        @if($order->event->support_email) Dúvidas: {{ $order->event->support_email }}.@endif
+        Este é o comprovante de pagamento do seu pedido no Seminário Internacional da Maçonaria 2026.
+        Dúvidas: glmees@glmees.org.br.
         Documento emitido em {{ now()->format('d/m/Y H:i') }}.
     </div>
 </body>

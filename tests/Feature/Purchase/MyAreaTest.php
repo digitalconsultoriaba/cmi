@@ -60,6 +60,9 @@ class MyAreaTest extends PurchaseTestCase
             ]),
         ])->assertCreated();
 
+        // Meus Ingressos mostra só emitidos — confirma o ingresso da compra.
+        $this->event->tickets()->update(['status_id' => \App\Domain\Events\Models\TicketStatus::idFor(\App\Domain\Events\Models\TicketStatus::CONFIRMED)]);
+
         $response = $this->actingAs($participant)->getJson('/api/tickets')->assertOk();
 
         $this->assertCount(1, $response->json('data'));
@@ -80,6 +83,9 @@ class MyAreaTest extends PurchaseTestCase
         $this->buy($buyer, [
             $this->item($this->individual, ['participant_name' => 'Sem Conta']),
         ])->assertCreated();
+
+        // Meus Ingressos mostra só emitidos — confirma o ingresso da compra.
+        $this->event->tickets()->update(['status_id' => \App\Domain\Events\Models\TicketStatus::idFor(\App\Domain\Events\Models\TicketStatus::CONFIRMED)]);
 
         $response = $this->actingAs($buyer)->getJson('/api/tickets')->assertOk();
         $this->assertCount(1, $response->json('data'));
