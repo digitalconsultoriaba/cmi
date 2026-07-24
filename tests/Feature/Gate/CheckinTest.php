@@ -53,6 +53,18 @@ class CheckinTest extends LifecycleTestCase
         $this->scan($this->gate(), '  '.strtolower($ticket->code).'  ')->assertOk();
     }
 
+    public function test_aceita_url_do_qr_extraindo_o_codigo(): void
+    {
+        [, $order] = $this->paidOrder();
+        $ticket = $order->tickets->first();
+
+        // O QR do ingresso aponta para a URL pública /validar/{code} — a portaria
+        // pode escanear a URL inteira e o check-in extrai o código.
+        $this->scan($this->gate(), 'https://cmi.glmees.org.br/validar/'.$ticket->code)
+            ->assertOk()
+            ->assertJsonPath('data.code', $ticket->code);
+    }
+
     public function test_casal_vale_duas_pessoas_com_acompanhante(): void
     {
         $this->sellableEvent();

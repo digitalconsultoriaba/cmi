@@ -45,24 +45,34 @@ class GateController extends Controller
     public function checkin(Request $request, CheckinService $service)
     {
         $data = $request->validate([
-            'code' => ['required', 'string', 'max:30'],
+            // Aceita a URL do QR (/validar/{code}); o código é extraído abaixo.
+            'code' => ['required', 'string', 'max:200'],
             'day' => ['nullable', 'integer', 'exists:event_days,id'],
             'origin' => ['sometimes', 'in:'.implode(',', CheckinOrigin::ALL)],
             'note' => ['nullable', 'string', 'max:255'],
         ], ['code.required' => 'Informe o código do ingresso.']);
 
+        // O QR do ingresso aponta para a URL pública /validar/{code}. A portaria
+        // pode escanear a URL inteira OU digitar só o código — extraímos o código
+        // dos dois casos (sem mexer na validação pública, que gera esse QR).
+        $code = $data['code'];
+        if (preg_match('~/validar/([^/?#\s]+)~i', $code, $m)) {
+            $code = urldecode($m[1]);
+        }
+        $code = strtoupper(trim($code));
+
         if (! empty($data['day'])) {
             $day = EventDay::query()->findOrFail($data['day']);
         } else {
             // Resolve o único dia do evento do ingresso (1 dia); multi-dia exige o dia.
-            $ticket = Ticket::query()->where('code', strtoupper(trim($data['code'])))->firstOrFail();
+            $ticket = Ticket::query()->where('code', $code)->firstOrFail();
             $days = $ticket->event->eventDays()->get();
             abort_if($days->count() !== 1, 422, 'Selecione o dia do evento.');
             $day = $days->first();
         }
 
         $checkin = $service->checkInDay(
-            $data['code'], $day, $request->user(),
+            $code, $day, $request->user(),
             $data['origin'] ?? CheckinOrigin::QR, $data['note'] ?? null
         );
         $ticket = $checkin->ticket;
