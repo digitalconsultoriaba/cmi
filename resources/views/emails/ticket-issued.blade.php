@@ -23,7 +23,7 @@
 
     <div style="text-align:center; margin:0 0 22px;">
         <div style="display:inline-block; padding:14px; background:#fff; border:1px solid #E4E9F2; border-radius:12px;">
-            <img src="{{ $qrDataUri }}" alt="QR {{ $ticket->code }}" width="196" height="196" style="display:block; width:196px; height:196px;">
+            <img src="{{ $qrUrl }}" alt="QR {{ $ticket->code }}" width="196" height="196" style="display:block; width:196px; height:196px;">
         </div>
         <p class="mono" style="font-size:15px; letter-spacing:1.5px; color:#17357A; font-weight:700; margin:12px 0 2px;">{{ $ticket->code }}</p>
         <p style="color:#7c88a0; font-size:12px; margin:2px 0 0;">Apresente este QR code na entrada do evento.</p>

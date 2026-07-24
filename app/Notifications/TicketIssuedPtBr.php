@@ -6,7 +6,6 @@ use App\Domain\Events\Models\Ticket;
 use App\Domain\Events\Services\TicketReceiptPdf;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 /**
  * Ingresso do participante + acesso passwordless à sua área (spec 014).
@@ -27,15 +26,12 @@ class TicketIssuedPtBr extends Notification
         $base = rtrim((string) config('app.frontend_url'), '/');
         $ticket = $this->ticket->loadMissing('event', 'ticketType', 'ticketLot');
 
-        // QR de validação (URL /validar/{code}); a portaria confere no check-in.
-        $qrSvg = QrCode::format('svg')->size(196)->margin(0)->errorCorrection('M')
-            ->generate($base.'/validar/'.$ticket->code);
-
         $message = (new MailMessage)
             ->subject('Seu ingresso — '.$ticket->event?->name)
             ->view('emails.ticket-issued', [
                 'ticket' => $ticket,
-                'qrDataUri' => 'data:image/svg+xml;base64,'.base64_encode($qrSvg),
+                // QR servido por URL pública em PNG — Gmail não renderiza SVG/data URI.
+                'qrUrl' => $base.'/api/public/tickets/'.$ticket->code.'/qr',
                 'eventName' => $ticket->event?->name,
                 'logoUrl' => $base.'/favicon-192x192.png',
                 'entrarUrl' => $base.'/entrar',

@@ -6,7 +6,11 @@ use App\Domain\Events\Models\Ticket;
 use App\Domain\Events\Models\TicketStatus;
 use App\Http\Controllers\Controller;
 use App\Support\ApiResponse;
+use chillerlan\QRCode\Output\QRGdImagePNG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 /**
  * Autenticação pública do ingresso (spec 014): dado o código do QR, confirma se
@@ -49,6 +53,27 @@ class PublicTicketController extends Controller
             'ticketType' => $ticket->is_courtesy ? 'Cortesia' : $ticket->ticketType?->name,
             'lote' => $ticket->ticketLot?->name,
             'value' => $ticket->is_courtesy ? 'Cortesia' : 'R$ '.number_format((float) $ticket->unit_price, 2, ',', '.'),
+        ]);
+    }
+
+    /**
+     * QR do ingresso em PNG (destino do QR = URL de validação). Servido por URL
+     * porque o Gmail/clientes de e-mail não renderizam SVG nem data: URI — a
+     * imagem precisa vir de um endereço público.
+     */
+    public function qr(string $code): Response
+    {
+        $base = rtrim((string) config('app.frontend_url'), '/');
+        $png = (new QRCode(new QROptions([
+            'outputInterface' => QRGdImagePNG::class,
+            'scale' => 6,
+            'quietzoneSize' => 1,
+            'outputBase64' => false,
+        ])))->render($base.'/validar/'.strtoupper(trim($code)));
+
+        return response($png, 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=86400',
         ]);
     }
 }

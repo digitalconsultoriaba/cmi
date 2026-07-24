@@ -55,6 +55,9 @@ Route::get('/public/events/{event:slug}/checkout-config', [\App\Http\Controllers
 // Autenticação pública do ingresso (read-only, sem check-in) — destino do QR.
 Route::get('/public/tickets/{code}/verify', [\App\Http\Controllers\Api\Public\PublicTicketController::class, 'verify'])
     ->middleware('throttle:60,1');
+// QR do ingresso em PNG (para o e-mail — Gmail não renderiza SVG/data URI).
+Route::get('/public/tickets/{code}/qr', [\App\Http\Controllers\Api\Public\PublicTicketController::class, 'qr'])
+    ->middleware('throttle:120,1');
 Route::post('/public/vouchers/validate', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'validateVoucher'])
     ->middleware('throttle:public-voucher');
 Route::post('/public/orders', [\App\Http\Controllers\Api\Public\GuestCheckoutController::class, 'store'])
