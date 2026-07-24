@@ -17,6 +17,12 @@ class TicketController extends Controller
         $user = $request->user();
 
         $tickets = Ticket::query()
+            // Área do participante: só ingressos emitidos/válidos. Cancelados,
+            // expirados e reservados (de tentativas abandonadas) não poluem a
+            // lista. No painel admin a listagem segue completa (outro controller).
+            ->whereHas('status', fn ($q) => $q->whereIn('slug', [
+                TicketStatus::PAID, TicketStatus::CONFIRMED, TicketStatus::COURTESY, TicketStatus::USED,
+            ]))
             ->where(fn ($q) => $q
                 ->where('participant_user_id', $user->id)
                 ->orWhere('participant_email', $user->email)
